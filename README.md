@@ -232,7 +232,8 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 | Repeated failures on one platform | **Settings → Update yt-dlp**. |
 | Nothing saved to the gallery | Check storage; on Android 7–9 grant the storage permission when prompted. |
 | Build fails on `kspDebugKotlin` | Ensure `ksp.useKSP2=false` (set in `gradle.properties`). |
-| A YouTube/TikTok download fails after the title/thumbnail loaded | See **Known limitations** below — the platform is gating the media fetch. Try **Settings → Update yt-dlp**. |
+| A YouTube/TikTok download fails after the title/thumbnail loaded | The platform is gating the media fetch — see **Two download modes** below. Try **Settings → Update yt-dlp**, and switch download source: on-device uses your own IP, which YouTube blocks far less than a server's. |
+| "Your IP address is blocked" / "Sign in to confirm you're not a bot" | Platform-side IP reputation, not an app fault. Switch to **On device** (your own connection) or try a different network. |
 
 ### Two download modes — on-device vs. server
 
@@ -240,14 +241,24 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 | Mode | Runs on | Best for |
 |------|---------|----------|
-| **On device** | The bundled yt-dlp | Privacy; content not behind aggressive anti-bot walls. |
-| **Server** (recommended) | Your backend (`backend/`) | **Reliable YouTube & TikTok** — the server runs the full toolchain. |
+| **On device** (default) | The bundled yt-dlp | **YouTube**; privacy — the request comes from your own connection. |
+| **Server** | Your backend (`backend/`) | Content needing the full toolchain (JS runtime, `curl_cffi`, ffmpeg). |
 
-On stock Android, some platforms gate the *media fetch* behind measures the bundled engine can't
-satisfy: **YouTube**'s `n`-signature JS challenge + PO-token/DRM, and **TikTok**'s TLS *impersonation*
-(`curl_cffi`) — upstream constraints that hit **every** yt-dlp-based Android app. The **server backend**
-solves them by running a `deno` JS runtime, `curl_cffi` and ffmpeg on a server, then streaming the
-finished file to the app. Verified end-to-end: YouTube downloads at full 4K quality and TikTok works.
+The two modes fail in *different* ways, which is why both exist:
+
+- **On device** has no JavaScript runtime and no PO-token provider, so it uses the `android_vr` player
+  client — the one YouTube client that needs neither. It downloads from **your own IP**, which
+  platforms treat far more kindly than a datacenter.
+- **The server** runs a `deno` JS runtime, `curl_cffi` impersonation and ffmpeg, so it can satisfy
+  challenges the phone cannot — but it downloads from a **datacenter IP**.
+
+> **Reality check (July 2026).** IP reputation now dominates. YouTube answers datacenter IPs with
+> *"Sign in to confirm you're not a bot"* and TikTok with *"Your IP address is blocked"* — for **every**
+> player client, and a PO-token provider does not help (it attests the stream, not the IP). So
+> **on-device is currently the more reliable route for YouTube**, while the server is the better route
+> for Facebook and anything needing ffmpeg/impersonation. Instagram returns an empty media response
+> without login. These are platform-side gates that affect all yt-dlp-based tools, not app bugs — the
+> app surfaces them as typed errors rather than pretending to work.
 
 Deploy the backend (systemd + nginx + TLS, `X-API-Key` auth) — see **[backend/README.md](backend/README.md)** —
 then set the server URL + key in Settings (or bake them into a git-ignored `backend.properties`).

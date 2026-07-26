@@ -25,12 +25,37 @@ class YtDlpArgsBuilderTest {
     }
 
     @Test
-    fun `youtube gets the SABR player-client workaround`() {
+    fun `youtube gets the player-client workaround`() {
         val args = YtDlpArgsBuilder.build("https://youtu.be/x", Platform.YOUTUBE, DownloadMode.VIDEO, template)
         assertThat(args).containsAtLeast(
             "--extractor-args",
-            "youtube:player_client=default,android_vr,tv,ios",
+            "youtube:player_client=${YtDlpArgsBuilder.YOUTUBE_PLAYER_CLIENTS}",
         ).inOrder()
+    }
+
+    @Test
+    fun `youtube uses only a client that needs neither a JS runtime nor a PO token`() {
+        // On-device there is no JS runtime and no PO-token provider, so a client failing either gate
+        // yields no downloadable format even though extraction succeeded. This asserts the intersection
+        // of both constraints, which is what actually makes YouTube downloads work on a stock device.
+        val clients = YtDlpArgsBuilder.YOUTUBE_PLAYER_CLIENTS.split(",").map { it.trim() }
+
+        assertThat(clients).containsExactly("android_vr")
+        // Need the n-sig JavaScript challenge -> "n challenge solving failed".
+        assertThat(clients).containsNoneOf("web", "web_safari", "web_embedded", "mweb")
+        // Require a GVS PO token -> formats skipped, download fails.
+        assertThat(clients).containsNoneOf("ios", "android", "tv_simply")
+        // `tv` is DRM without cookies; `default` resolves into the gated clients above.
+        assertThat(clients).containsNoneOf("tv", "default")
+    }
+
+    @Test
+    fun `the youtube extractor arg is a single token yt-dlp can parse`() {
+        val args = YtDlpArgsBuilder.build("https://youtu.be/x", Platform.YOUTUBE, DownloadMode.VIDEO, template)
+        val value = args[args.indexOf("--extractor-args") + 1]
+
+        assertThat(value).startsWith("youtube:player_client=")
+        assertThat(value).doesNotContain(" ")
     }
 
     @Test
@@ -69,6 +94,37 @@ class YtDlpArgsBuilderTest {
         assertThat(guardIndex).isGreaterThan(-1)
         assertThat(args.last()).isEqualTo(url)
         assertThat(args.indexOf(url)).isGreaterThan(guardIndex)
+    }
+
+    @Test
+    fun `engine options never contain an end-of-options guard`() {
+        // youtubedl-android appends its own flags (notably `--ffmpeg-location <path>`) AFTER these
+        // options. A `--` anywhere in here demotes those flags to positional arguments, so yt-dlp tried
+        // to download the ffmpeg binary path as a URL and every download ended with
+        // "ERROR: [generic] '…/libffmpeg.so' is not a valid URL" — after visibly downloading the real
+        // video first. Nothing ever reached the gallery.
+        val combos =
+            listOf(
+                Triple(Platform.YOUTUBE, DownloadMode.VIDEO, false),
+                Triple(Platform.YOUTUBE, DownloadMode.AUDIO, false),
+                Triple(Platform.YOUTUBE, DownloadMode.VIDEO, true),
+                Triple(Platform.YOUTUBE, DownloadMode.AUDIO, true),
+                Triple(Platform.INSTAGRAM, DownloadMode.VIDEO, false),
+                Triple(Platform.TIKTOK, DownloadMode.VIDEO, true),
+            )
+
+        combos.forEach { (platform, mode, progressive) ->
+            val args = YtDlpArgsBuilder.buildOptions(platform, mode, template, progressive)
+            assertThat(args).doesNotContain("--")
+        }
+    }
+
+    @Test
+    fun `engine options end with the output template so appended flags stay flags`() {
+        val args = YtDlpArgsBuilder.buildOptions(Platform.YOUTUBE, DownloadMode.VIDEO, template)
+
+        assertThat(args.last()).isEqualTo(template)
+        assertThat(args[args.size - 2]).isEqualTo("-o")
     }
 
     @Test

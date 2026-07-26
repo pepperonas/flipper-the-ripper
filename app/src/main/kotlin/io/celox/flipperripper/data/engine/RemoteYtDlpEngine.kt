@@ -61,7 +61,7 @@ constructor(
         withContext(ioDispatcher) {
             val cfg = configRepository.config.first()
             try {
-                val req = Request.Builder().url("${cfg.url.trimEnd('/')}/health").get().build()
+                val req = request(cfg, "/health").get().build()
                 client.newCall(req).execute().use { resp ->
                     if (resp.isSuccessful) {
                         _isReady.value = true
@@ -74,6 +74,12 @@ constructor(
             } catch (e: IOException) {
                 _isReady.value = false
                 EngineResult.Failure(DownloadError.Network("Cannot reach the download server: ${e.message}"))
+            } catch (e: IllegalArgumentException) {
+                // OkHttp rejects a malformed server URL (e.g. one typed without a scheme) by throwing,
+                // and this runs during app start-up — so an unhandled throw here bricked the app in a
+                // launch-crash loop with no way to reach Settings and correct the URL.
+                _isReady.value = false
+                EngineResult.Failure(invalidServerUrl(cfg.url, e))
             }
         }
 
@@ -108,6 +114,8 @@ constructor(
                 }
             } catch (e: IOException) {
                 EngineResult.Failure(DownloadError.Network("Server request failed: ${e.message}"))
+            } catch (e: IllegalArgumentException) {
+                EngineResult.Failure(invalidServerUrl(cfg.url, e))
             }
         }
 
@@ -130,6 +138,8 @@ constructor(
                 }
             } catch (e: IOException) {
                 EngineResult.Failure(DownloadError.Network("Server download failed: ${e.message}"))
+            } catch (e: IllegalArgumentException) {
+                EngineResult.Failure(invalidServerUrl(cfg.url, e))
             }
         }
 
@@ -227,6 +237,12 @@ constructor(
 
     private fun request(cfg: BackendConfig, path: String): Request.Builder =
         Request.Builder().url("${cfg.url.trimEnd('/')}$path").header("X-API-Key", cfg.apiKey)
+
+    private fun invalidServerUrl(url: String, e: IllegalArgumentException): DownloadError =
+        DownloadError.EngineNotReady(
+            "The server address \"$url\" is not a valid URL (${e.message}). " +
+                "Fix it under Settings → Download source, or switch back to On device.",
+        )
 
     private fun prepareDir(dir: File) {
         if (dir.exists()) dir.deleteRecursively()

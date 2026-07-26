@@ -40,6 +40,8 @@ IMPERSONATE = os.environ.get("FLIPPER_IMPERSONATE", "chrome")
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 SUPPORTED_HOSTS = ("youtube.com", "youtu.be", "instagram.com", "tiktok.com", "facebook.com", "fb.watch")
+YOUTUBE_HOSTS = ("youtube.com", "youtu.be")
+YOUTUBE_PLAYER_CLIENTS = "android_vr,web_safari,web_embedded"
 
 app = FastAPI(title="Flipper Backend", docs_url=None, redoc_url=None, openapi_url=None)
 _semaphore = asyncio.Semaphore(MAX_CONCURRENT)
@@ -106,6 +108,18 @@ def _is_supported(url: str) -> bool:
     return True
 
 
+def _is_youtube(url: str) -> bool:
+    """
+    Hostname-based YouTube check. A substring test over the whole URL would also match unrelated
+    links that merely mention youtube.com (e.g. in a query string), applying the wrong extractor args.
+    """
+    try:
+        host = (urlparse(url).hostname or "").rstrip(".").lower()
+    except ValueError:
+        return False
+    return any(host == h or host.endswith("." + h) for h in YOUTUBE_HOSTS)
+
+
 def _base_args(url: str, mode: str, out_template: str) -> list[str]:
     args = [YTDLP, "--no-playlist", "--no-mtime", "--no-warnings", "--newline"]
     if IMPERSONATE:
@@ -114,9 +128,12 @@ def _base_args(url: str, mode: str, out_template: str) -> list[str]:
         args += ["-x", "--audio-format", "m4a", "--audio-quality", "0"]
     else:
         args += ["-S", "vcodec:h264,res,acodec:m4a", "--merge-output-format", "mp4"]
-    # Prefer YouTube player clients that work without a PO token / DRM.
-    if "youtube.com" in url.lower() or "youtu.be" in url.lower():
-        args += ["--extractor-args", "youtube:player_client=default,web_safari,android_vr,tv"]
+    # Prefer YouTube player clients that need no GVS PO token and serve no DRM. `tv` is token-free but
+    # DRM-protected without cookies, and ios/android/mweb/tv_simply all require a token — their formats
+    # get skipped and the download fails. Mirrors the app's YtDlpArgsBuilder.YOUTUBE_PLAYER_CLIENTS.
+    # Source: https://github.com/yt-dlp/yt-dlp/wiki/PO-Token-Guide
+    if _is_youtube(url):
+        args += ["--extractor-args", f"youtube:player_client={YOUTUBE_PLAYER_CLIENTS}"]
     args += ["--progress-template", "flip:%(progress._percent_str)s"]
     args += ["-o", out_template, "--", url]
     return args
@@ -204,6 +221,10 @@ async def resolve(body: ResolveBody) -> JSONResponse:
     args = [YTDLP, "-J", "--no-warnings", "--no-playlist"]
     if IMPERSONATE:
         args += ["--impersonate", IMPERSONATE]
+    # Resolve with the same player clients the download will use, otherwise metadata can come back from
+    # a client whose formats the download step then refuses to fetch.
+    if _is_youtube(body.url):
+        args += ["--extractor-args", f"youtube:player_client={YOUTUBE_PLAYER_CLIENTS}"]
     args += ["--", body.url]
     proc = await asyncio.create_subprocess_exec(
         *args, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE

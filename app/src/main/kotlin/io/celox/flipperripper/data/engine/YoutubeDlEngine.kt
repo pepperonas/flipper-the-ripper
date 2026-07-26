@@ -13,6 +13,7 @@ import io.celox.flipperripper.domain.model.DownloadProgress
 import io.celox.flipperripper.domain.model.EngineResult
 import io.celox.flipperripper.domain.model.Platform
 import io.celox.flipperripper.domain.model.VideoInfo
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -56,14 +57,30 @@ constructor(
                     _isReady.value = true
                     EngineResult.Success(Unit)
                 } catch (e: YoutubeDLException) {
-                    EngineResult.Failure(
-                        DownloadError.EngineNotReady(
-                            "Could not initialise the download engine: ${e.message ?: "unknown error"}",
-                        ),
-                    )
+                    initFailure(e)
+                } catch (e: CancellationException) {
+                    // Cancellation is control flow, not an engine fault — it must keep propagating.
+                    throw e
+                } catch (
+                    @Suppress("TooGenericExceptionCaught") e: Throwable,
+                ) {
+                    // Deliberately broad: init() unpacks a native Python/yt-dlp payload through
+                    // reflection-heavy third-party code, which can fail with anything from IOException
+                    // to ExceptionInInitializerError/UnsatisfiedLinkError. A broken engine must
+                    // degrade into a typed error the UI can show — never take the whole app down.
+                    initFailure(e)
                 }
             }
         }
+    }
+
+    private fun initFailure(e: Throwable): EngineResult<Unit> {
+        _isReady.value = false
+        return EngineResult.Failure(
+            DownloadError.EngineNotReady(
+                "Could not initialise the download engine: ${e.message ?: e::class.java.simpleName}",
+            ),
+        )
     }
 
     override suspend fun fetchInfo(url: String, mode: DownloadMode): EngineResult<VideoInfo> {
@@ -78,7 +95,13 @@ constructor(
                 val request = YoutubeDLRequest(url)
                 request.addOption("--no-playlist")
                 if (platform == Platform.YOUTUBE) {
-                    request.addOption("--extractor-args", "youtube:player_client=default,ios,web_safari")
+                    // Same client list as the download path (see YtDlpArgsBuilder.YOUTUBE_PLAYER_CLIENTS).
+                    // These must agree: resolving with clients whose formats the download step cannot
+                    // fetch produces a preview that then fails to download.
+                    request.addOption(
+                        "--extractor-args",
+                        "youtube:player_client=${YtDlpArgsBuilder.YOUTUBE_PLAYER_CLIENTS}",
+                    )
                 }
                 val info: LibVideoInfo = YoutubeDL.getInstance().getInfo(request)
                 EngineResult.Success(info.toDomain(url, platform))
@@ -96,6 +119,14 @@ constructor(
     ): EngineResult<DownloadedFile> {
         val ready = ensureInitialized()
         if (ready is EngineResult.Failure) return ready
+
+        // Flag-injection guard. The options deliberately carry no trailing `--` (youtubedl-android
+        // appends its own flags after ours, and `--` would demote them to positional arguments), so the
+        // URL is validated here instead: only a well-formed http(s) link for a supported platform is
+        // ever handed to yt-dlp, which rules out an argument that could pose as a flag.
+        if (io.celox.flipperripper.domain.util.UrlParser.detectPlatform(spec.url) == null) {
+            return EngineResult.Failure(DownloadError.InvalidUrl())
+        }
 
         return withContext(ioDispatcher) {
             prepareWorkingDir(spec.workingDir)

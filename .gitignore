@@ -29,3 +29,9 @@ release.jks
 /kover/
 **/reports/
 backend.properties
+
+# Secrets. The backend README tells you to create backend/.env (it holds FLIPPER_API_KEY); make sure a
+# local copy can never be committed. .env.example is the tracked template and stays.
+.env
+**/.env
+!**/.env.example

@@ -9,6 +9,7 @@ import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import io.celox.flipperripper.data.engine.DownloadNaming
 import io.celox.flipperripper.data.engine.DownloadSpec
 import io.celox.flipperripper.data.engine.FilenameSanitizer
 import io.celox.flipperripper.data.engine.YtDlpEngine
@@ -96,19 +97,26 @@ constructor(
 
         return when (result) {
             is EngineResult.Failure -> finishWithError(id, displayTitle, result.error, workingDir)
-            is EngineResult.Success -> saveAndFinish(id, displayTitle, record, result.value.file, workingDir)
+            is EngineResult.Success ->
+                saveAndFinish(id, displayTitle, info?.title, record, result.value.file, workingDir)
         }
     }
 
     private suspend fun saveAndFinish(
         id: String,
         displayTitle: String,
+        resolvedTitle: String?,
         record: DownloadEntity,
         file: File,
         workingDir: File,
     ): Result {
-        val nameTitle = displayTitle.ifBlank { titleFromFile(file) }
+        val nameTitle = preferredName(resolvedTitle, file, record)
         val displayName = FilenameSanitizer.sanitize(nameTitle, file.extension)
+        // Metadata may have resolved only after the record was created from a bare shared link, so keep
+        // the stored title in step with the name we actually save under.
+        if (record.title != nameTitle) {
+            dao.upsert(record.copy(title = nameTitle, updatedAtEpochMs = now()))
+        }
         return when (val saved = mediaWriter.save(file, displayName, enumMode(record.mode))) {
             is EngineResult.Success -> {
                 dao.markCompleted(
@@ -191,8 +199,8 @@ constructor(
         }
     }
 
-    private fun titleFromFile(file: File): String =
-        file.nameWithoutExtension.replace(Regex("""\s*\[[^\]]+\]\s*$"""), "").trim()
+    private fun preferredName(resolvedTitle: String?, file: File, record: DownloadEntity): String =
+        DownloadNaming.preferredTitle(resolvedTitle, file.nameWithoutExtension, record.title)
 
     private fun enumMode(name: String) =
         runCatching { io.celox.flipperripper.domain.model.DownloadMode.valueOf(name) }

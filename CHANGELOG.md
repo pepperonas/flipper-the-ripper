@@ -7,6 +7,55 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.1] - 2026-07-27
+
+### Fixed
+- **The app crashed immediately on every launch (release builds).** R8 renamed Apache Commons
+  Compress's `ZipExtraField` implementations and made them abstract, because nothing constructs them
+  directly — but its `ExtraFieldUtils` static initialiser instantiates them *reflectively*. The
+  registry therefore threw `class ...zip.a is not a concrete class`, `YoutubeDL.init()` died with
+  `ExceptionInInitializerError`, and the app was stuck in an unrecoverable launch-crash loop. Added the
+  keep rules that keep those classes concrete, named and default-constructible. Debug builds were
+  unaffected (no shrinking), which is why it only ever showed up in shipped APKs.
+- **Downloads never finished, even when they visibly progressed.** The yt-dlp options ended with the
+  `--` end-of-options guard, but youtubedl-android appends its *own* flags after ours — so
+  `--ffmpeg-location <path>` was demoted to a positional argument and yt-dlp tried to download the
+  ffmpeg binary path as a URL. Every run fetched the real video and then failed with
+  `ERROR: [generic] '…/libffmpeg.so' is not a valid URL`, so nothing ever reached the gallery. The
+  guard now sits only where the app owns argument order; the engine validates the URL scheme instead.
+- **YouTube downloads failed at the media step.** The player-client list included clients that cannot
+  work on a stock device: `ios`/`tv_simply` require a **GVS PO Token** ("…require a GVS PO Token which
+  was not provided"), and the `web*` clients require the **n-signature JavaScript challenge** that
+  Android has no runtime for. The app now uses `android_vr` — the one client needing neither — and the
+  metadata and download steps use the *same* list, so a preview can no longer resolve via a client
+  whose formats the download cannot fetch.
+- **Filenames fell back to the raw URL.** A download started from a shared link carries the URL as its
+  title until metadata resolves; if that lookup failed, files were saved as
+  `https www.youtube.com watch v=….mp4`. yt-dlp already writes the real title into the file it
+  produces, so that is now used before falling back to the URL, and the history entry is updated to
+  match.
+- Engine start-up can no longer take the app down: initialisation failures (including `Error`s) become
+  a typed `EngineNotReady` result, a malformed server address is reported instead of thrown (it used to
+  brick the app on launch with no way to reach Settings), and the application scope has an exception
+  handler.
+
+### Changed
+- Backend: YouTube player clients aligned with the app's, `/api/resolve` now uses the same extractor
+  args as the download, and the YouTube check is hostname-based rather than a substring match on the
+  whole URL.
+
+### Added
+- Regression tests for all of the above (111 unit tests), including a guard asserting the R8 keep rules
+  exist — the crash was a build-configuration bug that no ordinary unit test could have caught.
+
+### Known limitations
+- **Platform IP blocking is outside the app's control.** YouTube now answers the server backend's
+  datacenter IP with "Sign in to confirm you're not a bot", and TikTok with "Your IP address is
+  blocked" — for *any* player client, and a PO-token provider does not change it (it attests the
+  stream, not the IP). **On-device downloads use your own connection and are therefore the more
+  reliable route for YouTube.** Instagram serves an empty media response without login. Facebook works
+  through the backend.
+
 ## [1.2.0] - 2026-07-26
 
 ### Added
@@ -116,7 +165,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Signed release builds, GitHub Actions CI (build, lint, detekt, unit tests, coverage) and an
   automated tag-driven release workflow.
 
-[Unreleased]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.2.1...HEAD
+[1.2.1]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.1.2...v1.2.0
 [1.1.2]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.1.0...v1.1.1

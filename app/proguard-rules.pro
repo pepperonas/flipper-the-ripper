@@ -15,6 +15,22 @@
 -keep class com.yausername.aria2c.** { *; }
 -dontwarn com.yausername.**
 
+# Apache Commons Compress (pulled in by youtubedl-android) unzips the Python/yt-dlp payloads during
+# YoutubeDL.init(). Its ExtraFieldUtils static initialiser REFLECTIVELY instantiates every
+# ZipExtraField implementation (Class.newInstance()). Because nothing in the app constructs those
+# classes directly, R8 turned them abstract and renamed them, so the registry blew up with
+# "class ...zip.a is not a concrete class" -> ExceptionInInitializerError -> the engine could never
+# initialise and the app crashed on every launch. Keep the implementations concrete, named and
+# default-constructible.
+-keep class org.apache.commons.compress.archivers.zip.ZipExtraField
+-keep class * implements org.apache.commons.compress.archivers.zip.ZipExtraField {
+    <init>();
+    *;
+}
+-keep class org.apache.commons.compress.archivers.zip.ExtraFieldUtils { *; }
+-dontwarn org.apache.commons.compress.**
+-dontwarn org.apache.commons.io.**
+
 # Room
 -keep class * extends androidx.room.RoomDatabase { <init>(); }
 -dontwarn androidx.room.paging.**

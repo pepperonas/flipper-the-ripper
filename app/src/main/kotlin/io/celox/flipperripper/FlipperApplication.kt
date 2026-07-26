@@ -38,13 +38,20 @@ class FlipperApplication :
 
     override fun onCreate() {
         super.onCreate()
-        notifier.ensureChannels()
+        runCatching { notifier.ensureChannels() }
         // Warm up the engine off the main thread, then keep the yt-dlp extractor fresh: the bundled
         // yt-dlp is frozen at the library's release, so sites like YouTube/Instagram need a periodic
         // update to keep extracting. Throttled to at most once per interval to avoid needless traffic.
+        //
+        // Everything here is best-effort and wrapped: start-up warm-up must never be able to take the
+        // process down. It once did — a third-party init failure escaped this coroutine and put the app
+        // in an unrecoverable launch-crash loop, with no way to even reach Settings. The UI already
+        // surfaces engine problems as typed errors when a download is actually attempted.
         appScope.launch {
-            if (engine.ensureInitialized() is EngineResult.Success) {
-                maybeUpdateEngine()
+            runCatching {
+                if (engine.ensureInitialized() is EngineResult.Success) {
+                    maybeUpdateEngine()
+                }
             }
         }
     }

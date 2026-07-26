@@ -31,12 +31,20 @@ object YtDlpArgsBuilder {
         platform: Platform,
         mode: DownloadMode,
         outputTemplate: String,
-    ): List<String> = buildOptions(platform, mode, outputTemplate) + url
+    ): List<String> = buildOptions(platform, mode, outputTemplate) + "--" + url
 
     /**
-     * The option tokens only, ending with the `--` flag-injection guard. The engine passes the URL
-     * separately (via the request constructor), which appends it after these options — reproducing
-     * `… -- <url>`.
+     * The option tokens only — deliberately **without** a trailing `--`.
+     *
+     * The `--` end-of-options guard belongs immediately before the URL, and on Android we do not own
+     * that position: youtubedl-android appends its own flags (notably `--ffmpeg-location <path>`)
+     * *after* the options we supply. A trailing `--` therefore demoted the library's own flags to
+     * positional arguments, so yt-dlp treated the ffmpeg binary path as another thing to download and
+     * ended every run with `ERROR: [generic] '…/libffmpeg.so' is not a valid URL`. Downloads visibly
+     * progressed (the real URL was fetched first) and then failed, so nothing ever reached the gallery.
+     *
+     * [build] — which does own the ordering — still emits `--` right before the URL. For the engine
+     * path the guard's job is done by validating the URL scheme instead (see [YoutubeDlEngine]).
      */
     fun buildOptions(
         platform: Platform,
@@ -69,11 +77,8 @@ object YtDlpArgsBuilder {
                 }
         }
 
-        // YouTube: prefer the android_vr / tv player clients, which return playable formats WITHOUT
-        // requiring YouTube's `n`-signature JavaScript challenge (there is no JS runtime on Android) and
-        // without a PO token. Stock web/ios clients now fail with "n challenge solving failed".
         if (platform == Platform.YOUTUBE) {
-            args += listOf("--extractor-args", "youtube:player_client=default,android_vr,tv,ios")
+            args += listOf("--extractor-args", "youtube:player_client=$YOUTUBE_PLAYER_CLIENTS")
         }
 
         args += "--no-playlist"
@@ -81,13 +86,31 @@ object YtDlpArgsBuilder {
 
         args += listOf("-o", outputTemplate)
 
-        // Flag-injection guard: everything after `--` is treated as a positional arg, so a URL that
-        // starts with `-` cannot smuggle flags. The URL itself is appended by the caller.
-        args += "--"
-
         return args
     }
 
     /** The output template used inside a per-download working directory. */
     const val OUTPUT_TEMPLATE = "%(title).100B [%(id)s].%(ext)s"
+
+    /**
+     * The YouTube player client used **on device**. Exactly one clears both of YouTube's gates without
+     * machinery a stock Android app cannot ship:
+     *
+     *  1. the `n`-signature **JavaScript challenge** — every `web*` client (`web`, `web_safari`,
+     *     `web_embedded`, `mweb`) needs a JS runtime to solve it. There is none on Android, so those
+     *     clients fail with "n challenge solving failed: Some formats may be missing".
+     *  2. the **GVS PO Token**, demanded before googlevideo serves the media — `ios`, `android`, `mweb`
+     *     and `tv_simply` all require one, so their formats are skipped with "…require a GVS PO Token
+     *     which was not provided" and the download fails even though extraction looked fine.
+     *
+     * `android_vr` is an app client (no JS challenge) that needs no PO token — the only combination
+     * that leaves a downloadable format. `tv` is token-free but serves DRM without account cookies, and
+     * `default` resolves into the gated clients above, so both are excluded.
+     *
+     * The server backend deliberately uses a *wider* list (it runs deno, so it can solve the JS
+     * challenge); see `backend/app.py`.
+     *
+     * Source: yt-dlp PO Token Guide (https://github.com/yt-dlp/yt-dlp/wiki/PO-Token-Guide).
+     */
+    const val YOUTUBE_PLAYER_CLIENTS = "android_vr"
 }
