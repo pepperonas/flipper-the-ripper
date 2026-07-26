@@ -20,7 +20,7 @@ coil = "2.7.0"
 # testing
 junit = "4.13.2"
 mockk = "1.13.13"
-turbine = "1.2.0"
+turbine = "1.2.1"
 truth = "1.4.4"
 androidxJunit = "1.2.1"
 espresso = "3.6.1"
