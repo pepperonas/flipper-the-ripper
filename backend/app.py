@@ -11,15 +11,18 @@ All endpoints require the `X-API-Key` header. Bound to loopback; nginx terminate
 from __future__ import annotations
 
 import asyncio
+import ipaddress
 import json
 import os
 import re
 import shutil
+import socket
 import time
 import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
+from urllib.parse import urlparse
 
 from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.responses import FileResponse, JSONResponse
@@ -77,8 +80,30 @@ class JobBody(BaseModel):
 
 
 def _is_supported(url: str) -> bool:
-    u = url.lower()
-    return url.startswith(("http://", "https://")) and any(h in u for h in SUPPORTED_HOSTS)
+    """
+    True only when the URL's *hostname* (not any substring) is an allowlisted platform host, and it
+    does not resolve to a private/loopback/link-local address. Substring matching would let
+    `https://youtube.com.evil.tld/` or `https://evil.tld/?youtube.com` through and turn yt-dlp's
+    generic extractor into an SSRF primitive, so we parse the host and match exactly / by subdomain,
+    then reject non-public resolutions (defense-in-depth against DNS rebinding).
+    """
+    try:
+        parsed = urlparse(url)
+    except ValueError:
+        return False
+    if parsed.scheme not in ("http", "https") or not parsed.hostname:
+        return False
+    host = parsed.hostname.rstrip(".").lower()
+    if not any(host == h or host.endswith("." + h) for h in SUPPORTED_HOSTS):
+        return False
+    try:
+        for _, _, _, _, sockaddr in socket.getaddrinfo(host, None):
+            ip = ipaddress.ip_address(sockaddr[0])
+            if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved or ip.is_multicast:
+                return False
+    except (socket.gaierror, ValueError):
+        return False
+    return True
 
 
 def _base_args(url: str, mode: str, out_template: str) -> list[str]:
