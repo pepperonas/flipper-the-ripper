@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      Minimal window theme for the pre-Compose splash frame. All real theming happens in Compose
+      (Material 3, dynamic color). Parent is the platform Material theme so no extra XML theming
+      dependency is pulled in.
+    -->
+    <style name="Theme.FlipperTheRipper" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/window_background</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+</resources>

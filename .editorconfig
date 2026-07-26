@@ -1,0 +1,20 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_size = 4
+indent_style = space
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.{kt,kts}]
+max_line_length = 140
+ktlint_code_style = android_studio
+# Composable functions are PascalCase by convention.
+ktlint_function_naming_ignore_when_annotated_with = Composable
+# Compose builder-style APIs legitimately exceed the default parameter/argument limits.
+ktlint_standard_function-signature = disabled
+
+[*.{yml,yaml,xml,json}]
+indent_size = 2

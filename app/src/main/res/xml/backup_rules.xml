@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <!-- Allowlist: back up settings + download history only. The engine cache (files/downloads)
+         is not included, so it is never backed up. -->
+    <include domain="database" path="flipper.db" />
+    <include domain="sharedpref" path="." />
+</full-backup-content>

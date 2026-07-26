@@ -1,0 +1,59 @@
+build:
+  maxIssues: 0
+  weights: {}
+
+config:
+  validation: true
+  warningsAsErrors: false
+
+complexity:
+  LongMethod:
+    threshold: 120
+    ignoreAnnotated: ['Composable']
+  LongParameterList:
+    functionThreshold: 8
+    constructorThreshold: 10
+    ignoreAnnotated: ['Composable', 'Inject']
+  TooManyFunctions:
+    thresholdInFiles: 30
+    thresholdInClasses: 20
+  CyclomaticComplexMethod:
+    threshold: 20
+    ignoreAnnotated: ['Composable']
+
+exceptions:
+  SwallowedException:
+    ignoredExceptionTypes:
+      - 'InterruptedException'
+      - 'CanceledException'
+  TooGenericExceptionCaught:
+    active: false
+
+style:
+  MagicNumber:
+    active: false
+  ReturnCount:
+    max: 5
+  MaxLineLength:
+    maxLineLength: 140
+  UnusedPrivateMember:
+    active: true
+  ForbiddenComment:
+    active: true
+    comments:
+      - reason: 'Ship no TODO/FIXME in the released source.'
+        value: 'TODO'
+      - reason: 'Ship no TODO/FIXME in the released source.'
+        value: 'FIXME'
+
+naming:
+  FunctionNaming:
+    # Composable functions are PascalCase.
+    ignoreAnnotated: ['Composable']
+
+comments:
+  active: true
+  UndocumentedPublicClass:
+    active: false
+  UndocumentedPublicFunction:
+    active: false

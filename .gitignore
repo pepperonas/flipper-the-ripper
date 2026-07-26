@@ -1,0 +1,30 @@
+# Android / Gradle
+*.iml
+.gradle/
+/local.properties
+/.idea/
+.DS_Store
+/build/
+/captures/
+.externalNativeBuild/
+.cxx/
+app/build/
+build/
+*.apk
+*.aab
+*.ap_
+*.dex
+local.properties
+
+# Keystore & signing secrets — NEVER commit
+*.jks
+*.keystore
+keystore.properties
+release.jks
+
+# Kotlin
+.kotlin/
+
+# Coverage / reports
+/kover/
+**/reports/

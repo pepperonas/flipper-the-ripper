@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Flipper the Ripper</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_history">History</string>
+    <string name="nav_settings">Settings</string>
+
+    <!-- Home -->
+    <string name="home_title">Flipper the Ripper</string>
+    <string name="home_url_label">Video link</string>
+    <string name="home_url_hint">Paste an Instagram, TikTok or YouTube link</string>
+    <string name="home_paste">Paste</string>
+    <string name="home_clear">Clear</string>
+    <string name="home_fetch">Load info</string>
+    <string name="home_download">Download</string>
+    <string name="home_download_audio">Download audio</string>
+    <string name="home_resolving">Resolving video info…</string>
+    <string name="home_clipboard_prompt">Link found on clipboard</string>
+    <string name="home_clipboard_use">Use it</string>
+    <string name="home_dismiss">Dismiss</string>
+    <string name="home_engine_initializing">Preparing the download engine…</string>
+    <string name="home_unsupported">This link is not from a supported platform.</string>
+    <string name="home_mode_video">Video</string>
+    <string name="home_mode_audio">Audio</string>
+
+    <!-- History -->
+    <string name="history_title">Downloads</string>
+    <string name="history_empty">No downloads yet</string>
+    <string name="history_empty_hint">Share a link to Flipper the Ripper or paste one on the Home screen.</string>
+    <string name="history_open">Open</string>
+    <string name="history_retry">Retry</string>
+    <string name="history_cancel">Cancel</string>
+    <string name="history_delete">Delete</string>
+    <string name="history_clear_all">Clear all</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_appearance">Appearance</string>
+    <string name="settings_theme">Theme</string>
+    <string name="settings_theme_system">Follow system</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_dynamic_color">Dynamic color</string>
+    <string name="settings_dynamic_color_desc">Use wallpaper-based colors (Android 12+)</string>
+    <string name="settings_behavior">Behavior</string>
+    <string name="settings_auto_download">Auto-download on share</string>
+    <string name="settings_auto_download_desc">Start downloading immediately when a link is shared</string>
+    <string name="settings_clipboard">Clipboard detection</string>
+    <string name="settings_clipboard_desc">Offer to download a link found on the clipboard at start</string>
+    <string name="settings_engine">Download engine</string>
+    <string name="settings_update_engine">Update yt-dlp</string>
+    <string name="settings_update_engine_desc">Fetch the latest extractor to fix broken downloads</string>
+    <string name="settings_about">About</string>
+    <string name="settings_version">Version</string>
+    <string name="settings_legal">Legal notice</string>
+    <string name="settings_legal_body">Only download content you have the right to save. Respect the terms of service of each platform and applicable copyright law. Flipper the Ripper does not bypass DRM or access restrictions.</string>
+
+    <!-- Notifications -->
+    <string name="channel_downloads_progress">Download progress</string>
+    <string name="channel_downloads_status">Download status</string>
+    <string name="notif_downloading">Downloading…</string>
+    <string name="notif_completed">Download complete</string>
+    <string name="notif_failed">Download failed</string>
+
+    <!-- Generic -->
+    <string name="action_ok">OK</string>
+    <string name="action_cancel">Cancel</string>
+</resources>

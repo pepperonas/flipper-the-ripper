@@ -1,0 +1,25 @@
+version: 2
+updates:
+  - package-ecosystem: gradle
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    groups:
+      androidx:
+        patterns: ["androidx.*"]
+      compose:
+        patterns: ["androidx.compose.*"]
+      kotlin:
+        patterns: ["org.jetbrains.kotlin*", "com.google.devtools.ksp*"]
+      hilt:
+        patterns: ["com.google.dagger*", "androidx.hilt*"]
+    commit-message:
+      prefix: "deps"
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "ci"
