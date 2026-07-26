@@ -23,7 +23,12 @@ class SettingsViewModelTest {
     private val settings = FakeSettingsRepository()
     private val engineRepo = FakeEngineRepository()
 
-    private fun createViewModel() = SettingsViewModel(settings, UpdateEngineUseCase(engineRepo))
+    private fun createViewModel() =
+        SettingsViewModel(
+            settings,
+            io.celox.flipperripper.testing.FakeBackendConfigRepository(),
+            UpdateEngineUseCase(engineRepo),
+        )
 
     @Test
     fun `setters update preferences`() =

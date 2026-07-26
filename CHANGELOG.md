@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-07-26
+
+### Added
+- **Server backend (recommended) — reliably downloads YouTube & TikTok.** A new optional backend
+  (`backend/`, FastAPI) runs the full yt-dlp toolchain on a server — a `deno` JS runtime for
+  YouTube's n-sig challenge, `curl_cffi` impersonation for TikTok, ffmpeg for merging — then streams
+  the finished file to the app. This solves the platform anti-bot walls that stock Android can't
+  (v1.1.2's Known limitations). **Verified end-to-end:** YouTube downloads at full 4K quality and
+  TikTok downloads via the deployed backend.
+  - **Settings → Download source** toggles **On device** ⇄ **Server** (with URL + API-key fields).
+    The app ships pointing at a server when one is baked in (git-ignored `backend.properties`),
+    otherwise stays on-device; the user can configure a server at any time.
+  - New `RemoteYtDlpEngine` (OkHttp) + `RoutingYtDlpEngine` pick the source live, so switching in
+    Settings takes effect with no restart. Cancellation, progress and the typed error taxonomy are
+    preserved across both paths.
+  - Backend: `POST /api/resolve`, `POST /api/jobs`, `GET /api/jobs/{id}`, `GET /api/jobs/{id}/file`;
+    `X-API-Key` auth; loopback + nginx TLS; nightly yt-dlp auto-update. Deploy docs in `backend/README.md`.
+
 ## [1.1.2] - 2026-07-26
 
 ### Fixed
@@ -98,7 +116,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Signed release builds, GitHub Actions CI (build, lint, detekt, unit tests, coverage) and an
   automated tag-driven release workflow.
 
-[Unreleased]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.1.2...HEAD
+[Unreleased]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.1.2...v1.2.0
 [1.1.2]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.0.0...v1.1.0

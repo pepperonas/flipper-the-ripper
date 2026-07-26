@@ -145,6 +145,26 @@ class FakeClipboardRepository(var suggestion: ParsedUrl? = null) : ClipboardRepo
     override fun peekSupportedUrl(): ParsedUrl? = suggestion
 }
 
+class FakeBackendConfigRepository(
+    initial: io.celox.flipperripper.domain.model.BackendConfig =
+        io.celox.flipperripper.domain.model.BackendConfig(
+            io.celox.flipperripper.domain.model.DownloadSource.ON_DEVICE,
+            "",
+            "",
+        ),
+) : io.celox.flipperripper.domain.repository.BackendConfigRepository {
+    val state = MutableStateFlow(initial)
+    override val config: Flow<io.celox.flipperripper.domain.model.BackendConfig> = state
+
+    override suspend fun setSource(source: io.celox.flipperripper.domain.model.DownloadSource) {
+        state.value = state.value.copy(source = source)
+    }
+
+    override suspend fun setServer(url: String, apiKey: String) {
+        state.value = state.value.copy(url = url, apiKey = apiKey)
+    }
+}
+
 /** A fake engine (data-layer seam) for repository/worker-style tests. */
 class FakeYtDlpEngine(
     ready: Boolean = true,

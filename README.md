@@ -234,19 +234,23 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 | Build fails on `kspDebugKotlin` | Ensure `ksp.useKSP2=false` (set in `gradle.properties`). |
 | A YouTube/TikTok download fails after the title/thumbnail loaded | See **Known limitations** below — the platform is gating the media fetch. Try **Settings → Update yt-dlp**. |
 
-### Known limitations — platform anti-bot (2026)
+### Two download modes — on-device vs. server
 
-Extraction (title, thumbnail, formats) works for all supported platforms, but some now gate the
-**actual media download** behind measures the bundled engine can't fully satisfy on stock Android:
+**Settings → Download source** lets you pick where downloads run:
 
-- **YouTube** — the `n`-signature JS challenge (worked around via the `android_vr`/`tv` clients), and
-  increasingly a **PO token** requirement / DRM on some player clients.
-- **TikTok** — TLS **"impersonation"** (`curl_cffi`), which isn't bundled in the Android runtime.
+| Mode | Runs on | Best for |
+|------|---------|----------|
+| **On device** | The bundled yt-dlp | Privacy; content not behind aggressive anti-bot walls. |
+| **Server** (recommended) | Your backend (`backend/`) | **Reliable YouTube & TikTok** — the server runs the full toolchain. |
 
-These are upstream constraints affecting **every yt-dlp-based Android app**, not app bugs. Content not
-behind these walls downloads normally, and keeping the engine current (auto-update + Settings → Update
-yt-dlp) closes the gap as yt-dlp catches up. Fully covering these platforms would require bundling a
-JS runtime, a PO-token provider and a `curl_cffi` impersonation backend — see the [Roadmap](#-roadmap).
+On stock Android, some platforms gate the *media fetch* behind measures the bundled engine can't
+satisfy: **YouTube**'s `n`-signature JS challenge + PO-token/DRM, and **TikTok**'s TLS *impersonation*
+(`curl_cffi`) — upstream constraints that hit **every** yt-dlp-based Android app. The **server backend**
+solves them by running a `deno` JS runtime, `curl_cffi` and ffmpeg on a server, then streaming the
+finished file to the app. Verified end-to-end: YouTube downloads at full 4K quality and TikTok works.
+
+Deploy the backend (systemd + nginx + TLS, `X-API-Key` auth) — see **[backend/README.md](backend/README.md)** —
+then set the server URL + key in Settings (or bake them into a git-ignored `backend.properties`).
 
 ## 🤝 Contributing
 

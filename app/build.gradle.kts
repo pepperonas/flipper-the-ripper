@@ -19,6 +19,16 @@ val keystoreProps =
     }
 val hasSigning = keystorePropsFile.exists() || System.getenv("KEYSTORE_PASSWORD") != null
 
+// --- Optional server backend defaults (git-ignored backend.properties or env). Empty by default:
+// the public build ships with no server and the user configures one in Settings. ---
+val backendPropsFile = rootProject.file("backend.properties")
+val backendProps =
+    Properties().apply {
+        if (backendPropsFile.exists()) backendPropsFile.inputStream().use { load(it) }
+    }
+val defaultBackendUrl = backendProps.getProperty("BACKEND_URL") ?: System.getenv("BACKEND_URL") ?: ""
+val defaultBackendKey = backendProps.getProperty("BACKEND_KEY") ?: System.getenv("BACKEND_KEY") ?: ""
+
 android {
     namespace = "io.celox.flipperripper"
     compileSdk = 35
@@ -27,13 +37,16 @@ android {
         applicationId = "io.celox.flipperripper"
         minSdk = 24
         targetSdk = 35
-        versionCode = 4
-        versionName = "1.1.2"
+        versionCode = 5
+        versionName = "1.2.0"
 
         testInstrumentationRunner = "io.celox.flipperripper.HiltTestRunner"
         vectorDrawables { useSupportLibrary = true }
         // ABIs are governed by the `splits.abi` block below (arm64-v8a + armeabi-v7a only). yt-dlp
         // native libs ship for ARM only — x86/x86_64 emulators are unsupported.
+
+        buildConfigField("String", "DEFAULT_BACKEND_URL", "\"$defaultBackendUrl\"")
+        buildConfigField("String", "DEFAULT_BACKEND_KEY", "\"$defaultBackendKey\"")
     }
 
     signingConfigs {
@@ -205,6 +218,9 @@ dependencies {
     // Image loading (thumbnails)
     implementation(libs.coil.compose)
 
+    // HTTP client for the optional server backend
+    implementation(libs.okhttp)
+
     // --- Unit tests ---
     testImplementation(libs.junit)
     testImplementation(libs.truth)
@@ -247,7 +263,11 @@ kover {
                     "*.*\$\$serializer",
                     // Library/platform integration — covered by androidTest, not unit tests.
                     "io.celox.flipperripper.FlipperApplication",
-                    "io.celox.flipperripper.data.engine.YoutubeDlEngine",
+                    // Trailing * also excludes the synthetic coroutine/lambda classes ($fetchInfo$2 …).
+                    "io.celox.flipperripper.data.engine.YoutubeDlEngine*",
+                    "io.celox.flipperripper.data.engine.RemoteYtDlpEngine*",
+                    "io.celox.flipperripper.data.engine.RoutingYtDlpEngine*",
+                    "io.celox.flipperripper.data.repository.BackendConfigRepositoryImpl*",
                     "io.celox.flipperripper.data.media.*",
                     "io.celox.flipperripper.data.work.*",
                     "io.celox.flipperripper.util.MediaIntents*",

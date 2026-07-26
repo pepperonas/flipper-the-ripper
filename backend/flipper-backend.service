@@ -1,0 +1,23 @@
+[Unit]
+Description=Flipper the Ripper extraction backend (yt-dlp)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/flipper-backend
+EnvironmentFile=/opt/flipper-backend/.env
+# deno (YouTube n-sig JS runtime) is installed under /opt/flipper-backend/.deno
+Environment=PATH=/opt/flipper-backend/venv/bin:/opt/flipper-backend/.deno/bin:/usr/local/bin:/usr/bin:/bin
+Environment=DENO_DIR=/opt/flipper-backend/.deno-cache
+ExecStart=/opt/flipper-backend/venv/bin/uvicorn app:app --host 127.0.0.1 --port 4253 --workers 1
+Restart=on-failure
+RestartSec=5
+# Hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ReadWritePaths=/opt/flipper-backend
+
+[Install]
+WantedBy=multi-user.target

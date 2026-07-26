@@ -18,6 +18,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -26,10 +27,15 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -39,12 +45,16 @@ import io.celox.flipperripper.domain.model.ThemeMode
 import io.celox.flipperripper.ui.components.SegmentedToggle
 import io.celox.flipperripper.ui.components.springPressed
 import io.celox.flipperripper.ui.util.ObserveAsEvents
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
     val prefs by viewModel.preferences.collectAsStateWithLifecycle()
+    val backendConfig by viewModel.backendConfig.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    val savedServerMsg = stringResource(R.string.settings_server_saved)
 
     ObserveAsEvents(viewModel.messages) { message -> snackbarHostState.showSnackbar(message) }
 
@@ -106,6 +116,17 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
                 )
             }
 
+            SettingsSection(stringResource(R.string.settings_source_title)) {
+                DownloadSourceSection(
+                    config = backendConfig,
+                    onSource = viewModel::setDownloadSource,
+                    onSaveServer = { url, key ->
+                        viewModel.setServer(url, key)
+                        scope.launch { snackbarHostState.showSnackbar(savedServerMsg) }
+                    },
+                )
+            }
+
             SettingsSection(stringResource(R.string.settings_engine)) {
                 Text(
                     stringResource(R.string.settings_update_engine_desc),
@@ -155,6 +176,63 @@ private fun SettingsSection(title: String, content: @Composable () -> Unit) {
         Column(Modifier.padding(18.dp)) { content() }
     }
     HorizontalDivider(color = MaterialTheme.colorScheme.surfaceContainerHighest, modifier = Modifier.padding(top = 4.dp))
+}
+
+@Composable
+private fun DownloadSourceSection(
+    config: io.celox.flipperripper.domain.model.BackendConfig,
+    onSource: (io.celox.flipperripper.domain.model.DownloadSource) -> Unit,
+    onSaveServer: (String, String) -> Unit,
+) {
+    Text(
+        stringResource(R.string.settings_source_desc),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    Spacer(Modifier.height(12.dp))
+    SegmentedToggle(
+        options =
+        listOf(
+            io.celox.flipperripper.domain.model.DownloadSource.ON_DEVICE to
+                stringResource(R.string.settings_source_ondevice),
+            io.celox.flipperripper.domain.model.DownloadSource.SERVER to
+                stringResource(R.string.settings_source_server),
+        ),
+        selected = config.source,
+        onSelect = onSource,
+    )
+
+    if (config.source == io.celox.flipperripper.domain.model.DownloadSource.SERVER) {
+        var url by rememberSaveable(config.url) { mutableStateOf(config.url) }
+        var key by rememberSaveable(config.apiKey) { mutableStateOf(config.apiKey) }
+        Spacer(Modifier.height(12.dp))
+        OutlinedTextField(
+            value = url,
+            onValueChange = { url = it },
+            label = { Text(stringResource(R.string.settings_server_url)) },
+            singleLine = true,
+            shape = RoundedCornerShape(16.dp),
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Spacer(Modifier.height(8.dp))
+        OutlinedTextField(
+            value = key,
+            onValueChange = { key = it },
+            label = { Text(stringResource(R.string.settings_server_key)) },
+            singleLine = true,
+            visualTransformation = PasswordVisualTransformation(),
+            shape = RoundedCornerShape(16.dp),
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Spacer(Modifier.height(12.dp))
+        val interaction = remember { MutableInteractionSource() }
+        FilledTonalButton(
+            onClick = { onSaveServer(url, key) },
+            interactionSource = interaction,
+            enabled = url.isNotBlank() && key.isNotBlank(),
+            modifier = Modifier.height(52.dp).springPressed(interaction),
+        ) { Text(stringResource(R.string.settings_server_save)) }
+    }
 }
 
 @Composable

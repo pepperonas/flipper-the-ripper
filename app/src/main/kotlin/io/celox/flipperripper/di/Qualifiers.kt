@@ -13,3 +13,11 @@ annotation class DefaultDispatcher
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
 annotation class ApplicationScope
+
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class OnDeviceEngine
+
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class RemoteEngine

@@ -4,15 +4,19 @@ import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import io.celox.flipperripper.data.engine.RemoteYtDlpEngine
+import io.celox.flipperripper.data.engine.RoutingYtDlpEngine
 import io.celox.flipperripper.data.engine.YoutubeDlEngine
 import io.celox.flipperripper.data.engine.YtDlpEngine
 import io.celox.flipperripper.data.media.MediaStoreWriter
 import io.celox.flipperripper.data.media.MediaStoreWriterImpl
+import io.celox.flipperripper.data.repository.BackendConfigRepositoryImpl
 import io.celox.flipperripper.data.repository.ClipboardRepositoryImpl
 import io.celox.flipperripper.data.repository.DownloadRepositoryImpl
 import io.celox.flipperripper.data.repository.EngineRepositoryImpl
 import io.celox.flipperripper.data.repository.SettingsRepositoryImpl
 import io.celox.flipperripper.data.repository.VideoRepositoryImpl
+import io.celox.flipperripper.domain.repository.BackendConfigRepository
 import io.celox.flipperripper.domain.repository.ClipboardRepository
 import io.celox.flipperripper.domain.repository.DownloadRepository
 import io.celox.flipperripper.domain.repository.EngineRepository
@@ -26,8 +30,20 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 abstract class RepositoryModule {
     @Binds
+    @io.celox.flipperripper.di.OnDeviceEngine
+    abstract fun bindOnDeviceEngine(impl: YoutubeDlEngine): YtDlpEngine
+
+    @Binds
+    @io.celox.flipperripper.di.RemoteEngine
+    abstract fun bindRemoteEngine(impl: RemoteYtDlpEngine): YtDlpEngine
+
+    @Binds
     @Singleton
-    abstract fun bindEngine(impl: YoutubeDlEngine): YtDlpEngine
+    abstract fun bindEngine(impl: RoutingYtDlpEngine): YtDlpEngine
+
+    @Binds
+    @Singleton
+    abstract fun bindBackendConfigRepository(impl: BackendConfigRepositoryImpl): BackendConfigRepository
 
     @Binds
     abstract fun bindMediaStoreWriter(impl: MediaStoreWriterImpl): MediaStoreWriter

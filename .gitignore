@@ -28,3 +28,4 @@ release.jks
 # Coverage / reports
 /kover/
 **/reports/
+backend.properties

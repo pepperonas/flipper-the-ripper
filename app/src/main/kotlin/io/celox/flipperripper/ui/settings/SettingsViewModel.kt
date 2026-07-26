@@ -3,10 +3,13 @@ package io.celox.flipperripper.ui.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.celox.flipperripper.domain.model.BackendConfig
 import io.celox.flipperripper.domain.model.DownloadMode
+import io.celox.flipperripper.domain.model.DownloadSource
 import io.celox.flipperripper.domain.model.EngineResult
 import io.celox.flipperripper.domain.model.ThemeMode
 import io.celox.flipperripper.domain.model.UserPreferences
+import io.celox.flipperripper.domain.repository.BackendConfigRepository
 import io.celox.flipperripper.domain.repository.SettingsRepository
 import io.celox.flipperripper.domain.usecase.UpdateEngineUseCase
 import kotlinx.coroutines.channels.Channel
@@ -22,6 +25,7 @@ class SettingsViewModel
 @Inject
 constructor(
     private val settingsRepository: SettingsRepository,
+    private val backendConfigRepository: BackendConfigRepository,
     private val updateEngine: UpdateEngineUseCase,
 ) : ViewModel() {
     val preferences =
@@ -30,6 +34,19 @@ constructor(
             started = SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS),
             initialValue = UserPreferences(),
         )
+
+    val backendConfig =
+        backendConfigRepository.config.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS),
+            initialValue = BackendConfig(DownloadSource.ON_DEVICE, "", ""),
+        )
+
+    fun setDownloadSource(source: DownloadSource) =
+        viewModelScope.launch { backendConfigRepository.setSource(source) }
+
+    fun setServer(url: String, apiKey: String) =
+        viewModelScope.launch { backendConfigRepository.setServer(url, apiKey) }
 
     private val _messages = Channel<String>(Channel.BUFFERED)
     val messages: Flow<String> = _messages.receiveAsFlow()

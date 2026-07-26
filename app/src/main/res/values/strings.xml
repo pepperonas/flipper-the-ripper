@@ -49,6 +49,15 @@
     <string name="settings_auto_download_desc">Start downloading immediately when a link is shared</string>
     <string name="settings_clipboard">Clipboard detection</string>
     <string name="settings_clipboard_desc">Offer to download a link found on the clipboard at start</string>
+    <string name="settings_source_title">Download source</string>
+    <string name="settings_source_ondevice">On device</string>
+    <string name="settings_source_server">Server</string>
+    <string name="settings_source_desc">On-device uses the bundled yt-dlp. The server runs the full yt-dlp toolchain (JS runtime, impersonation, ffmpeg), so it can download from platforms that block on-device downloads such as YouTube and TikTok.</string>
+    <string name="settings_server_url">Server URL</string>
+    <string name="settings_server_key">API key</string>
+    <string name="settings_server_save">Save server</string>
+    <string name="settings_server_saved">Server settings saved</string>
+
     <string name="settings_engine">Download engine</string>
     <string name="settings_update_engine">Update yt-dlp</string>
     <string name="settings_update_engine_desc">Fetch the latest extractor to fix broken downloads</string>
