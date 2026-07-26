@@ -61,15 +61,18 @@ jobs:
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: ./gradlew assembleRelease --no-daemon
 
-      - name: Rename APK
-        id: apk
+      - name: Rename per-ABI APKs
         env:
           TAG: ${{ steps.meta.outputs.tag }}
         run: |
-          SRC=app/build/outputs/apk/release/app-release.apk
-          DEST="flipper-the-ripper-${TAG}.apk"
-          cp "$SRC" "$DEST"
-          echo "path=$DEST" >> "$GITHUB_OUTPUT"
+          set -e
+          OUT=app/build/outputs/apk/release
+          for abi in arm64-v8a armeabi-v7a; do
+            SRC="$OUT/app-$abi-release.apk"
+            [ -f "$SRC" ] || { echo "Missing $SRC" >&2; exit 1; }
+            cp "$SRC" "flipper-the-ripper-${TAG}-${abi}.apk"
+          done
+          ls -lh flipper-the-ripper-*.apk
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
@@ -77,7 +80,9 @@ jobs:
           tag_name: ${{ steps.meta.outputs.tag }}
           name: Flipper the Ripper ${{ steps.meta.outputs.tag }}
           generate_release_notes: true
-          files: ${{ steps.apk.outputs.path }}
+          files: |
+            flipper-the-ripper-*-arm64-v8a.apk
+            flipper-the-ripper-*-armeabi-v7a.apk
 
       - name: Clean up keystore
         if: always()

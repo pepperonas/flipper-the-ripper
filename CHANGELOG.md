@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-07-26
+
+### Changed
+- **APK size cut ~55%** (from ~74 MB to **~33 MB**) with **no loss of features or device support**:
+  - **ABI splits** — ship one APK per architecture (`arm64-v8a`, `armeabi-v7a`) instead of a single
+    fat APK carrying both architectures' native libs. Each user downloads only their architecture;
+    both remain supported. Per-ABI `versionCode` offsetting keeps updates ordered.
+  - **Dropped the bundled `aria2c`** downloader (~6 MB/ABI) — it was never invoked (yt-dlp handles
+    downloading itself), so it was pure dead weight. No functional change.
+- The release workflow now builds and publishes both per-ABI APKs.
+
 ## [1.1.0] - 2026-07-26
 
 ### Changed
@@ -58,6 +69,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Signed release builds, GitHub Actions CI (build, lint, detekt, unit tests, coverage) and an
   automated tag-driven release workflow.
 
-[Unreleased]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.1.1...HEAD
+[1.1.1]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/pepperonas/flipper-the-ripper/releases/tag/v1.0.0

@@ -1,7 +1,6 @@
 package io.celox.flipperripper.data.engine
 
 import android.content.Context
-import com.yausername.aria2c.Aria2c
 import com.yausername.ffmpeg.FFmpeg
 import com.yausername.youtubedl_android.YoutubeDL
 import com.yausername.youtubedl_android.YoutubeDLException
@@ -54,7 +53,6 @@ constructor(
                 try {
                     YoutubeDL.getInstance().init(appContext)
                     FFmpeg.getInstance().init(appContext)
-                    Aria2c.getInstance().init(appContext)
                     _isReady.value = true
                     EngineResult.Success(Unit)
                 } catch (e: YoutubeDLException) {

@@ -1,3 +1,4 @@
+import com.android.build.api.variant.FilterConfiguration.FilterType.ABI
 import java.util.Properties
 
 plugins {
@@ -26,14 +27,13 @@ android {
         applicationId = "io.celox.flipperripper"
         minSdk = 24
         targetSdk = 35
-        versionCode = 2
-        versionName = "1.1.0"
+        versionCode = 3
+        versionName = "1.1.1"
 
         testInstrumentationRunner = "io.celox.flipperripper.HiltTestRunner"
         vectorDrawables { useSupportLibrary = true }
-
-        // yt-dlp native libs ship only for ARM. x86/x86_64 emulators are unsupported.
-        ndk { abiFilters += listOf("armeabi-v7a", "arm64-v8a") }
+        // ABIs are governed by the `splits.abi` block below (arm64-v8a + armeabi-v7a only). yt-dlp
+        // native libs ship for ARM only — x86/x86_64 emulators are unsupported.
     }
 
     signingConfigs {
@@ -67,6 +67,19 @@ android {
                 "proguard-rules.pro"
             )
             if (hasSigning) signingConfig = signingConfigs.getByName("release")
+        }
+    }
+
+    // Ship one APK per ABI instead of a single fat APK carrying both architectures' native libs
+    // (yt-dlp/ffmpeg/Python). Each user downloads only their architecture — roughly halves the size —
+    // and BOTH architectures stay supported. No universal APK: arm64-v8a covers virtually all modern
+    // devices, armeabi-v7a covers older 32-bit ones.
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            include("armeabi-v7a", "arm64-v8a")
+            isUniversalApk = false
         }
     }
 
@@ -122,6 +135,20 @@ android {
     }
 }
 
+// Give each per-ABI APK a distinct, ordered versionCode so an install always sees a higher code for a
+// newer build (arm64 > armeabi within a release), the convention for split distribution.
+androidComponents {
+    val abiOffsets = mapOf("armeabi-v7a" to 1, "arm64-v8a" to 2)
+    onVariants { variant ->
+        variant.outputs.forEach { output ->
+            val abi = output.filters.find { it.filterType == ABI }?.identifier
+            val offset = abiOffsets[abi] ?: 0
+            val base = output.versionCode.orNull ?: 0
+            output.versionCode.set(base * 10 + offset)
+        }
+    }
+}
+
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -162,10 +189,10 @@ dependencies {
     // WorkManager
     implementation(libs.androidx.work.runtime.ktx)
 
-    // Download engine (yt-dlp + ffmpeg + aria2c)
+    // Download engine (yt-dlp + ffmpeg). aria2c is intentionally omitted — the app never invokes the
+    // aria2c downloader, so bundling it only added ~6 MB per ABI of dead weight.
     implementation(libs.youtubedl.android.library)
     implementation(libs.youtubedl.android.ffmpeg)
-    implementation(libs.youtubedl.android.aria2c)
 
     // Image loading (thumbnails)
     implementation(libs.coil.compose)

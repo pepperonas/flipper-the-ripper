@@ -48,8 +48,16 @@ Material 3 **Expressive** UI with spring physics, shape-morphing motifs and dyna
 
 ## 📥 Download
 
-Grab the latest signed APK from the [**Releases**](https://github.com/pepperonas/flipper-the-ripper/releases/latest) page and sideload it.
+Grab the latest signed APK from the [**Releases**](https://github.com/pepperonas/flipper-the-ripper/releases/latest) page and sideload it. Pick the APK for your CPU:
 
+| APK | For |
+|-----|-----|
+| `flipper-the-ripper-<version>-arm64-v8a.apk` | **Virtually all modern phones** (64-bit ARM) — pick this if unsure |
+| `flipper-the-ripper-<version>-armeabi-v7a.apk` | Older 32-bit ARM devices |
+
+> Each build ships as a **per-ABI APK** (~33 MB) instead of one fat ~74 MB APK — you only download
+> the native engine (yt-dlp + ffmpeg) for your architecture. Both architectures stay fully supported.
+>
 > Not on Google Play by design — the Play Store prohibits video-downloader apps and runtime binary
 > updates. Distribution is via GitHub Releases / F-Droid-style sideloading (like NewPipe and Seal).
 
