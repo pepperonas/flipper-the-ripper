@@ -27,9 +27,11 @@
 
 ## 📸 Screenshots
 
-| Home | Preview | History | Settings |
-|------|---------|---------|----------|
-| _[screenshot placeholder]_ | _[screenshot placeholder]_ | _[screenshot placeholder]_ | _[screenshot placeholder]_ |
+Material 3 **Expressive** UI with spring physics, shape-morphing motifs and dynamic color — in dark and light.
+
+| Home (dark) | Settings (dark) | Settings (light) | History |
+|:---:|:---:|:---:|:---:|
+| <img src="docs/screenshots/home.png" width="200"/> | <img src="docs/screenshots/settings.png" width="200"/> | <img src="docs/screenshots/light.png" width="200"/> | <img src="docs/screenshots/history.png" width="200"/> |
 
 ## ✨ Features
 
@@ -41,7 +43,7 @@
 - **True background downloads** — keep going while the screen is locked, the app is minimised, or the device is rotated (WorkManager + foreground service).
 - **Audio-only mode** for YouTube (`.m4a`).
 - **Robust error messages** — private video, login required, region blocked, rate-limited, network error, invalid link, cancelled.
-- **Material 3** with dynamic color and light/dark themes.
+- **Material 3 Expressive** — spring-based motion physics (`MotionScheme.expressive()`), shape-morphing `MaterialShapes` motifs, the expressive `LoadingIndicator`, emphasized typography, a spring-sliding segmented toggle, staggered list entrances, and expressive screen transitions. Dynamic color + light/dark, all guarded by `prefers-reduced-motion`.
 - **Update the engine** in-app to fix broken extractors.
 
 ## 📥 Download
@@ -130,9 +132,13 @@ under the hood for the long-running case.
 
 ### Tech stack
 
-Kotlin 2.0 · Jetpack Compose + Material 3 · MVVM + Clean Architecture · Coroutines + Flow · Hilt ·
-Navigation Compose · Room · DataStore · WorkManager · Kotlin Serialization · Coil ·
-youtubedl-android · **no XML layouts**.
+Kotlin 2.0 · Jetpack Compose + **Material 3 Expressive** (material3 1.5.0-alpha, `graphics-shapes`) ·
+MVVM + Clean Architecture · Coroutines + Flow · Hilt · Navigation Compose · Room · DataStore ·
+WorkManager · Kotlin Serialization · Coil · youtubedl-android · **no XML layouts**.
+
+> The Expressive component + motion APIs (`MotionScheme`, `MaterialShapes`, `LoadingIndicator`) are
+> currently in the `material3:1.5.0-alpha` line, pinned explicitly (no Compose BOM) to the
+> Compose 1.11 set that still targets `compileSdk 35` / AGP 8.7.
 
 ## 🛠️ Build
 

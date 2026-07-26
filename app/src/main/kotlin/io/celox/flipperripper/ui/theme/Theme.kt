@@ -2,31 +2,21 @@ package io.celox.flipperripper.ui.theme
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.ColorScheme
+import androidx.compose.material3.MaterialExpressiveTheme
+import androidx.compose.material3.MotionScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
-import androidx.compose.material3.lightColorScheme
+import androidx.compose.material3.expressiveLightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import io.celox.flipperripper.domain.model.ThemeMode
 
-private val DarkColors =
-    darkColorScheme(
-        primary = Purple80,
-        secondary = PurpleGrey80,
-        tertiary = Pink80,
-        background = BrandBackgroundDark,
-    )
-
-private val LightColors =
-    lightColorScheme(
-        primary = Purple40,
-        secondary = PurpleGrey40,
-        tertiary = Pink40,
-        background = BrandBackgroundLight,
-    )
-
+/**
+ * Material 3 **Expressive** theme: installs the spring-based [MotionScheme.expressive] physics
+ * system, expressive color roles and dynamic color (Android 12+). Components across the app read
+ * `MaterialTheme.motionScheme` for their spatial/effects springs.
+ */
 @Composable
 fun FlipperTheme(
     themeMode: ThemeMode = ThemeMode.SYSTEM,
@@ -40,17 +30,17 @@ fun FlipperTheme(
             ThemeMode.DARK -> true
         }
     val context = LocalContext.current
-    val colorScheme =
+    val colorScheme: ColorScheme =
         when {
             dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ->
                 if (dark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-            dark -> DarkColors
-            else -> LightColors
+            dark -> ExpressiveDarkColors
+            else -> expressiveLightColorScheme()
         }
 
-    MaterialTheme(
+    MaterialExpressiveTheme(
         colorScheme = colorScheme,
-        typography = Typography,
+        motionScheme = MotionScheme.expressive(),
         content = content,
     )
 }

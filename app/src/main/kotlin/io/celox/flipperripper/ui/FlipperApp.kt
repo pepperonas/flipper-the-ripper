@@ -1,5 +1,10 @@
 package io.celox.flipperripper.ui
 
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -20,6 +25,8 @@ import io.celox.flipperripper.ui.history.HistoryScreen
 import io.celox.flipperripper.ui.home.HomeScreen
 import io.celox.flipperripper.ui.navigation.Destination
 import io.celox.flipperripper.ui.settings.SettingsScreen
+
+private const val DURATION = 400
 
 @Composable
 fun FlipperApp() {
@@ -53,6 +60,11 @@ fun FlipperApp() {
             navController = navController,
             startDestination = Destination.HOME.route,
             modifier = Modifier.padding(padding),
+            // Expressive cross-fade + gentle scale between destinations.
+            enterTransition = { fadeIn(tween(DURATION)) + scaleIn(tween(DURATION), initialScale = 0.94f) },
+            exitTransition = { fadeOut(tween(DURATION / 2)) },
+            popEnterTransition = { fadeIn(tween(DURATION)) + scaleIn(tween(DURATION), initialScale = 0.94f) },
+            popExitTransition = { fadeOut(tween(DURATION / 2)) + scaleOut(tween(DURATION), targetScale = 0.96f) },
         ) {
             composable(Destination.HOME.route) {
                 HomeScreen(onDownloadStarted = { navController.navigate(Destination.HISTORY.route) })

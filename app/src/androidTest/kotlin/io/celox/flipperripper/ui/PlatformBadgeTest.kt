@@ -15,6 +15,9 @@ class PlatformBadgeTest {
 
     @Test
     fun showsPlatformDisplayName() {
+        // The badge contains a continuously morphing motif; drive the clock manually so the infinite
+        // animation doesn't block test idle synchronization.
+        composeRule.mainClock.autoAdvance = false
         composeRule.setContent {
             FlipperTheme { PlatformBadge(platform = Platform.TIKTOK) }
         }
