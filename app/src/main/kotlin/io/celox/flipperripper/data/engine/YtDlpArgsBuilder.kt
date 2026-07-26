@@ -42,26 +42,38 @@ object YtDlpArgsBuilder {
         platform: Platform,
         mode: DownloadMode,
         outputTemplate: String,
+        preferProgressive: Boolean = false,
     ): List<String> {
         val args = mutableListOf<String>()
 
         when (mode) {
-            DownloadMode.VIDEO -> {
-                // Prefer H.264 + m4a so the muxed mp4 plays everywhere; avoids the "audio-only/broken"
-                // VP9-in-mp4 problem described in social_dl.rs.
-                args += listOf("-S", "vcodec:h264,res,acodec:m4a")
-                args += listOf("--merge-output-format", "mp4")
-            }
-            DownloadMode.AUDIO -> {
-                args += "-x"
-                args += listOf("--audio-format", "m4a")
-                args += listOf("--audio-quality", "0")
-            }
+            DownloadMode.VIDEO ->
+                if (preferProgressive) {
+                    // Progressive fallback: a single pre-muxed file (video+audio in one stream), so no
+                    // ffmpeg merge is required. Used to retry when a merge/ffmpeg failure occurred.
+                    args += listOf("-f", "best[ext=mp4]/best")
+                } else {
+                    // Prefer H.264 + m4a so the muxed mp4 plays everywhere; avoids the "audio-only/broken"
+                    // VP9-in-mp4 problem described in social_dl.rs. (Best quality — may require ffmpeg merge.)
+                    args += listOf("-S", "vcodec:h264,res,acodec:m4a")
+                    args += listOf("--merge-output-format", "mp4")
+                }
+            DownloadMode.AUDIO ->
+                if (preferProgressive) {
+                    // Grab the best m4a audio stream directly, without an ffmpeg extraction/convert pass.
+                    args += listOf("-f", "ba[ext=m4a]/ba")
+                } else {
+                    args += "-x"
+                    args += listOf("--audio-format", "m4a")
+                    args += listOf("--audio-quality", "0")
+                }
         }
 
-        // YouTube SABR workaround: the default web client returns formats without URLs.
+        // YouTube: prefer the android_vr / tv player clients, which return playable formats WITHOUT
+        // requiring YouTube's `n`-signature JavaScript challenge (there is no JS runtime on Android) and
+        // without a PO token. Stock web/ios clients now fail with "n challenge solving failed".
         if (platform == Platform.YOUTUBE) {
-            args += listOf("--extractor-args", "youtube:player_client=default,ios,web_safari")
+            args += listOf("--extractor-args", "youtube:player_client=default,android_vr,tv,ios")
         }
 
         args += "--no-playlist"

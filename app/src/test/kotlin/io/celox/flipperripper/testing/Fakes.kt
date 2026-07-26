@@ -132,6 +132,13 @@ class FakeSettingsRepository(initial: UserPreferences = UserPreferences()) : Set
     override suspend fun setClipboardDetection(enabled: Boolean) {
         state.value = state.value.copy(clipboardDetection = enabled)
     }
+
+    val lastUpdate = MutableStateFlow(0L)
+    override val lastEngineUpdateMs: Flow<Long> = lastUpdate
+
+    override suspend fun setLastEngineUpdateMs(epochMs: Long) {
+        lastUpdate.value = epochMs
+    }
 }
 
 class FakeClipboardRepository(var suggestion: ParsedUrl? = null) : ClipboardRepository {

@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.2] - 2026-07-26
+
+### Fixed
+- **Download engine could not start at all** — the single biggest bug. youtubedl-android ships its
+  Python/ffmpeg payloads as `lib*.zip.so` files that it unzips from disk at runtime, but the app was
+  built with the modern default `extractNativeLibs=false`, so those files were never written to disk
+  and `YoutubeDL.init()` failed with "failed to initialize". Every download therefore failed
+  immediately. Now `useLegacyPackaging = true` extracts them, so the engine initialises and
+  extraction/metadata (title, thumbnail, duration) works again.
+- **App icon** — the launcher glyph was off-centre. Redrawn as a centred download motif on an MD3
+  violet gradient, sized to the adaptive-icon safe zone.
+
+### Added
+- **Automatic yt-dlp updates** — the bundled extractor is frozen at the library's release, so it is
+  now refreshed on launch (throttled to once per 12 h) and the download worker updates + retries once
+  when it hits a stale-extractor / merge failure.
+- **Progressive (no-ffmpeg) fallback** — if a download fails needing an ffmpeg merge, it retries with
+  a single pre-muxed format so it still produces a playable file.
+- YouTube now uses the `android_vr` / `tv` player clients, which get past YouTube's `n`-signature
+  JavaScript challenge (there is no JS runtime on Android).
+
+### Known limitations
+- **Platform anti-bot measures (2026).** Some platforms now gate the actual media download behind
+  measures the bundled engine cannot fully satisfy on stock Android: **YouTube** may require a PO
+  token / serves DRM on some clients, and **TikTok** may require TLS "impersonation" (`curl_cffi`).
+  Extraction (title/thumbnail/formats) works, but such downloads can still fail until the upstream
+  yt-dlp + dependencies close the gap. This affects all yt-dlp-based Android apps. Content not behind
+  these walls downloads normally; keeping the engine updated (Settings → Update yt-dlp) helps.
+
 ## [1.1.1] - 2026-07-26
 
 ### Changed
@@ -69,7 +98,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Signed release builds, GitHub Actions CI (build, lint, detekt, unit tests, coverage) and an
   automated tag-driven release workflow.
 
-[Unreleased]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.1.1...HEAD
+[Unreleased]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.1.2...HEAD
+[1.1.2]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/pepperonas/flipper-the-ripper/releases/tag/v1.0.0

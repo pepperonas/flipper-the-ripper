@@ -3,14 +3,16 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Stylized download chevron inside the adaptive safe zone. -->
-    <group
-        android:scaleX="1.7"
-        android:scaleY="1.7"
-        android:translateX="24"
-        android:translateY="24">
-        <path
-            android:fillColor="#D0BCFF"
-            android:pathData="M19,9h-4V3H9v6H5l7,7 7,-7zM5,18v2h14v-2H5z" />
-    </group>
+    <!--
+      Centered download glyph (arrow + tray) on the 108x108 canvas, sitting inside the adaptive-icon
+      safe zone (centered ~66dp circle). Center of mass ≈ (54, 54).
+    -->
+    <!-- Down arrow: shaft + head, centered on x=54. -->
+    <path
+        android:fillColor="#FFEADDFF"
+        android:pathData="M46,24 h16 v26 h13 l-21,23 l-21,-23 h13 z" />
+    <!-- Tray / base capsule centered on x=54. -->
+    <path
+        android:fillColor="#FFEADDFF"
+        android:pathData="M36,80 h36 a3,3 0 0 1 0,6 h-36 a3,3 0 0 1 0,-6 z" />
 </vector>

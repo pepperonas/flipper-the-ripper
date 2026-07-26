@@ -18,4 +18,9 @@ interface SettingsRepository {
     suspend fun setDefaultMode(mode: DownloadMode)
 
     suspend fun setClipboardDetection(enabled: Boolean)
+
+    /** Epoch millis of the last successful yt-dlp engine update (0 if never). */
+    val lastEngineUpdateMs: Flow<Long>
+
+    suspend fun setLastEngineUpdateMs(epochMs: Long)
 }

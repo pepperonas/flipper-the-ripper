@@ -207,6 +207,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - [ ] Download queue management (pause/resume, reorder)
 - [ ] F-Droid distribution
 - [ ] Additional platforms supported by yt-dlp (opt-in)
+- [ ] Bundle a JS runtime + PO-token provider + `curl_cffi` impersonation to fully cover YouTube/TikTok (see Known limitations)
 
 ## ❓ FAQ
 
@@ -231,6 +232,21 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 | Repeated failures on one platform | **Settings → Update yt-dlp**. |
 | Nothing saved to the gallery | Check storage; on Android 7–9 grant the storage permission when prompted. |
 | Build fails on `kspDebugKotlin` | Ensure `ksp.useKSP2=false` (set in `gradle.properties`). |
+| A YouTube/TikTok download fails after the title/thumbnail loaded | See **Known limitations** below — the platform is gating the media fetch. Try **Settings → Update yt-dlp**. |
+
+### Known limitations — platform anti-bot (2026)
+
+Extraction (title, thumbnail, formats) works for all supported platforms, but some now gate the
+**actual media download** behind measures the bundled engine can't fully satisfy on stock Android:
+
+- **YouTube** — the `n`-signature JS challenge (worked around via the `android_vr`/`tv` clients), and
+  increasingly a **PO token** requirement / DRM on some player clients.
+- **TikTok** — TLS **"impersonation"** (`curl_cffi`), which isn't bundled in the Android runtime.
+
+These are upstream constraints affecting **every yt-dlp-based Android app**, not app bugs. Content not
+behind these walls downloads normally, and keeping the engine current (auto-update + Settings → Update
+yt-dlp) closes the gap as yt-dlp catches up. Fully covering these platforms would require bundling a
+JS runtime, a PO-token provider and a `curl_cffi` impersonation backend — see the [Roadmap](#-roadmap).
 
 ## 🤝 Contributing
 

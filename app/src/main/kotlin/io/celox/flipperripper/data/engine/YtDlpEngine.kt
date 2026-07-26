@@ -20,6 +20,8 @@ data class DownloadSpec(
     val workingDir: File,
     /** Stable id used to address (and cancel) the running process. */
     val processId: String,
+    /** Use a single pre-muxed format (no ffmpeg merge) — the fallback retry after a merge failure. */
+    val preferProgressive: Boolean = false,
 )
 
 /**

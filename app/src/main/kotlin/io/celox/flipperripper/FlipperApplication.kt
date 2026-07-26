@@ -7,7 +7,10 @@ import dagger.hilt.android.HiltAndroidApp
 import io.celox.flipperripper.data.engine.YtDlpEngine
 import io.celox.flipperripper.data.work.DownloadNotifier
 import io.celox.flipperripper.di.ApplicationScope
+import io.celox.flipperripper.domain.model.EngineResult
+import io.celox.flipperripper.domain.repository.SettingsRepository
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -20,6 +23,8 @@ class FlipperApplication :
     @Inject lateinit var engine: YtDlpEngine
 
     @Inject lateinit var notifier: DownloadNotifier
+
+    @Inject lateinit var settingsRepository: SettingsRepository
 
     @Inject
     @ApplicationScope
@@ -34,7 +39,26 @@ class FlipperApplication :
     override fun onCreate() {
         super.onCreate()
         notifier.ensureChannels()
-        // Warm up the engine off the main thread so the first download is instant.
-        appScope.launch { engine.ensureInitialized() }
+        // Warm up the engine off the main thread, then keep the yt-dlp extractor fresh: the bundled
+        // yt-dlp is frozen at the library's release, so sites like YouTube/Instagram need a periodic
+        // update to keep extracting. Throttled to at most once per interval to avoid needless traffic.
+        appScope.launch {
+            if (engine.ensureInitialized() is EngineResult.Success) {
+                maybeUpdateEngine()
+            }
+        }
+    }
+
+    private suspend fun maybeUpdateEngine() {
+        val last = settingsRepository.lastEngineUpdateMs.first()
+        val now = System.currentTimeMillis()
+        if (now - last < ENGINE_UPDATE_INTERVAL_MS) return
+        if (engine.update() is EngineResult.Success) {
+            settingsRepository.setLastEngineUpdateMs(now)
+        }
+    }
+
+    private companion object {
+        const val ENGINE_UPDATE_INTERVAL_MS = 12L * 60 * 60 * 1000 // 12 hours
     }
 }

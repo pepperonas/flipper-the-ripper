@@ -100,7 +100,8 @@ constructor(
         return withContext(ioDispatcher) {
             prepareWorkingDir(spec.workingDir)
             val template = java.io.File(spec.workingDir, YtDlpArgsBuilder.OUTPUT_TEMPLATE).absolutePath
-            val options = YtDlpArgsBuilder.buildOptions(spec.platform, spec.mode, template)
+            val options =
+                YtDlpArgsBuilder.buildOptions(spec.platform, spec.mode, template, spec.preferProgressive)
 
             val request = YoutubeDLRequest(spec.url)
             options.forEach { request.addOption(it) }

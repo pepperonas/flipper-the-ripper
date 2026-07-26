@@ -29,7 +29,7 @@ class YtDlpArgsBuilderTest {
         val args = YtDlpArgsBuilder.build("https://youtu.be/x", Platform.YOUTUBE, DownloadMode.VIDEO, template)
         assertThat(args).containsAtLeast(
             "--extractor-args",
-            "youtube:player_client=default,ios,web_safari",
+            "youtube:player_client=default,android_vr,tv,ios",
         ).inOrder()
     }
 
@@ -69,6 +69,21 @@ class YtDlpArgsBuilderTest {
         assertThat(guardIndex).isGreaterThan(-1)
         assertThat(args.last()).isEqualTo(url)
         assertThat(args.indexOf(url)).isGreaterThan(guardIndex)
+    }
+
+    @Test
+    fun `progressive video mode uses a single pre-muxed format and no merge`() {
+        val args = YtDlpArgsBuilder.buildOptions(Platform.YOUTUBE, DownloadMode.VIDEO, template, preferProgressive = true)
+        assertThat(args).containsAtLeast("-f", "best[ext=mp4]/best").inOrder()
+        assertThat(args).doesNotContain("--merge-output-format")
+        assertThat(args).doesNotContain("-S")
+    }
+
+    @Test
+    fun `progressive audio mode grabs the m4a stream without ffmpeg extraction`() {
+        val args = YtDlpArgsBuilder.buildOptions(Platform.YOUTUBE, DownloadMode.AUDIO, template, preferProgressive = true)
+        assertThat(args).containsAtLeast("-f", "ba[ext=m4a]/ba").inOrder()
+        assertThat(args).doesNotContain("-x")
     }
 
     @Test

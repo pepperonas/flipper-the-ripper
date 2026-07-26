@@ -27,8 +27,8 @@ android {
         applicationId = "io.celox.flipperripper"
         minSdk = 24
         targetSdk = 35
-        versionCode = 3
-        versionName = "1.1.1"
+        versionCode = 4
+        versionName = "1.1.2"
 
         testInstrumentationRunner = "io.celox.flipperripper.HiltTestRunner"
         vectorDrawables { useSupportLibrary = true }
@@ -108,6 +108,14 @@ android {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
             excludes += "/META-INF/LICENSE*"
+        }
+        jniLibs {
+            // REQUIRED by youtubedl-android: it ships Python/ffmpeg as lib*.zip.so payloads that it
+            // unzips from the on-disk native library dir at runtime. With the modern default
+            // (extractNativeLibs=false) those .so files are mmap'd from the APK and never written to
+            // disk, so YoutubeDL.init() fails with "failed to initialize". Legacy packaging extracts
+            // them on install so the engine can initialise.
+            useLegacyPackaging = true
         }
     }
 

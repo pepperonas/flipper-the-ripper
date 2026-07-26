@@ -73,25 +73,26 @@ constructor(
         val displayTitle = info?.title ?: record.title
 
         val workingDir = File(applicationContext.cacheDir, "downloads/$id")
-        val spec =
+        fun specFor(progressive: Boolean) =
             DownloadSpec(
                 url = record.sourceUrl,
                 platform = record.toDomain().platform,
                 mode = enumMode(record.mode),
                 workingDir = workingDir,
                 processId = id,
+                preferProgressive = progressive,
             )
 
-        var lastReported = -1f
-        val result =
-            engine.download(spec) { progress ->
-                val pct = progress.percent
-                if (pct != null && pct - lastReported >= PROGRESS_STEP) {
-                    lastReported = pct
-                    // Fire-and-forget UI updates; Room + notification.
-                    blockingUpdate(id, pct, displayTitle)
-                }
-            }
+        // Attempt 1: best quality (may need an ffmpeg merge).
+        var result = runEngine(id, displayTitle, specFor(progressive = false))
+
+        // Self-heal: a stale extractor or a merge/ffmpeg failure is recoverable — update yt-dlp and
+        // retry once with a single pre-muxed format that needs no ffmpeg.
+        if (result is EngineResult.Failure && isRecoverable(result.error)) {
+            engine.update()
+            dao.updateProgress(id, DownloadStatus.RUNNING.name, 0f, now())
+            result = runEngine(id, displayTitle, specFor(progressive = true))
+        }
 
         return when (result) {
             is EngineResult.Failure -> finishWithError(id, displayTitle, result.error, workingDir)
@@ -148,6 +149,29 @@ constructor(
             else -> Result.failure()
         }
     }
+
+    private suspend fun runEngine(
+        id: String,
+        displayTitle: String,
+        spec: DownloadSpec,
+    ): EngineResult<io.celox.flipperripper.data.engine.DownloadedFile> {
+        var lastReported = -1f
+        return engine.download(spec) { progress ->
+            val pct = progress.percent
+            if (pct != null && pct - lastReported >= PROGRESS_STEP) {
+                lastReported = pct
+                blockingUpdate(id, pct, displayTitle)
+            }
+        }
+    }
+
+    /**
+     * A failure worth retrying after a yt-dlp update + progressive fallback: a stale/rate-limited
+     * extractor, or an unclassified error (which is where a merge / "ffmpeg not found" failure lands).
+     * Terminal errors (private/login/region/network/cancelled) are not retried.
+     */
+    private fun isRecoverable(error: DownloadError): Boolean =
+        error is DownloadError.RateLimitedOrStale || error is DownloadError.Unknown
 
     private fun blockingUpdate(id: String, percent: Float, title: String) {
         // Called from the engine's progress callback (already off the main thread).

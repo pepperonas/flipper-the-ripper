@@ -5,6 +5,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -29,6 +30,7 @@ constructor(@ApplicationContext private val context: Context) : SettingsReposito
         val AUTO_DOWNLOAD = booleanPreferencesKey("auto_download_on_share")
         val DEFAULT_MODE = stringPreferencesKey("default_mode")
         val CLIPBOARD = booleanPreferencesKey("clipboard_detection")
+        val LAST_ENGINE_UPDATE = longPreferencesKey("last_engine_update_ms")
     }
 
     override val preferences: Flow<UserPreferences> =
@@ -62,5 +64,12 @@ constructor(@ApplicationContext private val context: Context) : SettingsReposito
 
     override suspend fun setClipboardDetection(enabled: Boolean) {
         context.dataStore.edit { it[Keys.CLIPBOARD] = enabled }
+    }
+
+    override val lastEngineUpdateMs: Flow<Long> =
+        context.dataStore.data.map { it[Keys.LAST_ENGINE_UPDATE] ?: 0L }
+
+    override suspend fun setLastEngineUpdateMs(epochMs: Long) {
+        context.dataStore.edit { it[Keys.LAST_ENGINE_UPDATE] = epochMs }
     }
 }
