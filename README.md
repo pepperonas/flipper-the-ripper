@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="docs/banner.png" alt="Flipper the Ripper — Rip it. Keep it." width="100%">
+
 # 🎬 Flipper the Ripper
 
 **A modern, open-source Android app to download publicly accessible videos from Instagram, YouTube and TikTok.**
