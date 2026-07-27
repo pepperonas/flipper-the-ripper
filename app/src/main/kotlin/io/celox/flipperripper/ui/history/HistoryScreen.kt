@@ -44,6 +44,7 @@ import io.celox.flipperripper.R
 import io.celox.flipperripper.domain.model.DownloadMode
 import io.celox.flipperripper.domain.model.DownloadRecord
 import io.celox.flipperripper.domain.model.DownloadStatus
+import io.celox.flipperripper.domain.model.isActive
 import io.celox.flipperripper.ui.components.MorphingMotif
 import io.celox.flipperripper.ui.motion.springEntrance
 import io.celox.flipperripper.util.MediaIntents
@@ -152,7 +153,7 @@ private fun DownloadCard(
                 }
             }
 
-            if (record.status == DownloadStatus.QUEUED || record.status == DownloadStatus.RUNNING) {
+            if (record.status.isActive) {
                 Spacer(Modifier.height(14.dp))
                 LinearWavyProgressIndicator(modifier = Modifier.fillMaxWidth())
             }

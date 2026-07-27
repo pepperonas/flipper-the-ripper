@@ -22,7 +22,9 @@ import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import io.celox.flipperripper.domain.model.Platform
+import io.celox.flipperripper.ui.motion.LocalDownloadsActive
 import io.celox.flipperripper.ui.motion.MorphPolygonShape
+import io.celox.flipperripper.ui.motion.MotionPolicy
 import io.celox.flipperripper.ui.motion.rememberMorph
 import io.celox.flipperripper.ui.motion.rememberReduceMotion
 import io.celox.flipperripper.ui.theme.accentColor
@@ -57,24 +59,37 @@ fun PlatformBadge(platform: Platform, modifier: Modifier = Modifier) {
     }
 }
 
-/** A small shape that continuously morphs between two expressive polygons (a lively accent). */
+/**
+ * A shape that morphs between two expressive polygons **while a download is in flight**, and rests in a
+ * fixed in-between shape otherwise.
+ *
+ * The loop used to run unconditionally, which meant an idle app animated forever — on the Home hero, the
+ * empty history state and once per list item for placeholder thumbnails and platform badges. Gating it
+ * on [animating] keeps the motion meaningful (it now signals actual work) and stops the constant drain.
+ */
 @Composable
 fun MorphingMotif(
     modifier: Modifier = Modifier,
     color: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.primary,
+    animating: Boolean = LocalDownloadsActive.current,
 ) {
     val morph = rememberMorph(MaterialShapes.Cookie7Sided, MaterialShapes.Clover4Leaf)
     val reduce = rememberReduceMotion()
-    val progress = remember { Animatable(0f) }
+    val progress = remember { Animatable(MotionPolicy.RESTING_PROGRESS) }
     val spec = MaterialTheme.motionScheme.slowSpatialSpec<Float>()
-    LaunchedEffect(reduce) {
-        if (reduce) {
-            progress.snapTo(0.5f)
-        } else {
+    val loop = MotionPolicy.shouldLoop(animating, reduce)
+    LaunchedEffect(loop, reduce) {
+        if (loop) {
+            // Continue from wherever the shape currently rests, so starting a download eases in.
             while (true) {
                 progress.animateTo(1f, spec)
                 progress.animateTo(0f, spec)
             }
+        } else if (MotionPolicy.shouldAnimateToRest(reduce)) {
+            // Settle once and stop, rather than snapping mid-morph when the last download finishes.
+            progress.animateTo(MotionPolicy.RESTING_PROGRESS, spec)
+        } else {
+            progress.snapTo(MotionPolicy.RESTING_PROGRESS)
         }
     }
     Box(
