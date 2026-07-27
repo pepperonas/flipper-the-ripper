@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.2] - 2026-07-27
+
+### Fixed
+- **The app animated continuously while idle.** The expressive shape motif looped unconditionally, so
+  with nothing happening the Home hero, the empty history state and — once per list item — every
+  placeholder thumbnail and platform badge kept animating forever. Looping motion is now tied to real
+  work: it runs only while a download is queued or running, and settles into a resting shape when the
+  last one finishes. One-shot effects (card entrance, screen transition, press feedback) are unchanged,
+  since they end by themselves.
+- **The two ways of reaching a tab behaved differently.** The automatic jump to History after starting a
+  download called `navigate()` with no options at all, while the bottom bar used
+  `popUpTo(start){saveState}` + `launchSingleTop` + `restoreState`. The same destination could therefore
+  be pushed twice onto the back stack, and the jump bypassed tab state save/restore — letting a stale
+  saved state later be restored over the live one. Both paths now go through one `navigateToTab()`.
+- **Screen transitions overlapped and appeared to zoom.** Timings were asymmetric (400 ms in against
+  200 ms out, with a scale only on the way back), so both screens were visible at once. Replaced with a
+  proper Material 3 fade-through — the outgoing screen leaves in 90 ms and the incoming one follows —
+  and reduced motion now disables the transition entirely.
+
+### Added
+- Project banner in the README.
+
 ## [1.2.1] - 2026-07-27
 
 ### Fixed
@@ -165,7 +187,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Signed release builds, GitHub Actions CI (build, lint, detekt, unit tests, coverage) and an
   automated tag-driven release workflow.
 
-[Unreleased]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.2.1...HEAD
+[Unreleased]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.2.2...HEAD
+[1.2.2]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.2.1...v1.2.2
 [1.2.1]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.1.2...v1.2.0
 [1.1.2]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.1.1...v1.1.2
