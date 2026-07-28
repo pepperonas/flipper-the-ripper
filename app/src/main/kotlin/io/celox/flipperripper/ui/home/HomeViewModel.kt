@@ -81,11 +81,18 @@ constructor(
         }
     }
 
+    /**
+     * Called from a `LaunchedEffect` on first composition. That coroutine runs on the main dispatcher,
+     * so the clipboard read has to be dispatched away from it — reading the clipboard is a binder call
+     * into the system service and used to freeze the UI right after opening.
+     */
     fun checkClipboard(prefEnabled: Boolean) {
         if (!prefEnabled) return
-        val suggestion = peekClipboardUrl()
-        if (suggestion != null && suggestion.url != _state.value.urlInput) {
-            _state.update { it.copy(clipboardSuggestion = suggestion) }
+        viewModelScope.launch {
+            val suggestion = peekClipboardUrl() ?: return@launch
+            if (suggestion.url != _state.value.urlInput) {
+                _state.update { it.copy(clipboardSuggestion = suggestion) }
+            }
         }
     }
 

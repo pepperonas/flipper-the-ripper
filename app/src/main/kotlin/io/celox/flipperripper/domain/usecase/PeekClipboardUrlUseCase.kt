@@ -8,5 +8,5 @@ import javax.inject.Inject
 class PeekClipboardUrlUseCase
 @Inject
 constructor(private val repository: ClipboardRepository) {
-    operator fun invoke(): ParsedUrl? = repository.peekSupportedUrl()
+    suspend operator fun invoke(): ParsedUrl? = repository.peekSupportedUrl()
 }

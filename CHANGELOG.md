@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.3] - 2026-07-28
+
+### Fixed
+- **The app could freeze immediately after opening.** Home peeks at the clipboard on first composition
+  from a `LaunchedEffect`, whose coroutine runs on the **main** dispatcher — but the clipboard read was
+  synchronous and used `ClipData.Item.coerceToText()`. For an item holding a URI that call opens the
+  owning app's content provider and reads it, i.e. blocking cross-process I/O on the UI thread. With a
+  `content://` item from a slow or unresponsive app on the clipboard (routine on devices with a
+  clipboard manager or a phone-link feature), the UI froze on launch. The read now runs off the main
+  thread and only ever looks at plain text and http(s) URIs — a video link can be nothing else, and
+  neither requires touching another app's provider. An empty clipboard, as on a fresh emulator, never
+  triggered this, which is why it only showed on real devices.
+
 ## [1.2.2] - 2026-07-27
 
 ### Fixed
@@ -187,7 +200,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Signed release builds, GitHub Actions CI (build, lint, detekt, unit tests, coverage) and an
   automated tag-driven release workflow.
 
-[Unreleased]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.2.2...HEAD
+[Unreleased]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.2.3...HEAD
+[1.2.3]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.2.2...v1.2.3
 [1.2.2]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.2.1...v1.2.2
 [1.2.1]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.1.2...v1.2.0

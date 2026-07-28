@@ -116,6 +116,8 @@ class HomeViewModelTest {
             val vm = createViewModel()
             advanceUntilIdle()
             vm.checkClipboard(prefEnabled = true)
+            // The clipboard read is dispatched off the caller's thread on purpose, so it settles later.
+            advanceUntilIdle()
             assertThat(vm.state.value.clipboardSuggestion).isNotNull()
             vm.acceptClipboardSuggestion()
             advanceUntilIdle()

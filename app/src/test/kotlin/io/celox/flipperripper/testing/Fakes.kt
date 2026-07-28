@@ -142,7 +142,7 @@ class FakeSettingsRepository(initial: UserPreferences = UserPreferences()) : Set
 }
 
 class FakeClipboardRepository(var suggestion: ParsedUrl? = null) : ClipboardRepository {
-    override fun peekSupportedUrl(): ParsedUrl? = suggestion
+    override suspend fun peekSupportedUrl(): ParsedUrl? = suggestion
 }
 
 class FakeBackendConfigRepository(
