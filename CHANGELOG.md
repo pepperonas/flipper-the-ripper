@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.7] - 2026-07-29
+
+### Added
+- **Sign in to Instagram (Settings → Instagram) to download login-only reels.** Some reels are not
+  publicly viewable — Instagram serves an empty/degraded page to anyone not signed in, so *no* method,
+  on-device or server, can fetch them anonymously (yt-dlp itself says "empty media response … check if
+  accessible without being logged-in"). Signing in with your account inside the app lets the hidden
+  extractor WebView carry your session, so it can then read anything your account can see. The password
+  is entered on Instagram's own page and never stored by the app — only the resulting session cookie is
+  kept, exactly as a browser does. Sign out at any time.
+
+### Fixed
+- **Public Instagram reels now save with their real title** (e.g. `Video by elevopro.pets.mp4`) instead
+  of `Untitled`. The video URL and title are read out of the embed's hydrated `shortcode_media` JSON
+  (un-escaping the nested JSON first), rather than relying only on catching the video as it plays.
+- **The failure message now tells you what to do.** A reel that isn't publicly available now says it
+  needs a sign-in and points to Settings → Instagram, instead of a generic "could not read this video".
+
+### Notes
+- Whether a specific login-only reel downloads after signing in depends on your account being able to
+  see it (a private account you don't follow still won't be accessible — that is Instagram's rule, not
+  the app's).
+
 ## [1.2.6] - 2026-07-28
 
 ### Fixed
@@ -261,7 +284,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Signed release builds, GitHub Actions CI (build, lint, detekt, unit tests, coverage) and an
   automated tag-driven release workflow.
 
-[Unreleased]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.2.6...HEAD
+[Unreleased]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.2.7...HEAD
+[1.2.7]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.2.6...v1.2.7
 [1.2.6]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.2.5...v1.2.6
 [1.2.5]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.2.4...v1.2.5
 [1.2.4]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.2.3...v1.2.4

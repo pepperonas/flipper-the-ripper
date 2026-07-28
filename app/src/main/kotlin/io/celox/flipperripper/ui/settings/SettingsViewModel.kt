@@ -27,7 +27,15 @@ constructor(
     private val settingsRepository: SettingsRepository,
     private val backendConfigRepository: BackendConfigRepository,
     private val updateEngine: UpdateEngineUseCase,
+    private val instagramSession: io.celox.flipperripper.data.engine.InstagramSession,
 ) : ViewModel() {
+    val instagramLoggedIn = instagramSession.loggedIn
+
+    /** Re-read the login state (call when Settings is shown, so returning from login updates it). */
+    fun refreshInstagram() = instagramSession.refresh()
+
+    fun signOutInstagram() = instagramSession.signOut()
+
     val preferences =
         settingsRepository.preferences.stateIn(
             scope = viewModelScope,

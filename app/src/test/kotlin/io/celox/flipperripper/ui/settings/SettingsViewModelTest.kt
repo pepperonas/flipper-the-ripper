@@ -28,6 +28,7 @@ class SettingsViewModelTest {
             settings,
             io.celox.flipperripper.testing.FakeBackendConfigRepository(),
             UpdateEngineUseCase(engineRepo),
+            io.celox.flipperripper.data.engine.InstagramSession(),
         )
 
     @Test

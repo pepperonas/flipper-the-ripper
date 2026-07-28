@@ -58,6 +58,14 @@
     <string name="settings_server_save">Save server</string>
     <string name="settings_server_saved">Server settings saved</string>
 
+    <string name="settings_instagram_title">Instagram</string>
+    <string name="settings_instagram_desc">Some reels are only visible when signed in. Sign in with your Instagram account to download those — the password is entered on Instagram\'s own page, not stored by the app.</string>
+    <string name="settings_instagram_sign_in">Sign in to Instagram</string>
+    <string name="settings_instagram_sign_out">Sign out of Instagram</string>
+    <string name="settings_instagram_signed_in">Signed in ✓</string>
+    <string name="login_title">Sign in to Instagram</string>
+    <string name="login_back">Back</string>
+
     <string name="settings_engine">Download engine</string>
     <string name="settings_update_engine">Update yt-dlp</string>
     <string name="settings_update_engine_desc">Fetch the latest extractor to fix broken downloads</string>

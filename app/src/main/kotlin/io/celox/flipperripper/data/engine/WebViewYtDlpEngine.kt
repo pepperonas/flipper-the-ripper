@@ -32,6 +32,7 @@ class WebViewYtDlpEngine
 @Inject
 constructor(
     private val extractor: WebViewExtractor,
+    private val instagramSession: InstagramSession,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : YtDlpEngine {
     private val client =
@@ -145,10 +146,16 @@ constructor(
     }
 
     private fun browserExtractionFailed(): DownloadError =
-        DownloadError.LoginRequired(
-            "Could not read this video from the page. It may be private, or the platform changed its " +
-                "page. If you run a server, it can also handle this — see Settings → Download source.",
-        )
+        if (instagramSession.isLoggedIn()) {
+            DownloadError.LoginRequired(
+                "Could not read this video. The post may be unavailable, or the platform changed its page.",
+            )
+        } else {
+            DownloadError.LoginRequired(
+                "This video isn't available without signing in. Sign in to Instagram under " +
+                    "Settings → Instagram, then try again.",
+            )
+        }
 
     private companion object {
         const val BUFFER = 64 * 1024

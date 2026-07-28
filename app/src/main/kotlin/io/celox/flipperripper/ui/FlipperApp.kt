@@ -26,6 +26,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import io.celox.flipperripper.ui.history.HistoryScreen
 import io.celox.flipperripper.ui.home.HomeScreen
+import io.celox.flipperripper.ui.login.InstagramLoginScreen
 import io.celox.flipperripper.ui.motion.rememberReduceMotion
 import io.celox.flipperripper.ui.navigation.Destination
 import io.celox.flipperripper.ui.settings.SettingsScreen
@@ -35,6 +36,9 @@ import io.celox.flipperripper.ui.settings.SettingsScreen
 // the way back, so every tab switch showed both screens at once and appeared to zoom.
 private const val FADE_OUT_MILLIS = 90
 private const val FADE_IN_MILLIS = 210
+
+/** A full-screen destination outside the bottom-nav tabs. */
+private const val INSTAGRAM_LOGIN_ROUTE = "instagram_login"
 
 /**
  * Navigate to a top-level destination.
@@ -97,7 +101,12 @@ fun FlipperApp() {
                 )
             }
             composable(Destination.HISTORY.route) { HistoryScreen() }
-            composable(Destination.SETTINGS.route) { SettingsScreen() }
+            composable(Destination.SETTINGS.route) {
+                SettingsScreen(onOpenInstagramLogin = { navController.navigate(INSTAGRAM_LOGIN_ROUTE) })
+            }
+            composable(INSTAGRAM_LOGIN_ROUTE) {
+                InstagramLoginScreen(onDone = { navController.popBackStack() })
+            }
         }
     }
 }

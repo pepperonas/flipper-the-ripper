@@ -49,12 +49,20 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
+fun SettingsScreen(
+    onOpenInstagramLogin: () -> Unit = {},
+    viewModel: SettingsViewModel = hiltViewModel(),
+) {
     val prefs by viewModel.preferences.collectAsStateWithLifecycle()
     val backendConfig by viewModel.backendConfig.collectAsStateWithLifecycle()
+    val instagramLoggedIn by viewModel.instagramLoggedIn.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val savedServerMsg = stringResource(R.string.settings_server_saved)
+
+    // Re-read the Instagram login state whenever Settings is shown, so it reflects a just-completed
+    // (or cleared) login when the login screen pops back here.
+    androidx.compose.runtime.LaunchedEffect(Unit) { viewModel.refreshInstagram() }
 
     ObserveAsEvents(viewModel.messages) { message -> snackbarHostState.showSnackbar(message) }
 
@@ -125,6 +133,35 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
                         scope.launch { snackbarHostState.showSnackbar(savedServerMsg) }
                     },
                 )
+            }
+
+            SettingsSection(stringResource(R.string.settings_instagram_title)) {
+                Text(
+                    stringResource(R.string.settings_instagram_desc),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.height(12.dp))
+                val igInteraction = remember { MutableInteractionSource() }
+                if (instagramLoggedIn) {
+                    Text(
+                        stringResource(R.string.settings_instagram_signed_in),
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    FilledTonalButton(
+                        onClick = viewModel::signOutInstagram,
+                        interactionSource = igInteraction,
+                        modifier = Modifier.height(52.dp).springPressed(igInteraction),
+                    ) { Text(stringResource(R.string.settings_instagram_sign_out)) }
+                } else {
+                    FilledTonalButton(
+                        onClick = onOpenInstagramLogin,
+                        interactionSource = igInteraction,
+                        modifier = Modifier.height(52.dp).springPressed(igInteraction),
+                    ) { Text(stringResource(R.string.settings_instagram_sign_in)) }
+                }
             }
 
             SettingsSection(stringResource(R.string.settings_engine)) {
