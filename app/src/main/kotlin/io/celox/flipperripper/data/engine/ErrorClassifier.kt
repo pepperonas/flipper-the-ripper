@@ -107,7 +107,16 @@ object ErrorClassifier {
 
         return when {
             BOT_BLOCK.any { s.contains(it) } ->
-                DownloadError.LoginRequired("Sign-in required — this content is behind a login wall.")
+                // Deliberately not phrased as "behind a login wall": the platform frequently answers
+                // this way to a request it does not recognise as a real browser, even for content that
+                // is fully public. Saying it needs a sign-in sent people looking for an account they
+                // do not need, when switching to the server (which can present a browser TLS
+                // fingerprint) downloads the very same video.
+                DownloadError.LoginRequired(
+                    "The platform refused this request. It may need a sign-in — but public content is " +
+                        "often refused too. Switching to the server under Settings → Download source " +
+                        "usually gets it.",
+                )
 
             PRIVATE.any { s.contains(it) } ->
                 DownloadError.PrivateVideo("This video is private and cannot be downloaded.")

@@ -1,27 +1,18 @@
 package io.celox.flipperripper.ui.motion
 
 /**
- * Decides whether *continuous* (never-ending) motion may run.
+ * Where motion is allowed in this app.
  *
- * The expressive shape motifs used to loop forever, so an idle app kept animating on the Home hero, the
- * empty history state, every placeholder thumbnail and every platform badge at once — constant CPU and
- * battery cost with nothing happening. Looping motion is now tied to actual work: it runs only while a
- * download is queued or running.
+ * Motion is reserved for the one thing that is genuinely happening: a running download, signalled by
+ * its progress indicator. Decorative shape motifs stand still — they used to loop forever, so an idle
+ * app animated continuously on the Home hero, the empty history state and once per list item for every
+ * placeholder thumbnail and platform badge. That competed with the real progress signal and cost
+ * battery for nothing.
  *
- * This governs looping motion only. One-shot effects (card entrance, screen transition, press feedback)
- * are unaffected — they end by themselves and cost nothing once settled.
+ * One-shot effects (card entrance, screen transition, press feedback) are unaffected: they end by
+ * themselves and settle immediately.
  */
 object MotionPolicy {
-    /** The shape a motif rests at when it is not looping — mid-morph, so it still looks deliberate. */
+    /** The fixed point along the morph at which a static motif is drawn. */
     const val RESTING_PROGRESS = 0.5f
-
-    /** Looping motion runs only for real work, and never when the system asks for reduced motion. */
-    fun shouldLoop(hasActiveDownload: Boolean, reduceMotion: Boolean): Boolean =
-        hasActiveDownload && !reduceMotion
-
-    /**
-     * Whether coming to rest should be animated. Under reduced motion the motif snaps instead, so no
-     * movement happens at all.
-     */
-    fun shouldAnimateToRest(reduceMotion: Boolean): Boolean = !reduceMotion
 }

@@ -64,6 +64,42 @@ class DownloadNamingTest {
     }
 
     @Test
+    fun `display title drops the file extension`() {
+        // The card used to read "Video by kvashenaya.mp4"; the extension is not part of a title.
+        assertThat(DownloadNaming.displayTitle("Video by kvashenaya.mp4", "ignored"))
+            .isEqualTo("Video by kvashenaya")
+        assertThat(DownloadNaming.displayTitle("Track.m4a", "ignored")).isEqualTo("Track")
+    }
+
+    @Test
+    fun `display title keeps dots that are not an extension`() {
+        assertThat(DownloadNaming.displayTitle("Best of 2026. The Recap", "x"))
+            .isEqualTo("Best of 2026. The Recap")
+    }
+
+    @Test
+    fun `display title shortens a raw url to what identifies the video`() {
+        // A failed entry keeps the source URL as its title and filled the whole card with it.
+        val long = "https://www.instagram.com/reel/DbDBPYJnUMW/?igsh=MW5vNDdwbGZ4bGJ4"
+
+        val shown = DownloadNaming.displayTitle(fileName = null, fallbackTitle = long)
+
+        assertThat(shown).isEqualTo("reel/DbDBPYJnUMW")
+        assertThat(shown).doesNotContain("igsh")
+        assertThat(shown).doesNotContain("https")
+    }
+
+    @Test
+    fun `display title leaves a real title untouched`() {
+        assertThat(DownloadNaming.displayTitle(null, "Me at the zoo")).isEqualTo("Me at the zoo")
+    }
+
+    @Test
+    fun `display title falls back to the host when a url has no path`() {
+        assertThat(DownloadNaming.displayTitle(null, "https://youtu.be")).isEqualTo("youtu.be")
+    }
+
+    @Test
     fun `produced name flows into a sanitised filename`() {
         val title = DownloadNaming.preferredTitle(null, "AC/DC: Live [xyz]", "https://youtu.be/x")
 

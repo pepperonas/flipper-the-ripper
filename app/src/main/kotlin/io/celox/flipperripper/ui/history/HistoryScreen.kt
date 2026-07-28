@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.DeleteSweep
@@ -29,10 +30,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -41,12 +44,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import io.celox.flipperripper.R
+import io.celox.flipperripper.data.engine.DownloadNaming
 import io.celox.flipperripper.domain.model.DownloadMode
 import io.celox.flipperripper.domain.model.DownloadRecord
 import io.celox.flipperripper.domain.model.DownloadStatus
 import io.celox.flipperripper.domain.model.isActive
 import io.celox.flipperripper.ui.components.MorphingMotif
-import io.celox.flipperripper.ui.motion.springEntrance
 import io.celox.flipperripper.util.MediaIntents
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -79,15 +82,25 @@ fun HistoryScreen(viewModel: HistoryViewModel = hiltViewModel()) {
         if (records.isEmpty()) {
             EmptyState(Modifier.fillMaxSize().padding(padding))
         } else {
+            val listState = rememberLazyListState()
+            // A new download is prepended (history is newest-first). Jump back to the top whenever the
+            // leading entry changes, so the download that was just started is always the one on screen —
+            // otherwise pasting a link while scrolled down appeared to do nothing.
+            val newestId = records.first().id
+            LaunchedEffect(newestId) { listState.animateScrollToItem(0) }
+
             LazyColumn(
+                state = listState,
                 modifier = Modifier.fillMaxSize().padding(padding),
                 contentPadding = PaddingValues(20.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp),
             ) {
-                itemsIndexed(records, key = { _, r -> r.id }) { index, record ->
+                itemsIndexed(records, key = { _, r -> r.id }) { _, record ->
                     DownloadCard(
                         record = record,
-                        modifier = Modifier.springEntrance(index),
+                        // No entrance animation: in a lazy list it re-fires every time a card scrolls
+                        // back into view, which reads as flicker. Motion is reserved for the download.
+                        modifier = Modifier,
                         onCancel = { viewModel.cancel(record.id) },
                         onRetry = { viewModel.retry(record.id) },
                         onDelete = { viewModel.delete(record.id) },
@@ -136,7 +149,7 @@ private fun DownloadCard(
                 Spacer(Modifier.width(14.dp))
                 Column(Modifier.weight(1f)) {
                     Text(
-                        record.fileName ?: record.title,
+                        DownloadNaming.displayTitle(record.fileName, record.title),
                         style = MaterialTheme.typography.titleSmall,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
@@ -189,10 +202,17 @@ private fun DownloadCard(
 @Composable
 private fun Thumbnail(record: DownloadRecord) {
     val shape = RoundedCornerShape(16.dp)
-    if (record.thumbnailUrl != null) {
+    // Prefer the platform's thumbnail; when there is none (Instagram routinely returns no thumbnail
+    // URL), fall back to a frame decoded from the saved video itself, so the card is not just a
+    // placeholder for a file that is sitting right there on the device.
+    val model =
+        record.thumbnailUrl
+            ?: record.mediaUri?.takeIf { record.status == DownloadStatus.COMPLETED && record.mode == DownloadMode.VIDEO }
+    if (model != null) {
         AsyncImage(
-            model = record.thumbnailUrl,
+            model = model,
             contentDescription = null,
+            contentScale = ContentScale.Crop,
             modifier = Modifier.size(width = 96.dp, height = 56.dp).clip(shape),
         )
     } else {

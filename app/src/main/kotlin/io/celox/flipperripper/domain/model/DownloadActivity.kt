@@ -6,6 +6,3 @@ package io.celox.flipperripper.domain.model
  */
 val DownloadStatus.isActive: Boolean
     get() = this == DownloadStatus.QUEUED || this == DownloadStatus.RUNNING
-
-/** True while at least one download is queued or running. Drives the app's continuous motion. */
-fun List<DownloadRecord>.hasActiveDownload(): Boolean = any { it.status.isActive }

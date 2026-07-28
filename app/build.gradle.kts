@@ -37,8 +37,8 @@ android {
         applicationId = "io.celox.flipperripper"
         minSdk = 24
         targetSdk = 35
-        versionCode = 8
-        versionName = "1.2.3"
+        versionCode = 9
+        versionName = "1.2.4"
 
         testInstrumentationRunner = "io.celox.flipperripper.HiltTestRunner"
         vectorDrawables { useSupportLibrary = true }
@@ -217,6 +217,8 @@ dependencies {
 
     // Image loading (thumbnails)
     implementation(libs.coil.compose)
+    // Decodes a frame from a downloaded video file, used as the history thumbnail.
+    implementation(libs.coil.video)
 
     // HTTP client for the optional server backend
     implementation(libs.okhttp)

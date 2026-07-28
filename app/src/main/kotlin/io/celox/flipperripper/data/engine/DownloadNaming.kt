@@ -28,4 +28,34 @@ object DownloadNaming {
         resolvedTitle?.takeIf { it.isNotBlank() }
             ?: titleFromProducedFile(producedFileBaseName).takeIf { it.isNotBlank() }
             ?: fallbackTitle
+
+    private val FILE_EXTENSION = Regex("""\.[A-Za-z0-9]{1,5}$""")
+
+    /**
+     * The label shown in the history list.
+     *
+     * Two things are cleaned up here. The stored file name carries its extension, which does not belong
+     * in a title (`Video by kvashenaya.mp4`). And an entry whose metadata never resolved — a failed
+     * download, typically — still holds the raw source URL, which filled the card with
+     * `https://www.instagram.com/reel/DbDBPYJnUMW/?igsh=…`; that is shortened to the part which
+     * identifies the video.
+     */
+    fun displayTitle(fileName: String?, fallbackTitle: String): String =
+        fileName?.takeIf { it.isNotBlank() }?.let { it.replace(FILE_EXTENSION, "") }
+            ?: shortenUrl(fallbackTitle)
+
+    /** Reduce a bare URL to its identifying tail; anything that is not a URL is returned unchanged. */
+    private fun shortenUrl(value: String): String {
+        val trimmed = value.trim()
+        if (!trimmed.startsWith("http://", true) && !trimmed.startsWith("https://", true)) return trimmed
+        val afterScheme = trimmed.substringAfter("://")
+        val host = afterScheme.substringBefore('/').substringBefore('?')
+        val segments =
+            afterScheme.substringAfter('/', "")
+                .substringBefore('?')
+                .substringBefore('#')
+                .split('/')
+                .filter { it.isNotBlank() }
+        return if (segments.isEmpty()) host else segments.takeLast(2).joinToString("/")
+    }
 }

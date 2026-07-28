@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.4] - 2026-07-28
+
+### Changed
+- **Only the download animates now.** The expressive shape motifs are static. They previously looped —
+  in 1.2.3 while a download ran, before that permanently — which competed with the one signal that
+  matters. The running download's progress indicator is the only continuous motion left. History cards
+  also lost their staggered entrance, which in a lazy list re-fired every time a card scrolled back
+  into view and read as flicker.
+- **The history list jumps back to the top when a new download appears**, so a freshly pasted link is
+  always the entry on screen instead of being added out of sight above the scroll position.
+
+### Fixed
+- **Saved videos show a real preview.** Several platforms (Instagram in particular) return no thumbnail
+  URL, which left a placeholder on every card even though the video was on the device. A frame is now
+  decoded from the saved file itself as a fallback.
+- **Titles no longer carry the file extension** — `Video by kvashenaya.mp4` now reads
+  `Video by kvashenaya`. The file on disk is unchanged.
+- **Failed entries no longer show the raw source URL.** A card filled with
+  `https://www.instagram.com/reel/DbDBPYJnUMW/?igsh=…` now shows just the identifying part,
+  `reel/DbDBPYJnUMW`.
+- **A misleading error message.** A refused request was reported as "this content is behind a login
+  wall". That is frequently wrong: platforms answer the same way to a request they do not recognise as
+  a real browser, even for fully public content — a reel reported this way downloads fine through the
+  server backend, which can present a browser TLS fingerprint. The message now says what actually
+  happened and points to Settings → Download source.
+
 ## [1.2.3] - 2026-07-28
 
 ### Fixed
@@ -200,7 +226,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Signed release builds, GitHub Actions CI (build, lint, detekt, unit tests, coverage) and an
   automated tag-driven release workflow.
 
-[Unreleased]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.2.3...HEAD
+[Unreleased]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.2.4...HEAD
+[1.2.4]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.2.3...v1.2.4
 [1.2.3]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.2.2...v1.2.3
 [1.2.2]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.2.1...v1.2.2
 [1.2.1]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.2.0...v1.2.1

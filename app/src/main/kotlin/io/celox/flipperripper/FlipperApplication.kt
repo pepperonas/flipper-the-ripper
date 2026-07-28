@@ -3,6 +3,9 @@ package io.celox.flipperripper
 import android.app.Application
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
+import coil.ImageLoader
+import coil.ImageLoaderFactory
+import coil.decode.VideoFrameDecoder
 import dagger.hilt.android.HiltAndroidApp
 import io.celox.flipperripper.data.engine.YtDlpEngine
 import io.celox.flipperripper.data.work.DownloadNotifier
@@ -17,7 +20,18 @@ import javax.inject.Inject
 @HiltAndroidApp
 class FlipperApplication :
     Application(),
-    Configuration.Provider {
+    Configuration.Provider,
+    ImageLoaderFactory {
+    /**
+     * Adds video-frame decoding, so a saved download can show a still from the file itself. Several
+     * platforms return no thumbnail URL at all (Instagram in particular), which left every card with a
+     * bare placeholder even though the video was sitting on the device.
+     */
+    override fun newImageLoader(): ImageLoader =
+        ImageLoader.Builder(this)
+            .components { add(VideoFrameDecoder.Factory()) }
+            .build()
+
     @Inject lateinit var workerFactory: HiltWorkerFactory
 
     @Inject lateinit var engine: YtDlpEngine
