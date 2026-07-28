@@ -21,3 +21,7 @@ annotation class OnDeviceEngine
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
 annotation class RemoteEngine
+
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class WebViewEngine

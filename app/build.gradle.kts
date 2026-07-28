@@ -37,8 +37,8 @@ android {
         applicationId = "io.celox.flipperripper"
         minSdk = 24
         targetSdk = 35
-        versionCode = 9
-        versionName = "1.2.4"
+        versionCode = 10
+        versionName = "1.2.5"
 
         testInstrumentationRunner = "io.celox.flipperripper.HiltTestRunner"
         vectorDrawables { useSupportLibrary = true }
@@ -269,6 +269,8 @@ kover {
                     "io.celox.flipperripper.data.engine.YoutubeDlEngine*",
                     "io.celox.flipperripper.data.engine.RemoteYtDlpEngine*",
                     "io.celox.flipperripper.data.engine.RoutingYtDlpEngine*",
+                    "io.celox.flipperripper.data.engine.WebViewExtractor*",
+                    "io.celox.flipperripper.data.engine.WebViewYtDlpEngine*",
                     "io.celox.flipperripper.data.repository.BackendConfigRepositoryImpl*",
                     "io.celox.flipperripper.data.media.*",
                     "io.celox.flipperripper.data.work.*",

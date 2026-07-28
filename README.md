@@ -237,30 +237,37 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 | A YouTube/TikTok download fails after the title/thumbnail loaded | The platform is gating the media fetch — see **Two download modes** below. Try **Settings → Update yt-dlp**, and switch download source: on-device uses your own IP, which YouTube blocks far less than a server's. |
 | "Your IP address is blocked" / "Sign in to confirm you're not a bot" | Platform-side IP reputation, not an app fault. Switch to **On device** (your own connection) or try a different network. |
 
-### Two download modes — on-device vs. server
+### How downloads are routed
 
-**Settings → Download source** lets you pick where downloads run:
+The app picks the right engine per platform automatically — you do not choose a source by hand — and
+falls back to a configured server if the primary can't get it:
 
-| Mode | Runs on | Best for |
-|------|---------|----------|
-| **On device** (default) | The bundled yt-dlp | **YouTube**; privacy — the request comes from your own connection. |
-| **Server** | Your backend (`backend/`) | Content needing the full toolchain (JS runtime, `curl_cffi`, ffmpeg). |
+| Platform | On-device primary | Why | Fallback |
+|----------|-------------------|-----|----------|
+| **YouTube** | bundled **yt-dlp** (`android_vr` client) | needs no JS challenge, no PO token; runs from *your* IP, which YouTube blocks far less than a datacenter | server |
+| **Instagram** | a hidden **WebView** | Instagram fingerprints the TLS handshake and hydrates the URL with JS — only a real browser gets through, and Android's WebView *is* Chromium | server |
+| **TikTok** | WebView (best-effort) | same browser check; extraction is less reliable and may fail | server |
 
-The two modes fail in *different* ways, which is why both exist:
+**Why three engines fail in different ways:**
 
-- **On device** has no JavaScript runtime and no PO-token provider, so it uses the `android_vr` player
-  client — the one YouTube client that needs neither. It downloads from **your own IP**, which
-  platforms treat far more kindly than a datacenter.
-- **The server** runs a `deno` JS runtime, `curl_cffi` impersonation and ffmpeg, so it can satisfy
-  challenges the phone cannot — but it downloads from a **datacenter IP**.
+- **yt-dlp on the device** has no JavaScript runtime and no `curl_cffi`, so it can do YouTube (via
+  `android_vr`) but *cannot* do Instagram/TikTok at all — those now require browser TLS impersonation.
+- **The WebView** is real Chromium: it presents the genuine Chrome TLS fingerprint and runs the page's
+  JS, so it reads the video URL off Instagram directly on the device, with no server. The signed CDN
+  URL it finds is then downloaded with an ordinary client.
+- **The server** (optional, `backend/`) runs `curl_cffi`, a `deno` JS runtime and ffmpeg — it can catch
+  what the device missed, **except** where the block is its datacenter IP (YouTube, TikTok), which is
+  why it is only ever a fallback.
 
-> **Reality check (July 2026).** IP reputation now dominates. YouTube answers datacenter IPs with
-> *"Sign in to confirm you're not a bot"* and TikTok with *"Your IP address is blocked"* — for **every**
-> player client, and a PO-token provider does not help (it attests the stream, not the IP). So
-> **on-device is currently the more reliable route for YouTube**, while the server is the better route
-> for Facebook and anything needing ffmpeg/impersonation. Instagram returns an empty media response
-> without login. These are platform-side gates that affect all yt-dlp-based tools, not app bugs — the
-> app surfaces them as typed errors rather than pretending to work.
+> **Reality (July 2026).** The blocks are of two kinds. **IP reputation:** YouTube answers datacenter
+> IPs with *"Sign in to confirm you're not a bot"* and TikTok with *"Your IP address is blocked"* — so a
+> server does not help those, and the device (your own IP) is the better route. **TLS fingerprint:**
+> Instagram/TikTok refuse any non-browser client regardless of IP — which the on-device WebView solves
+> for Instagram. TikTok remains hard everywhere; when the device can't get it and no server is
+> configured, the app says so plainly instead of saving a broken file.
+
+**Settings → Download source** still lets you force the server as your preferred source (it then leads,
+with the on-device engine as fallback).
 
 Deploy the backend (systemd + nginx + TLS, `X-API-Key` auth) — see **[backend/README.md](backend/README.md)** —
 then set the server URL + key in Settings (or bake them into a git-ignored `backend.properties`).

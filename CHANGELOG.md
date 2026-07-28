@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.5] - 2026-07-28
+
+### Added
+- **Instagram now downloads on the device — no server needed.** Instagram fingerprints the TLS
+  handshake and hydrates the video URL with JavaScript, so no plain HTTP client (including the bundled
+  yt-dlp, which lacks `curl_cffi`) can reach it — they all hit the login wall regardless of IP. The app
+  now uses a hidden **WebView**, which is real Chromium: it presents a genuine Chrome fingerprint and
+  runs the page's JS, reads the signed CDN URL, and downloads it with an ordinary client. Verified
+  end-to-end on device: the reel that previously reported "login required" saves as a titled 5.5 MB
+  file with a real preview.
+- **Automatic per-platform routing with server fallback.** The app picks the engine per platform
+  instead of a manual toggle: YouTube → on-device yt-dlp (the server's IP is blocked by YouTube),
+  Instagram/TikTok → on-device WebView. A configured server is tried automatically as a fallback; if you
+  explicitly pick the server in Settings it leads, with the on-device engine as fallback.
+
+### Fixed
+- **A previous "login required" message on Instagram was wrong** and is gone: the content was public
+  all along; the on-device engine simply couldn't present a browser fingerprint. The WebView now
+  downloads it directly.
+- **TikTok no longer saves a broken file.** A too-loose match could grab a cover image (~13 KB) and
+  report success; the app now requires a real `.mp4` above a plausible size and otherwise fails plainly,
+  pointing to the server option. (TikTok remains hard everywhere — its IP block hits the server too.)
+
 ## [1.2.4] - 2026-07-28
 
 ### Changed
@@ -226,7 +249,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Signed release builds, GitHub Actions CI (build, lint, detekt, unit tests, coverage) and an
   automated tag-driven release workflow.
 
-[Unreleased]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.2.4...HEAD
+[Unreleased]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.2.5...HEAD
+[1.2.5]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.2.4...v1.2.5
 [1.2.4]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.2.3...v1.2.4
 [1.2.3]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.2.2...v1.2.3
 [1.2.2]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.2.1...v1.2.2

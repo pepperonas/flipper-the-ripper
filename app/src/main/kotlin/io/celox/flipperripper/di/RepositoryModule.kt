@@ -6,6 +6,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import io.celox.flipperripper.data.engine.RemoteYtDlpEngine
 import io.celox.flipperripper.data.engine.RoutingYtDlpEngine
+import io.celox.flipperripper.data.engine.WebViewYtDlpEngine
 import io.celox.flipperripper.data.engine.YoutubeDlEngine
 import io.celox.flipperripper.data.engine.YtDlpEngine
 import io.celox.flipperripper.data.media.MediaStoreWriter
@@ -36,6 +37,10 @@ abstract class RepositoryModule {
     @Binds
     @io.celox.flipperripper.di.RemoteEngine
     abstract fun bindRemoteEngine(impl: RemoteYtDlpEngine): YtDlpEngine
+
+    @Binds
+    @io.celox.flipperripper.di.WebViewEngine
+    abstract fun bindWebViewEngine(impl: WebViewYtDlpEngine): YtDlpEngine
 
     @Binds
     @Singleton
