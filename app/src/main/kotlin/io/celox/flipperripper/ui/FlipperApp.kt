@@ -6,6 +6,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -78,7 +79,13 @@ fun FlipperApp() {
         NavHost(
             navController = navController,
             startDestination = Destination.HOME.route,
-            modifier = Modifier.padding(padding),
+            // Each screen has its own Scaffold with a top app bar. This outer Scaffold already reserves
+            // the status-bar and navigation-bar insets (as `padding`), so the inner Scaffolds must be
+            // told those insets are handled — otherwise they add the status bar again at the top (a fat
+            // empty strip above every title) and the nav-bar inset again at the bottom (a dead strip
+            // above the menu bar that also clipped the last of the content). Consuming `padding` here is
+            // what stops the double counting.
+            modifier = Modifier.padding(padding).consumeWindowInsets(padding),
             enterTransition = { if (reduceMotion) EnterTransition.None else fadeThroughEnter() },
             exitTransition = { if (reduceMotion) ExitTransition.None else fadeThroughExit() },
             popEnterTransition = { if (reduceMotion) EnterTransition.None else fadeThroughEnter() },

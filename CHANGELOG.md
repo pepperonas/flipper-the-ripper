@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.6] - 2026-07-28
+
+### Fixed
+- **Wasted bands at the top and bottom of every screen, with content clipped.** The app nests a
+  per-screen `Scaffold` (each with its own top app bar) inside the app-level `Scaffold` that owns the
+  bottom navigation bar. The outer one already reserves the status-bar and navigation-bar insets, but
+  those insets were never marked as consumed, so each inner Scaffold added them **again**: a thick empty
+  strip above every title, and a dead strip above the menu bar that also cut off the last of the content
+  (e.g. the Download-source section in Settings). Consuming the outer insets on the nav host
+  (`consumeWindowInsets`) removes the double counting — titles now sit directly under the status bar and
+  content runs down to the navigation bar.
+
 ## [1.2.5] - 2026-07-28
 
 ### Added
@@ -249,7 +261,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Signed release builds, GitHub Actions CI (build, lint, detekt, unit tests, coverage) and an
   automated tag-driven release workflow.
 
-[Unreleased]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.2.5...HEAD
+[Unreleased]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.2.6...HEAD
+[1.2.6]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.2.5...v1.2.6
 [1.2.5]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.2.4...v1.2.5
 [1.2.4]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.2.3...v1.2.4
 [1.2.3]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.2.2...v1.2.3
