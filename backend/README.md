@@ -36,7 +36,7 @@ ssh root@<vps> '
 ssh root@<vps> '
   cp /opt/flipper-backend/nginx-flipper.conf /etc/nginx/sites-available/flipper.celox.io
   ln -sf /etc/nginx/sites-available/flipper.celox.io /etc/nginx/sites-enabled/
-  certbot certonly --nginx -d flipper.celox.io --non-interactive --agree-tos -m admin@celox.io
+  certbot certonly --nginx -d flipper.celox.io --non-interactive --agree-tos -m martin.pfeffer@celox.io
   nginx -t && systemctl reload nginx
 '
 ```
