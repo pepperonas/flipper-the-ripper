@@ -129,7 +129,12 @@ constructor(
                 .build()
         client.newCall(request).execute().use { resp ->
             val body = resp.body ?: throw IOException("empty response (${resp.code})")
-            if (!resp.isSuccessful) throw IOException("server returned ${resp.code}")
+            if (!resp.isSuccessful) {
+                // Surface enough to tell apart the failure modes on-device without a logcat: the status
+                // and which host refused it (a CDN 403 vs an instagram.com login redirect look different).
+                val host = resp.request.url.host
+                throw IOException("HTTP ${resp.code} from $host")
+            }
             body.byteStream().use { input ->
                 target.outputStream().use { out -> copyStream(spec, input, out, body.contentLength(), onProgress) }
             }

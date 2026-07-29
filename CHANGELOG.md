@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.11] - 2026-07-29
+
+### Fixed
+- **Logged-in reels that kept returning 403 now resolve their URL through Instagram's own media API.**
+  The earlier approach scraped the video URL out of the *embed* page, but for a signed-in/gated reel that
+  URL is not authorized and the CDN rejects it (403) no matter what headers or cookies accompany it. The
+  extractor now first calls Instagram's `/api/v1/media/<id>/info/` endpoint — a *same-origin* request from
+  the page, so it carries the session, uses the browser's own TLS and returns the correctly authorized
+  video URL. The media id is derived from the reel shortcode. When signed out the API returns HTML and the
+  extractor falls back to the public embed scrape, so public reels are unchanged (verified). A failed
+  download now also reports the HTTP status and host, to make any remaining edge case diagnosable.
+
 ## [1.2.10] - 2026-07-29
 
 ### Fixed
