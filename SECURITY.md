@@ -53,7 +53,7 @@ Flipper the Ripper is designed with a conservative, privacy-respecting posture:
 
 The following are generally **not** considered vulnerabilities in this project:
 
-- Behavior of remote video platforms (Instagram, YouTube, TikTok) or their changing APIs and rate limits.
+- Behavior of remote video platforms (Instagram, YouTube, TikTok, Facebook) or their changing APIs and rate limits.
 - Issues in third-party dependencies that are already publicly known and tracked upstream (please report those to the respective projects; we will update our bundled versions accordingly).
 - The ability to download publicly accessible content — this is the app's intended function.
 - User misuse of downloaded content (respecting copyright and platform terms of service is the user's responsibility).

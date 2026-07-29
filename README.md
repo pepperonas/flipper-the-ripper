@@ -79,9 +79,14 @@ layer, which this app reimplements faithfully in Kotlin:
 - **Error taxonomy** — `is_bot_block` / `looks_stale_or_rate_limited` plus private/region/unavailable/network buckets → [`ErrorClassifier`](app/src/main/kotlin/io/celox/flipperripper/data/engine/ErrorClassifier.kt)
 
 The engine underneath is [**youtubedl-android**](https://github.com/JunkFood02/youtubedl-android),
-which bundles the **real yt-dlp + ffmpeg + aria2c** as native libraries — the same engine that
-powers apps like Seal. So the ported policy layer drives the *identical* extractor, giving the
-same reliability across all three platforms.
+which bundles the **real yt-dlp + ffmpeg** as native libraries — the same engine that powers apps like
+Seal. That drives **YouTube** on the device.
+
+The browser-gated platforms need more than yt-dlp: **Instagram, TikTok and Facebook** fingerprint the TLS
+handshake and hydrate the video URL with JavaScript, so they are handled by an on-device **WebView
+extractor** (real Chromium) instead — see [How downloads are routed](#how-downloads-are-routed) for the
+per-platform detail. The `inspector-rust` policy layer still governs the shared concerns (platform
+detection, error taxonomy, naming) across all four.
 
 ### Decision: reuse vs. JNI vs. re-port
 
@@ -89,7 +94,7 @@ same reliability across all three platforms.
 |--------|---------|
 | **Port the Rust as a native lib (JNI)** | ❌ Not useful — `inspector-rust`'s core is an `rlib` (no `cdylib`) and contains **no extraction code**, only a ~50-line subprocess wrapper around external CLIs. Nothing to port. |
 | **Subprocess yt-dlp (as on desktop)** | ❌ Impossible on non-rooted Android (no Python, no arbitrary `exec`). |
-| **Bundle yt-dlp via youtubedl-android** ✅ | **Chosen.** Ships the real yt-dlp as a native payload; reuses the desktop policy layer verbatim; self-updates at runtime. Trade-off: larger APK (~70 MB) and ARM-only. |
+| **Bundle yt-dlp via youtubedl-android** ✅ | **Chosen.** Ships the real yt-dlp as a native payload; reuses the desktop policy layer verbatim; self-updates at runtime. Trade-off: larger APK (~33 MB per ABI) and ARM-only. |
 | Pure-JVM extractor (NewPipeExtractor) | ❌ Strong for YouTube only; Instagram unsupported, TikTok fragile — would not meet the requirement. |
 
 **Cookie fallback deviation:** the desktop `--cookies-from-browser` retry has no Android equivalent
@@ -116,13 +121,15 @@ flowchart TD
     end
     subgraph DATA["data"]
         REPO[Repository impls]
-        ENGINE["engine · YtDlpEngine\nArgsBuilder · ErrorClassifier · FilenameSanitizer"]
+        ENGINE["engine · RoutingYtDlpEngine\n(per-platform + ErrorClassifier · FilenameSanitizer)"]
         WORK["work · DownloadWorker\n(foreground service)"]
         ROOM[(Room · history)]
         DS[(DataStore · settings)]
         MEDIA[MediaStoreWriter]
     end
-    YTDLP[["youtubedl-android\n(yt-dlp + ffmpeg + aria2c)"]]
+    YTDLP[["youtubedl-android\n(yt-dlp + ffmpeg) · YouTube"]]
+    WEBVIEW[["WebView extractor\n(Chromium) · Instagram/TikTok/Facebook"]]
+    SERVER[["optional server\n(curl_cffi + deno + ffmpeg) · fallback"]]
 
     HVM --> UC
     HiVM --> UC
@@ -135,6 +142,8 @@ flowchart TD
     WORK --> ENGINE
     WORK --> MEDIA
     ENGINE --> YTDLP
+    ENGINE --> WEBVIEW
+    ENGINE -. fallback .-> SERVER
     REPO --> DS
 ```
 

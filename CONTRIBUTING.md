@@ -1,6 +1,6 @@
 # Contributing to Flipper the Ripper
 
-Thanks for your interest in improving **Flipper the Ripper** — an open-source Android app (Kotlin, Jetpack Compose, Material 3) that downloads publicly accessible videos from Instagram, YouTube and TikTok using a bundled yt-dlp engine.
+Thanks for your interest in improving **Flipper the Ripper** — an open-source Android app (Kotlin, Jetpack Compose, Material 3) that downloads publicly accessible videos from Instagram, YouTube, TikTok and Facebook (a bundled yt-dlp engine for YouTube, an on-device WebView extractor for the browser-gated platforms).
 
 This document describes how to set up your environment, the conventions we follow, and what your pull request needs to pass before it can be merged. Please read it fully before opening a PR.
 
