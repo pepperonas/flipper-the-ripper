@@ -37,8 +37,8 @@ android {
         applicationId = "io.celox.flipperripper"
         minSdk = 24
         targetSdk = 35
-        versionCode = 16
-        versionName = "1.2.11"
+        versionCode = 17
+        versionName = "1.2.12"
 
         testInstrumentationRunner = "io.celox.flipperripper.HiltTestRunner"
         vectorDrawables { useSupportLibrary = true }

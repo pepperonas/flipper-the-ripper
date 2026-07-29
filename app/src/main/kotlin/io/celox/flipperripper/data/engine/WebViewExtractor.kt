@@ -51,6 +51,7 @@ constructor(@ApplicationContext private val context: Context) {
             val scraped = CompletableDeferred<ExtractedMedia?>()
             val interception = CompletableDeferred<String>()
             val shortcode = shortcodeOf(url)
+            val mediaId = shortcode?.let { InstagramMediaId.fromShortcode(it) }
             val pageUrl = embedUrlFor(url, platform, shortcode)
             CookieManager.getInstance().setAcceptCookie(true)
 
@@ -87,7 +88,7 @@ constructor(@ApplicationContext private val context: Context) {
                             }
 
                             override fun onPageFinished(view: WebView?, finishedUrl: String?) {
-                                view?.evaluateJavascript(EXTRACT_JS, null)
+                                view?.evaluateJavascript(buildExtractJs(mediaId), null)
                             }
                         }
                 }
@@ -149,83 +150,78 @@ constructor(@ApplicationContext private val context: Context) {
 
         val VIDEO_CDN_HOSTS = listOf("cdninstagram.com", "fbcdn.net", "tiktokcdn", "muscdn.com")
         val INSTAGRAM_CODE = Regex("""instagram\.com/(reel|reels|p|tv)/([A-Za-z0-9_-]+)""")
-
-        /**
-         * Runs in the page and hands results back over the console channel as a `FLIP:` line.
-         *
-         * Two sources, in order of authority:
-         *  1. Instagram's own media API (`/api/v1/media/<id>/info/`). This is *same-origin* from the
-         *     embed page, so the fetch carries the signed-in session, uses Chromium's TLS and isn't
-         *     CORS-blocked — and it returns the correctly authorized `video_versions` URL. The embed's
-         *     scraped URL is NOT authorized for logged-in/gated reels (it 403s on download); the API URL
-         *     is. When signed out the API returns HTML, so this simply yields nothing and we fall back.
-         *     The numeric media id is derived from the shortcode (Instagram's base64 alphabet).
-         *  2. Scraping the embed's hydrated JSON (`shortcode_media`, JSON-in-JSON → unescape first). This
-         *     is what public reels use and needs no session.
-         * The `<video>` is also nudged to play so its CDN request fires for the interception path.
-         */
-        val EXTRACT_JS =
-            """
-            (function() {
-              var done = false;
-              function report(url, title, thumb) {
-                if (done || !url) return;
-                done = true;
-                console.log('FLIP:' + JSON.stringify({video_url:url, title:title||'', thumb:thumb||''}));
-              }
-              function meta(p){ var e=document.querySelector('meta[property="'+p+'"]'); return e?e.content:''; }
-              function mediaId(sc) {
-                var AB='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
-                var n = 0n;
-                for (var i=0;i<sc.length;i++){ var d=AB.indexOf(sc[i]); if(d<0) return null; n=n*64n+BigInt(d); }
-                return n.toString();
-              }
-              function apiGrab() {
-                try {
-                  var sc = (location.pathname.match(/\/(?:reel|reels|p|tv)\/([^\/?#]+)/)||[])[1];
-                  if (!sc) return;
-                  var id = mediaId(sc);
-                  if (!id) return;
-                  fetch('/api/v1/media/'+id+'/info/', {
-                    headers: {'X-IG-App-ID':'936619743392459'}, credentials: 'include'
-                  }).then(function(r){
-                    var ct = r.headers.get('content-type')||'';
-                    if (ct.indexOf('json') < 0) return null;   // signed out -> HTML, ignore
-                    return r.json();
-                  }).then(function(j){
-                    if (!j) return;
-                    var it = j.items && j.items[0]; if (!it) return;
-                    var vv = it.video_versions && it.video_versions[0] && it.video_versions[0].url;
-                    if (!vv) return;
-                    var title = (it.user && it.user.username) ? 'Video by ' + it.user.username : '';
-                    var thumb = it.image_versions2 && it.image_versions2.candidates
-                                && it.image_versions2.candidates[0] && it.image_versions2.candidates[0].url;
-                    report(vv, title, thumb);
-                  }).catch(function(){});
-                } catch (e) {}
-              }
-              function scrapeGrab() {
-                try {
-                  var v = document.querySelector('video');
-                  if (v) { try { v.muted = true; v.play(); } catch (e) {} }
-                  var raw = document.documentElement.innerHTML
-                    .replace(/\\u0026/g,'&').replace(/\\\//g,'/').replace(/\\"/g,'"');
-                  var m = raw.match(/"video_url":"([^"]+)"/)
-                       || raw.match(/"video_versions":\[\{[^}]*?"url":"([^"]+)"/)
-                       || raw.match(/(https:\/\/[^"'\s]+?\.mp4[^"'\s]*)/);
-                  if (!m && v && v.src && v.src.indexOf('http')===0) m=[null, v.src];
-                  if (!m) return;
-                  var u = raw.match(/"owner":\{[^}]*?"username":"([^"]+)"/) || raw.match(/"username":"([^"]+)"/);
-                  var title = meta('og:title') || (u ? 'Video by ' + u[1] : '');
-                  report(m[1], title, meta('og:image'));
-                } catch (e) {}
-              }
-              // Give the authoritative same-origin API a ~1s head start; the `done` guard means the
-              // embed scrape only reports if the API didn't (signed out / public reel).
-              apiGrab();
-              setTimeout(scrapeGrab, 1000);
-              setTimeout(function(){ apiGrab(); scrapeGrab(); }, 3000);
-            })();
-            """.trimIndent()
     }
+}
+
+/**
+ * The page script, with the Kotlin-computed [mediaId] baked in. It hands results back over the console
+ * channel as a `FLIP:` line and draws from two sources, in order of authority:
+ *  1. Instagram's own media API (`/api/v1/media/<id>/info/`). This is *same-origin* from the embed page,
+ *     so the fetch carries the signed-in session, uses Chromium's TLS and isn't CORS-blocked — and it
+ *     returns the correctly authorized `video_versions` URL. The embed's scraped URL is NOT authorized for
+ *     logged-in/gated reels (it 403s on download); the API URL is. When signed out the API returns HTML,
+ *     so this yields nothing and we fall back. Skipped when [mediaId] is null (non-reel / unparseable).
+ *  2. Scraping the embed's hydrated JSON (`shortcode_media`, JSON-in-JSON → unescape first). This is what
+ *     public reels use and needs no session.
+ * The `<video>` is also nudged to play so its CDN request fires for the interception path.
+ *
+ * [mediaId] is always a validated base-10 number ([InstagramMediaId]) or null, so baking it straight into
+ * the script carries no injection risk.
+ */
+internal fun buildExtractJs(mediaId: String?): String {
+    val idLiteral = mediaId?.let { "'$it'" } ?: "null"
+    return """
+        (function() {
+          var MEDIA_ID = $idLiteral;
+          var done = false;
+          function report(url, title, thumb) {
+            if (done || !url) return;
+            done = true;
+            console.log('FLIP:' + JSON.stringify({video_url:url, title:title||'', thumb:thumb||''}));
+          }
+          function meta(p){ var e=document.querySelector('meta[property="'+p+'"]'); return e?e.content:''; }
+          function apiGrab() {
+            if (!MEDIA_ID) return;
+            try {
+              fetch('/api/v1/media/'+MEDIA_ID+'/info/', {
+                headers: {'X-IG-App-ID':'936619743392459'}, credentials: 'include'
+              }).then(function(r){
+                var ct = r.headers.get('content-type')||'';
+                if (ct.indexOf('json') < 0) return null;   // signed out -> HTML, ignore
+                return r.json();
+              }).then(function(j){
+                if (!j) return;
+                var it = j.items && j.items[0]; if (!it) return;
+                var vv = it.video_versions && it.video_versions[0] && it.video_versions[0].url;
+                if (!vv) return;
+                var title = (it.user && it.user.username) ? 'Video by ' + it.user.username : '';
+                var thumb = it.image_versions2 && it.image_versions2.candidates
+                            && it.image_versions2.candidates[0] && it.image_versions2.candidates[0].url;
+                report(vv, title, thumb);
+              }).catch(function(){});
+            } catch (e) {}
+          }
+          function scrapeGrab() {
+            try {
+              var v = document.querySelector('video');
+              if (v) { try { v.muted = true; v.play(); } catch (e) {} }
+              var raw = document.documentElement.innerHTML
+                .replace(/\\u0026/g,'&').replace(/\\\//g,'/').replace(/\\"/g,'"');
+              var m = raw.match(/"video_url":"([^"]+)"/)
+                   || raw.match(/"video_versions":\[\{[^}]*?"url":"([^"]+)"/)
+                   || raw.match(/(https:\/\/[^"'\s]+?\.mp4[^"'\s]*)/);
+              if (!m && v && v.src && v.src.indexOf('http')===0) m=[null, v.src];
+              if (!m) return;
+              var u = raw.match(/"owner":\{[^}]*?"username":"([^"]+)"/) || raw.match(/"username":"([^"]+)"/);
+              var title = meta('og:title') || (u ? 'Video by ' + u[1] : '');
+              report(m[1], title, meta('og:image'));
+            } catch (e) {}
+          }
+          // Give the authoritative same-origin API a ~1s head start; the `done` guard means the
+          // embed scrape only reports if the API didn't (signed out / public reel).
+          apiGrab();
+          setTimeout(scrapeGrab, 1000);
+          setTimeout(function(){ apiGrab(); scrapeGrab(); }, 3000);
+        })();
+    """.trimIndent()
 }

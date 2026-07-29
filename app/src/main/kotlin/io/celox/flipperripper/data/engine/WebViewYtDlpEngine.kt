@@ -142,28 +142,12 @@ constructor(
     }
 
     /**
-     * The cookies to send with the CDN media request. A browser would send only the cookies scoped to
-     * the CDN host, but Instagram gates some logged-in media on the *account* cookies, which live on the
-     * `instagram.com` domain and are therefore absent from the CDN host's jar. Merge the two: the CDN
-     * host's own cookies plus the session cookies (`sessionid`, `ds_user_id`, `csrftoken`) lifted from
-     * the instagram.com jar. When signed out the account jar is empty, so this is identical to the
-     * CDN-only cookies and public downloads are unaffected.
+     * The cookies to send with the CDN media request: the CDN host's own cookies merged with the
+     * instagram.com account session (see [InstagramCookies], which holds the reasoning and is unit-tested).
      */
     private fun cookieHeaderFor(mediaUrl: String): String {
         val cm = CookieManager.getInstance()
-        val cdnPairs =
-            cm.getCookie(mediaUrl).orEmpty().split(";").map { it.trim() }.filter { it.isNotBlank() }
-        val cdnNames = cdnPairs.map { it.substringBefore('=') }.toSet()
-        val igJar = cm.getCookie("https://www.instagram.com").orEmpty()
-        // Only lift account cookies when actually signed in, so the logged-out public path is unchanged.
-        val sessionPairs =
-            if (!igJar.contains("sessionid=")) {
-                emptyList()
-            } else {
-                igJar.split(";").map { it.trim() }
-                    .filter { it.substringBefore('=') in SESSION_COOKIE_NAMES && it.substringBefore('=') !in cdnNames }
-            }
-        return (cdnPairs + sessionPairs).joinToString("; ")
+        return InstagramCookies.merge(cm.getCookie(mediaUrl), cm.getCookie("https://www.instagram.com"))
     }
 
     private fun copyStream(
@@ -214,8 +198,5 @@ constructor(
 
         /** A real short clip is comfortably above this; anything smaller is a cover image or an error. */
         const val MIN_VIDEO_BYTES = 50_000L
-
-        /** Instagram account cookies that gate logged-in media, lifted from the instagram.com jar. */
-        val SESSION_COOKIE_NAMES = setOf("sessionid", "ds_user_id", "csrftoken")
     }
 }

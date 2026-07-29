@@ -40,6 +40,7 @@ Material 3 **Expressive** UI with spring physics, shape-morphing motifs and dyna
 - **Share integration** — tap *Share* in Instagram / TikTok / YouTube and pick **Flipper the Ripper**; the link is imported automatically.
 - **Clipboard detection** — copied a link instead? On launch the app offers to download a supported URL found on the clipboard.
 - **One-tap flow** — analyse → detect platform → resolve metadata → download, with as few taps as possible (auto-download on share is configurable).
+- **Instagram sign-in (optional)** — some reels are only visible to a signed-in account. Sign in on **Instagram's own page** (*Settings → Instagram*) and the app can download the reels *your* account can see. The password is entered on Instagram, never touched by the app — only the resulting session cookie is kept, exactly as a browser does. Sign out anytime.
 - **Title-based filenames** — files are named after the video title (`Wie man Android Apps entwickelt.mp4`) with illegal characters sanitised.
 - **Shows up everywhere** — saved via **MediaStore** into the public *Movies* folder; instantly visible in Gallery, Google Photos and file managers.
 - **True background downloads** — keep going while the screen is locked, the app is minimised, or the device is rotated (WorkManager + foreground service).
@@ -92,8 +93,10 @@ same reliability across all three platforms.
 | Pure-JVM extractor (NewPipeExtractor) | ❌ Strong for YouTube only; Instagram unsupported, TikTok fragile — would not meet the requirement. |
 
 **Cookie fallback deviation:** the desktop `--cookies-from-browser` retry has no Android equivalent
-(there are no desktop browser profiles). Login walls are surfaced as a typed `LoginRequired` error
-instead; user-supplied cookie files are on the [roadmap](#-roadmap).
+(there are no desktop browser profiles). For Instagram the app instead offers an **in-app sign-in**
+(*Settings → Instagram*): a WebView loads Instagram's own login page and the shared cookie store then
+carries the session into the extractor — see [How downloads are routed](#how-downloads-are-routed).
+Login walls that remain (e.g. YouTube age-gates) are surfaced as a typed `LoginRequired` error.
 
 ## 🏛️ Architecture
 
@@ -202,7 +205,8 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## 🗺️ Roadmap
 
-- [ ] User-supplied cookie file for login-gated public content
+- [x] Instagram sign-in for login-only reels (in-app WebView login → session reused by the extractor) — shipped in 1.2.11
+- [ ] User-supplied cookie file for other login-gated platforms
 - [ ] Playlist / multi-item downloads
 - [ ] Quality / format picker before download
 - [ ] Subtitle download
@@ -215,11 +219,13 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 **Is this on Google Play?** No — Play policy prohibits these apps. Sideload the signed APK from Releases.
 
-**Why is the APK ~70 MB?** It bundles the real yt-dlp + ffmpeg + Python runtime as native libraries so extraction works fully offline of any server.
+**Why is the APK ~33 MB?** Each build is a **per-ABI APK** carrying only your architecture's copy of the real yt-dlp + ffmpeg native libraries (a single fat APK would be ~70 MB), so extraction works fully offline of any server.
 
 **A download fails with "rate-limited or out of date".** The extractor changed upstream. Open **Settings → Update yt-dlp** to fetch the latest engine, then retry.
 
-**Instagram/YouTube says login required.** The content is behind an auth/anti-bot wall. Only publicly accessible content is supported; cookie import is on the roadmap.
+**An Instagram reel won't download / says it needs sign-in.** Some reels are only visible to a logged-in account. Go to **Settings → Instagram → Sign in to Instagram**, sign in on Instagram's own page, then retry. If your account can view the reel, the app can download it; a private account you don't follow stays inaccessible (that is Instagram's rule, not an app limit).
+
+**YouTube says login/age-verification required.** That content is behind an auth/anti-bot wall that the app does not bypass; only content reachable without those walls is supported.
 
 **Where do files go?** The public *Movies/FlipperTheRipper* folder (audio → *Music/FlipperTheRipper*), visible in Gallery/Photos/file managers.
 
@@ -234,8 +240,9 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 | Repeated failures on one platform | **Settings → Update yt-dlp**. |
 | Nothing saved to the gallery | Check storage; on Android 7–9 grant the storage permission when prompted. |
 | Build fails on `kspDebugKotlin` | Ensure `ksp.useKSP2=false` (set in `gradle.properties`). |
-| A YouTube/TikTok download fails after the title/thumbnail loaded | The platform is gating the media fetch — see **Two download modes** below. Try **Settings → Update yt-dlp**, and switch download source: on-device uses your own IP, which YouTube blocks far less than a server's. |
+| A YouTube/TikTok download fails after the title/thumbnail loaded | The platform is gating the media fetch — see **How downloads are routed** below. Try **Settings → Update yt-dlp**, and switch download source: on-device uses your own IP, which YouTube blocks far less than a server's. |
 | "Your IP address is blocked" / "Sign in to confirm you're not a bot" | Platform-side IP reputation, not an app fault. Switch to **On device** (your own connection) or try a different network. |
+| An Instagram reel fails / `HTTP 403 from …cdninstagram.com` | The reel is login-only. **Settings → Instagram → Sign in to Instagram**, then retry. A 403 after signing in usually means your account can't view that reel (private account you don't follow). |
 
 ### How downloads are routed
 
@@ -245,7 +252,7 @@ falls back to a configured server if the primary can't get it:
 | Platform | On-device primary | Why | Fallback |
 |----------|-------------------|-----|----------|
 | **YouTube** | bundled **yt-dlp** (`android_vr` client) | needs no JS challenge, no PO token; runs from *your* IP, which YouTube blocks far less than a datacenter | server |
-| **Instagram** | a hidden **WebView** | Instagram fingerprints the TLS handshake and hydrates the URL with JS — only a real browser gets through, and Android's WebView *is* Chromium | server |
+| **Instagram** | a hidden **WebView** (+ optional sign-in) | Instagram fingerprints the TLS handshake and hydrates the URL with JS — only a real browser gets through, and Android's WebView *is* Chromium; signing in unlocks login-only reels | server |
 | **TikTok** | WebView (best-effort) | same browser check; extraction is less reliable and may fail | server |
 
 **Why three engines fail in different ways:**
@@ -253,11 +260,20 @@ falls back to a configured server if the primary can't get it:
 - **yt-dlp on the device** has no JavaScript runtime and no `curl_cffi`, so it can do YouTube (via
   `android_vr`) but *cannot* do Instagram/TikTok at all — those now require browser TLS impersonation.
 - **The WebView** is real Chromium: it presents the genuine Chrome TLS fingerprint and runs the page's
-  JS, so it reads the video URL off Instagram directly on the device, with no server. The signed CDN
-  URL it finds is then downloaded with an ordinary client.
+  JS. It loads the reel's embed in a hidden WebView and resolves the video URL two ways:
+  - **public reels** — scraped straight out of the embed's hydrated JSON;
+  - **signed-in / gated reels** — via Instagram's own media API (`/api/v1/media/<id>/info/`, media id
+    derived from the shortcode). That call is made *from inside the page*, so it is same-origin: it
+    carries your session, uses Chromium's TLS and isn't CORS-blocked, and returns the **authorized**
+    URL. (The URL scraped from the embed is *not* authorized for gated content and the CDN 403s it.)
+
+  The resulting signed CDN URL is then downloaded with an ordinary HTTP client, replicating what the
+  page's `<video>` element sends (Referer, `Range`, `Sec-Fetch-*`) and — when signed in — the
+  `instagram.com` session cookies, which the CDN requires for gated media.
 - **The server** (optional, `backend/`) runs `curl_cffi`, a `deno` JS runtime and ffmpeg — it can catch
   what the device missed, **except** where the block is its datacenter IP (YouTube, TikTok), which is
-  why it is only ever a fallback.
+  why it is only ever a fallback. (It is not signed in to your Instagram, so it cannot fetch login-only
+  reels — that is exactly what the on-device sign-in is for.)
 
 > **Reality (July 2026).** The blocks are of two kinds. **IP reputation:** YouTube answers datacenter
 > IPs with *"Sign in to confirm you're not a bot"* and TikTok with *"Your IP address is blocked"* — so a

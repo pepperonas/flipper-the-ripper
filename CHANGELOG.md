@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.12] - 2026-07-29
+
+### Changed
+- **Hardened the Instagram fix with unit tests and a small refactor (no behaviour change).** The
+  shortcode → media-id conversion moved out of in-page JavaScript into a pure, tested Kotlin object
+  (`InstagramMediaId`, computed once and injected into the page script), and the CDN cookie-merge logic
+  moved into a pure, tested `InstagramCookies`. New unit suites cover the media-id math (incl. values past
+  64-bit range), the signed-in/signed-out cookie merge, and the emitted page script. Documentation
+  (README) now describes the WebView + authenticated-media-API download path and the Instagram sign-in.
+
 ## [1.2.11] - 2026-07-29
 
 ### Fixed
