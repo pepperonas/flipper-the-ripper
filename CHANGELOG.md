@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.10] - 2026-07-29
+
+### Fixed
+- **Logged-in Instagram downloads that still returned 403 now send the account's session.** Instagram's
+  CDN gates some signed-in media on the `instagram.com` account cookies (`sessionid`, `ds_user_id`,
+  `csrftoken`) — but those live on a different domain than the CDN host, so the browser's own cookie jar
+  for the CDN never contains them. The download now lifts those session cookies into the request when
+  signed in, and also sends the `Sec-Fetch-Dest/Mode/Site` and `Accept-Language` headers a real `<video>`
+  element attaches. When signed out nothing changes, so public reels are unaffected (verified).
+
 ## [1.2.9] - 2026-07-29
 
 ### Fixed

@@ -106,21 +106,24 @@ constructor(
         onProgress: (DownloadProgress) -> Unit,
     ) {
         // Replicate exactly what the page's own <video> element sends. Instagram's CDN returns 403 to a
-        // bare GET for a logged-in/gated clip: a real video request carries the instagram.com Referer,
-        // a Range header (video is always range-requested) and, for gated media, the session's cookies.
-        // Public reels tolerated a bare GET; gated ones do not.
+        // bare GET for a logged-in/gated clip: a real cross-site video request carries the instagram.com
+        // Referer, a Range header (video is always range-requested), the Sec-Fetch metadata a browser
+        // attaches, and — for gated media — the account's session cookies. Public reels tolerated a bare
+        // GET; gated ones do not.
         val request =
             Request.Builder()
                 .url(mediaUrl)
                 .header("User-Agent", MOBILE_CHROME_UA)
                 .header("Accept", "*/*")
+                .header("Accept-Language", "en-US,en;q=0.9")
                 .header("Accept-Encoding", "identity")
                 .header("Referer", "https://www.instagram.com/")
                 .header("Range", "bytes=0-")
+                .header("Sec-Fetch-Dest", "video")
+                .header("Sec-Fetch-Mode", "no-cors")
+                .header("Sec-Fetch-Site", "cross-site")
                 .apply {
-                    CookieManager.getInstance().getCookie(mediaUrl)
-                        ?.takeIf { it.isNotBlank() }
-                        ?.let { header("Cookie", it) }
+                    cookieHeaderFor(mediaUrl).takeIf { it.isNotBlank() }?.let { header("Cookie", it) }
                 }
                 .get()
                 .build()
@@ -131,6 +134,31 @@ constructor(
                 target.outputStream().use { out -> copyStream(spec, input, out, body.contentLength(), onProgress) }
             }
         }
+    }
+
+    /**
+     * The cookies to send with the CDN media request. A browser would send only the cookies scoped to
+     * the CDN host, but Instagram gates some logged-in media on the *account* cookies, which live on the
+     * `instagram.com` domain and are therefore absent from the CDN host's jar. Merge the two: the CDN
+     * host's own cookies plus the session cookies (`sessionid`, `ds_user_id`, `csrftoken`) lifted from
+     * the instagram.com jar. When signed out the account jar is empty, so this is identical to the
+     * CDN-only cookies and public downloads are unaffected.
+     */
+    private fun cookieHeaderFor(mediaUrl: String): String {
+        val cm = CookieManager.getInstance()
+        val cdnPairs =
+            cm.getCookie(mediaUrl).orEmpty().split(";").map { it.trim() }.filter { it.isNotBlank() }
+        val cdnNames = cdnPairs.map { it.substringBefore('=') }.toSet()
+        val igJar = cm.getCookie("https://www.instagram.com").orEmpty()
+        // Only lift account cookies when actually signed in, so the logged-out public path is unchanged.
+        val sessionPairs =
+            if (!igJar.contains("sessionid=")) {
+                emptyList()
+            } else {
+                igJar.split(";").map { it.trim() }
+                    .filter { it.substringBefore('=') in SESSION_COOKIE_NAMES && it.substringBefore('=') !in cdnNames }
+            }
+        return (cdnPairs + sessionPairs).joinToString("; ")
     }
 
     private fun copyStream(
@@ -181,5 +209,8 @@ constructor(
 
         /** A real short clip is comfortably above this; anything smaller is a cover image or an error. */
         const val MIN_VIDEO_BYTES = 50_000L
+
+        /** Instagram account cookies that gate logged-in media, lifted from the instagram.com jar. */
+        val SESSION_COOKIE_NAMES = setOf("sessionid", "ds_user_id", "csrftoken")
     }
 }
