@@ -60,7 +60,7 @@ constructor(@ApplicationContext private val context: Context) {
                     settings.javaScriptEnabled = true
                     settings.domStorageEnabled = true
                     settings.mediaPlaybackRequiresUserGesture = false
-                    settings.userAgentString = MOBILE_CHROME_UA
+                    settings.userAgentString = webViewUserAgent(platform)
                     CookieManager.getInstance().setAcceptThirdPartyCookies(this, true)
                     webChromeClient =
                         object : WebChromeClient() {
@@ -88,7 +88,7 @@ constructor(@ApplicationContext private val context: Context) {
                             }
 
                             override fun onPageFinished(view: WebView?, finishedUrl: String?) {
-                                view?.evaluateJavascript(buildExtractJs(mediaId), null)
+                                view?.evaluateJavascript(buildExtractJs(platform, mediaId), null)
                             }
                         }
                 }
@@ -154,25 +154,27 @@ constructor(@ApplicationContext private val context: Context) {
 }
 
 /**
- * The page script, with the Kotlin-computed [mediaId] baked in. It hands results back over the console
- * channel as a `FLIP:` line and draws from two sources, in order of authority:
- *  1. Instagram's own media API (`/api/v1/media/<id>/info/`). This is *same-origin* from the embed page,
- *     so the fetch carries the signed-in session, uses Chromium's TLS and isn't CORS-blocked — and it
- *     returns the correctly authorized `video_versions` URL. The embed's scraped URL is NOT authorized for
- *     logged-in/gated reels (it 403s on download); the API URL is. When signed out the API returns HTML,
- *     so this yields nothing and we fall back. Skipped when [mediaId] is null (non-reel / unparseable).
- *  2. Scraping the embed's hydrated JSON (`shortcode_media`, JSON-in-JSON → unescape first). This is what
- *     public reels use and needs no session.
- * The `<video>` is also nudged to play so its CDN request fires for the interception path.
+ * The page script, tailored to [platform] with the Kotlin-computed [mediaId] baked in. It reports over
+ * the console channel as a `FLIP:` line. Each platform hides the direct video URL differently:
  *
- * [mediaId] is always a validated base-10 number ([InstagramMediaId]) or null, so baking it straight into
- * the script carries no injection risk.
+ *  - **Instagram** — first its own media API (`/api/v1/media/<id>/info/`, [mediaId] from the shortcode):
+ *    same-origin, so it carries the signed-in session, uses Chromium's TLS, isn't CORS-blocked, and
+ *    returns the *authorized* URL (the embed's scraped URL 403s for gated reels). Signed out it returns
+ *    HTML and we fall back to scraping the embed's hydrated `shortcode_media` JSON.
+ *  - **TikTok** — the `__UNIVERSAL_DATA_FOR_REHYDRATION__` blob (`webapp.video-detail…video.playAddr`).
+ *  - **Facebook** — the `browser_native_hd_url` / `playable_url` fields embedded in the page HTML.
+ *
+ * The `<video>` is also nudged to play so its CDN request fires for the interception path, and a generic
+ * `.mp4` sweep is the last resort. [mediaId] is always a validated base-10 number ([InstagramMediaId]) or
+ * null, so baking it into the script carries no injection risk.
  */
-internal fun buildExtractJs(mediaId: String?): String {
+internal fun buildExtractJs(platform: Platform, mediaId: String?): String {
     val idLiteral = mediaId?.let { "'$it'" } ?: "null"
+    val platformLiteral = "'${platform.name.lowercase()}'"
     return """
         (function() {
           var MEDIA_ID = $idLiteral;
+          var PLATFORM = $platformLiteral;
           var done = false;
           function report(url, title, thumb) {
             if (done || !url) return;
@@ -201,13 +203,41 @@ internal fun buildExtractJs(mediaId: String?): String {
               }).catch(function(){});
             } catch (e) {}
           }
+          function tiktokBlob() {
+            // TikTok hydrates the video into a JSON <script>; parse it rather than regex the URL.
+            try {
+              var el = document.getElementById('__UNIVERSAL_DATA_FOR_REHYDRATION__');
+              if (!el) return null;
+              var scope = JSON.parse(el.textContent).__DEFAULT_SCOPE__ || {};
+              var d = scope['webapp.video-detail'];
+              var it = d && d.itemInfo && d.itemInfo.itemStruct;
+              if (!it || !it.video) return null;
+              var vid = it.video;
+              var url = vid.playAddr
+                     || (vid.bitrateInfo && vid.bitrateInfo[0] && vid.bitrateInfo[0].PlayAddr
+                         && vid.bitrateInfo[0].PlayAddr.UrlList && vid.bitrateInfo[0].PlayAddr.UrlList[0])
+                     || vid.downloadAddr;
+              if (!url) return null;
+              var title = it.desc || (it.author && it.author.uniqueId ? 'Video by @' + it.author.uniqueId : '');
+              return { url: url, title: title, thumb: vid.cover || vid.originCover || '' };
+            } catch (e) { return null; }
+          }
           function scrapeGrab() {
             try {
               var v = document.querySelector('video');
               if (v) { try { v.muted = true; v.play(); } catch (e) {} }
+              if (PLATFORM === 'tiktok') {
+                var t = tiktokBlob();
+                if (t) { report(t.url, t.title, t.thumb); return; }
+              }
               var raw = document.documentElement.innerHTML
-                .replace(/\\u0026/g,'&').replace(/\\\//g,'/').replace(/\\"/g,'"');
-              var m = raw.match(/"video_url":"([^"]+)"/)
+                .replace(/\\u0026/g,'&').replace(/\\u0025/g,'%').replace(/\\\//g,'/').replace(/\\"/g,'"');
+              var m = raw.match(/"browser_native_hd_url":"([^"]+)"/)
+                   || raw.match(/"playable_url_quality_hd":"([^"]+)"/)
+                   || raw.match(/"browser_native_sd_url":"([^"]+)"/)
+                   || raw.match(/"playable_url":"([^"]+)"/)
+                   || raw.match(/"playAddr":"([^"]+)"/)
+                   || raw.match(/"video_url":"([^"]+)"/)
                    || raw.match(/"video_versions":\[\{[^}]*?"url":"([^"]+)"/)
                    || raw.match(/(https:\/\/[^"'\s]+?\.mp4[^"'\s]*)/);
               if (!m && v && v.src && v.src.indexOf('http')===0) m=[null, v.src];

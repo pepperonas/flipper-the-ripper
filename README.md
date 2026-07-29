@@ -4,7 +4,7 @@
 
 # 🎬 Flipper the Ripper
 
-**A modern, open-source Android app to download publicly accessible videos from Instagram, YouTube and TikTok.**
+**A modern, open-source Android app to download publicly accessible videos from Instagram, YouTube, TikTok and Facebook.**
 
 [![CI](https://img.shields.io/github/actions/workflow/status/pepperonas/flipper-the-ripper/ci.yml?branch=main&label=build&logo=github)](https://github.com/pepperonas/flipper-the-ripper/actions/workflows/ci.yml)
 [![Tests](https://img.shields.io/github/actions/workflow/status/pepperonas/flipper-the-ripper/ci.yml?branch=main&label=tests&logo=junit5)](https://github.com/pepperonas/flipper-the-ripper/actions/workflows/ci.yml)
@@ -37,7 +37,7 @@ Material 3 **Expressive** UI with spring physics, shape-morphing motifs and dyna
 
 ## ✨ Features
 
-- **Share integration** — tap *Share* in Instagram / TikTok / YouTube and pick **Flipper the Ripper**; the link is imported automatically.
+- **Share integration** — tap *Share* in Instagram / TikTok / YouTube / Facebook and pick **Flipper the Ripper**; the link is imported automatically.
 - **Clipboard detection** — copied a link instead? On launch the app offers to download a supported URL found on the clipboard.
 - **One-tap flow** — analyse → detect platform → resolve metadata → download, with as few taps as possible (auto-download on share is configurable).
 - **Instagram sign-in (optional)** — some reels are only visible to a signed-in account. Sign in on **Instagram's own page** (*Settings → Instagram*) and the app can download the reels *your* account can see. The password is entered on Instagram, never touched by the app — only the resulting session cookie is kept, exactly as a browser does. Sign out anytime.
@@ -227,6 +227,8 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 **YouTube says login/age-verification required.** That content is behind an auth/anti-bot wall that the app does not bypass; only content reachable without those walls is supported.
 
+**Do TikTok and Facebook work?** Yes — both download on-device through the WebView (TikTok reads the URL from the page's rehydration JSON; Facebook from the public video page's HTML). Facebook videos that require a login, and private/age-restricted content, are not supported.
+
 **Where do files go?** The public *Movies/FlipperTheRipper* folder (audio → *Music/FlipperTheRipper*), visible in Gallery/Photos/file managers.
 
 **Does it work on an x86 emulator?** No — use an ARM system image or a physical device.
@@ -253,23 +255,28 @@ falls back to a configured server if the primary can't get it:
 |----------|-------------------|-----|----------|
 | **YouTube** | bundled **yt-dlp** (`android_vr` client) | needs no JS challenge, no PO token; runs from *your* IP, which YouTube blocks far less than a datacenter | server |
 | **Instagram** | a hidden **WebView** (+ optional sign-in) | Instagram fingerprints the TLS handshake and hydrates the URL with JS — only a real browser gets through, and Android's WebView *is* Chromium; signing in unlocks login-only reels | server |
-| **TikTok** | WebView (best-effort) | same browser check; extraction is less reliable and may fail | server |
+| **TikTok** | a hidden **WebView** | same browser check; the URL is read from the page's `__UNIVERSAL_DATA_FOR_REHYDRATION__` JSON and fetched with a `tiktok.com` Referer + the page cookies | server |
+| **Facebook** | a hidden **WebView** (desktop UA) | the public video page embeds `browser_native_hd_url` in its HTML — but only the *desktop* page, so the extractor presents a desktop user-agent | server |
 
-**Why three engines fail in different ways:**
+**How the engines differ:**
 
 - **yt-dlp on the device** has no JavaScript runtime and no `curl_cffi`, so it can do YouTube (via
-  `android_vr`) but *cannot* do Instagram/TikTok at all — those now require browser TLS impersonation.
+  `android_vr`) but *cannot* do Instagram/TikTok/Facebook at all — those require browser TLS impersonation.
 - **The WebView** is real Chromium: it presents the genuine Chrome TLS fingerprint and runs the page's
-  JS. It loads the reel's embed in a hidden WebView and resolves the video URL two ways:
-  - **public reels** — scraped straight out of the embed's hydrated JSON;
-  - **signed-in / gated reels** — via Instagram's own media API (`/api/v1/media/<id>/info/`, media id
-    derived from the shortcode). That call is made *from inside the page*, so it is same-origin: it
-    carries your session, uses Chromium's TLS and isn't CORS-blocked, and returns the **authorized**
-    URL. (The URL scraped from the embed is *not* authorized for gated content and the CDN 403s it.)
+  JS, then reads the direct video URL — each platform hides it differently:
+  - **Instagram** — public reels are scraped from the embed's hydrated JSON; signed-in/gated reels go
+    through Instagram's own media API (`/api/v1/media/<id>/info/`, media id derived from the shortcode),
+    called *from inside the page* so it is same-origin: it carries your session, uses Chromium's TLS,
+    isn't CORS-blocked, and returns the **authorized** URL (the embed's URL 403s for gated content).
+  - **TikTok** — parsed out of the page's `__UNIVERSAL_DATA_FOR_REHYDRATION__` JSON (`video.playAddr`).
+  - **Facebook** — read from `browser_native_hd_url` in the page HTML (desktop UA — the mobile page
+    omits it).
 
   The resulting signed CDN URL is then downloaded with an ordinary HTTP client, replicating what the
-  page's `<video>` element sends (Referer, `Range`, `Sec-Fetch-*`) and — when signed in — the
-  `instagram.com` session cookies, which the CDN requires for gated media.
+  page's `<video>` element sends: the matching **site Referer** (instagram.com / tiktok.com /
+  facebook.com — the wrong one is a 403), `Range`, `Sec-Fetch-*`, and the site's cookies (including the
+  Instagram account session for logged-in reels). Because JavaScript cannot read cross-origin CDN bytes
+  (CORS), the URL is captured in the page but the *bytes* are fetched natively.
 - **The server** (optional, `backend/`) runs `curl_cffi`, a `deno` JS runtime and ffmpeg — it can catch
   what the device missed, **except** where the block is its datacenter IP (YouTube, TikTok), which is
   why it is only ever a fallback. (It is not signed in to your Instagram, so it cannot fetch login-only

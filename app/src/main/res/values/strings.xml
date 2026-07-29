@@ -10,7 +10,7 @@
     <!-- Home -->
     <string name="home_title">Flipper the Ripper</string>
     <string name="home_url_label">Video link</string>
-    <string name="home_url_hint">Paste an Instagram, TikTok or YouTube link</string>
+    <string name="home_url_hint">Paste an Instagram, TikTok, Facebook or YouTube link</string>
     <string name="home_paste">Paste</string>
     <string name="home_clear">Clear</string>
     <string name="home_fetch">Load info</string>

@@ -37,6 +37,15 @@ class EngineRoutingTest {
     }
 
     @Test
+    fun `facebook runs through the webview first`() {
+        assertThat(EngineRouting.order(Platform.FACEBOOK, serverConfigured = false, preferServer = false))
+            .containsExactly(EngineKind.WEB_VIEW)
+        assertThat(EngineRouting.order(Platform.FACEBOOK, serverConfigured = true, preferServer = false))
+            .containsExactly(EngineKind.WEB_VIEW, EngineKind.SERVER)
+            .inOrder()
+    }
+
+    @Test
     fun `an explicit server preference puts the server first, primary as fallback`() {
         assertThat(EngineRouting.order(Platform.YOUTUBE, serverConfigured = true, preferServer = true))
             .containsExactly(EngineKind.SERVER, EngineKind.ON_DEVICE)

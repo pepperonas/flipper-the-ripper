@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-07-30
+
+### Added
+- **Facebook support.** Public Facebook videos (`facebook.com`, `fb.watch`, `fb.com`, incl. `m.`/`web.`)
+  now download on-device. The extractor reads `browser_native_hd_url` from the video page's HTML — using
+  a **desktop** user-agent, because Facebook's mobile page omits that field. Verified on device (5.9 MB).
+
+### Changed
+- **TikTok downloads are now reliable, not best-effort.** Instead of hoping to catch the `.mp4` off the
+  wire, the extractor parses the page's `__UNIVERSAL_DATA_FOR_REHYDRATION__` JSON
+  (`webapp.video-detail…video.playAddr`) and downloads it with a **`tiktok.com` Referer** plus the page's
+  cookies — the old code sent an `instagram.com` Referer and missed the real CDN host
+  (`v16-webapp-prime.tiktok.com`), which is why it kept failing. Verified on device (4.0 MB, real caption
+  as the title).
+- The download now sends the **site-matched Referer** per platform (instagram.com / tiktok.com /
+  facebook.com); a mismatched Referer was itself a source of 403s.
+- A failed non-Instagram extraction no longer shows the Instagram sign-in hint — the message is now
+  platform-appropriate.
+
 ## [1.2.12] - 2026-07-29
 
 ### Changed

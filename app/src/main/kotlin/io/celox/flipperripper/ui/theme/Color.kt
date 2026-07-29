@@ -48,4 +48,5 @@ fun Platform.accentColor(): Color =
         Platform.YOUTUBE -> Color(0xFFFF3D3D)
         Platform.INSTAGRAM -> Color(0xFFE1306C)
         Platform.TIKTOK -> Color(0xFF25F4EE)
+        Platform.FACEBOOK -> Color(0xFF1877F2)
     }

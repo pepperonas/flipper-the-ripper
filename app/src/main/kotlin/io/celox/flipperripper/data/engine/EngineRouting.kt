@@ -28,7 +28,7 @@ object EngineRouting {
         val primary =
             when (platform) {
                 Platform.YOUTUBE -> EngineKind.ON_DEVICE
-                Platform.INSTAGRAM, Platform.TIKTOK -> EngineKind.WEB_VIEW
+                Platform.INSTAGRAM, Platform.TIKTOK, Platform.FACEBOOK -> EngineKind.WEB_VIEW
             }
         return when {
             preferServer -> listOf(EngineKind.SERVER, primary)

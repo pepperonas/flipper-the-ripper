@@ -6,6 +6,7 @@ import io.celox.flipperripper.domain.model.DownloadError
 import io.celox.flipperripper.domain.model.DownloadMode
 import io.celox.flipperripper.domain.model.DownloadProgress
 import io.celox.flipperripper.domain.model.EngineResult
+import io.celox.flipperripper.domain.model.Platform
 import io.celox.flipperripper.domain.model.VideoInfo
 import io.celox.flipperripper.domain.util.UrlParser
 import kotlinx.coroutines.CoroutineDispatcher
@@ -55,7 +56,7 @@ constructor(
             UrlParser.detectPlatform(url) ?: return EngineResult.Failure(DownloadError.InvalidUrl())
         val media =
             extractor.extract(url, platform)
-                ?: return EngineResult.Failure(browserExtractionFailed())
+                ?: return EngineResult.Failure(browserExtractionFailed(platform))
         return EngineResult.Success(
             VideoInfo(
                 sourceUrl = url,
@@ -75,7 +76,7 @@ constructor(
     ): EngineResult<DownloadedFile> {
         val media =
             extractor.extract(spec.url, spec.platform)
-                ?: return EngineResult.Failure(browserExtractionFailed())
+                ?: return EngineResult.Failure(browserExtractionFailed(spec.platform))
 
         return withContext(ioDispatcher) {
             prepareDir(spec.workingDir)
@@ -94,7 +95,7 @@ constructor(
                 // Below a plausible video size the extractor grabbed the wrong asset (a cover image or
                 // pixel). Fail rather than save junk, so the routing can fall through to the server.
                 target.length() >= MIN_VIDEO_BYTES -> EngineResult.Success(DownloadedFile(target, "mp4"))
-                else -> EngineResult.Failure(browserExtractionFailed())
+                else -> EngineResult.Failure(browserExtractionFailed(spec.platform))
             }
         }
     }
@@ -105,11 +106,11 @@ constructor(
         target: File,
         onProgress: (DownloadProgress) -> Unit,
     ) {
-        // Replicate exactly what the page's own <video> element sends. Instagram's CDN returns 403 to a
-        // bare GET for a logged-in/gated clip: a real cross-site video request carries the instagram.com
-        // Referer, a Range header (video is always range-requested), the Sec-Fetch metadata a browser
-        // attaches, and — for gated media — the account's session cookies. Public reels tolerated a bare
-        // GET; gated ones do not.
+        // Replicate what the page's own <video> element sends. A platform CDN returns 403 to a bare GET
+        // for gated/authenticated media: a real cross-site video request carries the *site's* Referer
+        // (instagram.com / tiktok.com / facebook.com — the wrong one is a 403), a Range header (video is
+        // always range-requested), the Sec-Fetch metadata a browser attaches, and the cookies the site
+        // holds (incl. the Instagram account session for logged-in reels).
         val request =
             Request.Builder()
                 .url(mediaUrl)
@@ -117,13 +118,14 @@ constructor(
                 .header("Accept", "*/*")
                 .header("Accept-Language", "en-US,en;q=0.9")
                 .header("Accept-Encoding", "identity")
-                .header("Referer", "https://www.instagram.com/")
+                .header("Referer", PlatformWeb.referer(spec.platform))
                 .header("Range", "bytes=0-")
                 .header("Sec-Fetch-Dest", "video")
                 .header("Sec-Fetch-Mode", "no-cors")
                 .header("Sec-Fetch-Site", "cross-site")
                 .apply {
-                    cookieHeaderFor(mediaUrl).takeIf { it.isNotBlank() }?.let { header("Cookie", it) }
+                    cookieHeaderFor(spec.platform, mediaUrl).takeIf { it.isNotBlank() }
+                        ?.let { header("Cookie", it) }
                 }
                 .get()
                 .build()
@@ -142,12 +144,16 @@ constructor(
     }
 
     /**
-     * The cookies to send with the CDN media request: the CDN host's own cookies merged with the
-     * instagram.com account session (see [InstagramCookies], which holds the reasoning and is unit-tested).
+     * The cookies to send with the CDN media request. Always the CDN host's own cookies (TikTok's
+     * `tt_chain_token`, Facebook's fbcdn cookies …); for Instagram they are merged with the account
+     * session lifted from the instagram.com jar, which gates logged-in reels (see [InstagramCookies]).
      */
-    private fun cookieHeaderFor(mediaUrl: String): String {
+    private fun cookieHeaderFor(platform: Platform, mediaUrl: String): String {
         val cm = CookieManager.getInstance()
-        return InstagramCookies.merge(cm.getCookie(mediaUrl), cm.getCookie("https://www.instagram.com"))
+        val cdn = cm.getCookie(mediaUrl)
+        val accountJar =
+            if (platform == Platform.INSTAGRAM) cm.getCookie("https://www.instagram.com") else null
+        return InstagramCookies.merge(cdn, accountJar)
     }
 
     private fun copyStream(
@@ -181,15 +187,17 @@ constructor(
         dir.mkdirs()
     }
 
-    private fun browserExtractionFailed(): DownloadError =
-        if (instagramSession.isLoggedIn()) {
+    private fun browserExtractionFailed(platform: Platform): DownloadError =
+        if (platform == Platform.INSTAGRAM && !instagramSession.isLoggedIn()) {
+            // Only Instagram has an in-app sign-in that can unlock more content.
             DownloadError.LoginRequired(
-                "Could not read this video. The post may be unavailable, or the platform changed its page.",
+                "This reel isn't available without signing in. Sign in to Instagram under " +
+                    "Settings → Instagram, then try again.",
             )
         } else {
             DownloadError.LoginRequired(
-                "This video isn't available without signing in. Sign in to Instagram under " +
-                    "Settings → Instagram, then try again.",
+                "Could not read this video. It may be private or unavailable, " +
+                    "or the platform changed its page.",
             )
         }
 

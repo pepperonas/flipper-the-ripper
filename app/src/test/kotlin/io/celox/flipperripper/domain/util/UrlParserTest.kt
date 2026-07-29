@@ -20,6 +20,17 @@ class UrlParserTest {
     }
 
     @Test
+    fun `detects facebook across its host variants`() {
+        assertThat(UrlParser.detectPlatform("https://www.facebook.com/page/videos/123/"))
+            .isEqualTo(Platform.FACEBOOK)
+        assertThat(UrlParser.detectPlatform("https://web.facebook.com/watch?v=123")).isEqualTo(Platform.FACEBOOK)
+        assertThat(UrlParser.detectPlatform("https://m.facebook.com/reel/123")).isEqualTo(Platform.FACEBOOK)
+        // Share short links come on their own hosts.
+        assertThat(UrlParser.detectPlatform("https://fb.watch/abc123/")).isEqualTo(Platform.FACEBOOK)
+        assertThat(UrlParser.detectPlatform("https://fb.com/x/videos/1")).isEqualTo(Platform.FACEBOOK)
+    }
+
+    @Test
     fun `rejects unsupported and non-http`() {
         assertThat(UrlParser.detectPlatform("https://vimeo.com/123")).isNull()
         assertThat(UrlParser.detectPlatform("ftp://youtube.com/x")).isNull()
