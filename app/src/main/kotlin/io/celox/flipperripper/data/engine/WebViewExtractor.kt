@@ -142,9 +142,6 @@ constructor(@ApplicationContext private val context: Context) {
     private companion object {
         const val TAG = "WebViewExtractor"
         const val TIMEOUT_MS = 25_000L
-        const val MOBILE_CHROME_UA =
-            "Mozilla/5.0 (Linux; Android 14; SM-S928B) AppleWebKit/537.36 (KHTML, like Gecko) " +
-                "Chrome/126.0.0.0 Mobile Safari/537.36"
 
         val VIDEO_CDN_HOSTS = listOf("cdninstagram.com", "fbcdn.net", "tiktokcdn", "muscdn.com")
         val INSTAGRAM_CODE = Regex("""instagram\.com/(reel|reels|p|tv)/([A-Za-z0-9_-]+)""")

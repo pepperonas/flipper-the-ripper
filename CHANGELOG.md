@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.8] - 2026-07-29
+
+### Fixed
+- **"Sign in to Instagram" no longer shows a black screen.** The login WebView used the default Android
+  WebView user-agent, which carries a `wv` token that identifies it as an embedded browser — Instagram
+  detects that and serves it a blank page. The screen now presents the same real mobile-Chrome
+  user-agent the media extractor already uses, so Instagram delivers its genuine login page. Verified:
+  the full login form (username, password, *Log in*) now renders. A light backdrop and a loading spinner
+  cover the moment before the page paints, and a render-process guard reloads instead of tearing the app
+  down if the WebView renderer dies.
+
 ## [1.2.7] - 2026-07-29
 
 ### Added
