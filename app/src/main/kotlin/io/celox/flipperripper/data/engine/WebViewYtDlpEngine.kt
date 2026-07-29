@@ -1,5 +1,6 @@
 package io.celox.flipperripper.data.engine
 
+import android.webkit.CookieManager
 import io.celox.flipperripper.di.IoDispatcher
 import io.celox.flipperripper.domain.model.DownloadError
 import io.celox.flipperripper.domain.model.DownloadMode
@@ -104,7 +105,25 @@ constructor(
         target: File,
         onProgress: (DownloadProgress) -> Unit,
     ) {
-        val request = Request.Builder().url(mediaUrl).header("User-Agent", BROWSER_UA).get().build()
+        // Replicate exactly what the page's own <video> element sends. Instagram's CDN returns 403 to a
+        // bare GET for a logged-in/gated clip: a real video request carries the instagram.com Referer,
+        // a Range header (video is always range-requested) and, for gated media, the session's cookies.
+        // Public reels tolerated a bare GET; gated ones do not.
+        val request =
+            Request.Builder()
+                .url(mediaUrl)
+                .header("User-Agent", MOBILE_CHROME_UA)
+                .header("Accept", "*/*")
+                .header("Accept-Encoding", "identity")
+                .header("Referer", "https://www.instagram.com/")
+                .header("Range", "bytes=0-")
+                .apply {
+                    CookieManager.getInstance().getCookie(mediaUrl)
+                        ?.takeIf { it.isNotBlank() }
+                        ?.let { header("Cookie", it) }
+                }
+                .get()
+                .build()
         client.newCall(request).execute().use { resp ->
             val body = resp.body ?: throw IOException("empty response (${resp.code})")
             if (!resp.isSuccessful) throw IOException("server returned ${resp.code}")
@@ -162,8 +181,5 @@ constructor(
 
         /** A real short clip is comfortably above this; anything smaller is a cover image or an error. */
         const val MIN_VIDEO_BYTES = 50_000L
-        const val BROWSER_UA =
-            "Mozilla/5.0 (Linux; Android 14; SM-S928B) AppleWebKit/537.36 (KHTML, like Gecko) " +
-                "Chrome/126.0.0.0 Mobile Safari/537.36"
     }
 }

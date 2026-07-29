@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.9] - 2026-07-29
+
+### Fixed
+- **Instagram downloads no longer fail with "error 403" after signing in.** The extractor captured
+  Instagram's signed CDN video URL correctly, but the download then fetched it with a bare request that
+  carried only a User-Agent. Instagram's CDN rejects that with 403 for a logged-in/gated clip — a real
+  `<video>` element also sends an `instagram.com` Referer, a `Range` request and the session's CDN
+  cookies. The download now sends exactly those headers, so gated videos transfer instead of 403-ing.
+  Verified that public reels still download unchanged.
+
 ## [1.2.8] - 2026-07-29
 
 ### Fixed
