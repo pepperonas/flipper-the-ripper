@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.1] - 2026-07-30
+
+### Added
+- **Share a downloaded video from History.** Every completed entry now has a **Share** button next to
+  *Open* that opens the system share sheet with the saved file (works for any target — chats, mail, cloud,
+  Quick Share). Because a finished download lands at the top of History, this also covers sharing straight
+  after a download. The MediaStore `content://` URI is passed with a read grant; `file://` URIs are never
+  shared (avoids FileUriExposedException).
+
 ## [1.3.0] - 2026-07-30
 
 ### Added

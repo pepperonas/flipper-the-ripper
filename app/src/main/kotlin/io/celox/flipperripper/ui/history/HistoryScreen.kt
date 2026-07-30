@@ -179,7 +179,7 @@ private fun DownloadCard(
             Spacer(Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 when (record.status) {
-                    DownloadStatus.COMPLETED ->
+                    DownloadStatus.COMPLETED -> {
                         TextButton(
                             onClick = {
                                 MediaIntents.viewIntent(record.mediaUri, record.mode)
@@ -187,6 +187,14 @@ private fun DownloadCard(
                             },
                             enabled = record.mediaUri != null,
                         ) { Text(stringResource(R.string.history_open)) }
+                        TextButton(
+                            onClick = {
+                                MediaIntents.shareIntent(record.mediaUri, record.mode)
+                                    ?.let { context.startActivity(it) }
+                            },
+                            enabled = record.mediaUri != null,
+                        ) { Text(stringResource(R.string.history_share)) }
+                    }
                     DownloadStatus.RUNNING, DownloadStatus.QUEUED ->
                         TextButton(onClick = onCancel) { Text(stringResource(R.string.history_cancel)) }
                     DownloadStatus.FAILED, DownloadStatus.CANCELLED ->

@@ -30,6 +30,7 @@
     <string name="history_empty">No downloads yet</string>
     <string name="history_empty_hint">Share a link to Flipper the Ripper or paste one on the Home screen.</string>
     <string name="history_open">Open</string>
+    <string name="history_share">Share</string>
     <string name="history_retry">Retry</string>
     <string name="history_cancel">Cancel</string>
     <string name="history_delete">Delete</string>
