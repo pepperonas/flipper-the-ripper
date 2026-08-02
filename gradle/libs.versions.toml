@@ -2,8 +2,8 @@
 agp = "8.7.3"
 kotlin = "2.0.21"
 ksp = "2.0.21-1.0.28"
-hilt = "2.52"
-hiltNavigationCompose = "1.2.0"
+hilt = "2.60.1"
+hiltNavigationCompose = "1.4.0"
 coreKtx = "1.15.0"
 lifecycle = "2.9.3"
 activityCompose = "1.10.1"
@@ -65,8 +65,8 @@ androidx-graphics-shapes = { group = "androidx.graphics", name = "graphics-shape
 hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }
 hilt-compiler = { group = "com.google.dagger", name = "hilt-android-compiler", version.ref = "hilt" }
 hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "hiltNavigationCompose" }
-hilt-work = { group = "androidx.hilt", name = "hilt-work", version = "1.2.0" }
-hilt-work-compiler = { group = "androidx.hilt", name = "hilt-compiler", version = "1.2.0" }
+hilt-work = { group = "androidx.hilt", name = "hilt-work", version = "1.4.0" }
+hilt-work-compiler = { group = "androidx.hilt", name = "hilt-compiler", version = "1.4.0" }
 
 # Serialization / coroutines
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
