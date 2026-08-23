@@ -47,7 +47,11 @@ Material 3 **Expressive** UI with spring physics, shape-morphing motifs and dyna
 - **Audio-only mode** for YouTube (`.m4a`).
 - **Robust error messages** — private video, login required, region blocked, rate-limited, network error, invalid link, cancelled.
 - **Material 3 Expressive** — spring-based motion physics (`MotionScheme.expressive()`), shape-morphing `MaterialShapes` motifs, the expressive `LoadingIndicator`, emphasized typography, a spring-sliding segmented toggle, staggered list entrances, and expressive screen transitions. Dynamic color + light/dark, all guarded by `prefers-reduced-motion`.
-- **Update the engine** in-app to fix broken extractors.
+- **Self-updating extractor** — yt-dlp is refreshed automatically (throttled, on app start *and*
+  whenever a link is shared in), because platforms like YouTube break old extractors within months.
+  A manual **Update yt-dlp** button remains in Settings.
+- **Update notices** — when a newer release is published on GitHub, the Home screen shows a
+  dismissible card linking straight to it.
 
 ## 📥 Download
 
@@ -58,8 +62,8 @@ Grab the latest signed APK from the [**Releases**](https://github.com/pepperonas
 | `flipper-the-ripper-<version>-arm64-v8a.apk` | **Virtually all modern phones** (64-bit ARM) — pick this if unsure |
 | `flipper-the-ripper-<version>-armeabi-v7a.apk` | Older 32-bit ARM devices |
 
-> Each build ships as a **per-ABI APK** (~33 MB) instead of one fat ~74 MB APK — you only download
-> the native engine (yt-dlp + ffmpeg) for your architecture. Both architectures stay fully supported.
+> Each build ships as a **per-ABI APK** (~50 MB) instead of one fat ~100 MB APK — you only download
+> the native engine (yt-dlp + ffmpeg + QuickJS) for your architecture. Both architectures stay fully supported.
 >
 > Not on Google Play by design — the Play Store prohibits video-downloader apps and runtime binary
 > updates. Distribution is via GitHub Releases / F-Droid-style sideloading (like NewPipe and Seal).
@@ -94,7 +98,7 @@ detection, error taxonomy, naming) across all four.
 |--------|---------|
 | **Port the Rust as a native lib (JNI)** | ❌ Not useful — `inspector-rust`'s core is an `rlib` (no `cdylib`) and contains **no extraction code**, only a ~50-line subprocess wrapper around external CLIs. Nothing to port. |
 | **Subprocess yt-dlp (as on desktop)** | ❌ Impossible on non-rooted Android (no Python, no arbitrary `exec`). |
-| **Bundle yt-dlp via youtubedl-android** ✅ | **Chosen.** Ships the real yt-dlp as a native payload; reuses the desktop policy layer verbatim; self-updates at runtime. Trade-off: larger APK (~33 MB per ABI) and ARM-only. |
+| **Bundle yt-dlp via youtubedl-android** ✅ | **Chosen.** Ships the real yt-dlp as a native payload; reuses the desktop policy layer verbatim; self-updates at runtime. Trade-off: larger APK (~50 MB per ABI) and ARM-only. |
 | Pure-JVM extractor (NewPipeExtractor) | ❌ Strong for YouTube only; Instagram unsupported, TikTok fragile — would not meet the requirement. |
 
 **Cookie fallback deviation:** the desktop `--cookies-from-browser` retry has no Android equivalent
@@ -228,7 +232,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 **Is this on Google Play?** No — Play policy prohibits these apps. Sideload the signed APK from Releases.
 
-**Why is the APK ~33 MB?** Each build is a **per-ABI APK** carrying only your architecture's copy of the real yt-dlp + ffmpeg native libraries (a single fat APK would be ~70 MB), so extraction works fully offline of any server.
+**Why is the APK ~50 MB?** Each build is a **per-ABI APK** carrying only your architecture's copy of the real yt-dlp + ffmpeg + QuickJS native libraries (a single fat APK would be ~100 MB), so extraction works fully offline of any server.
 
 **A download fails with "rate-limited or out of date".** The extractor changed upstream. Open **Settings → Update yt-dlp** to fetch the latest engine, then retry.
 
@@ -262,15 +266,17 @@ falls back to a configured server if the primary can't get it:
 
 | Platform | On-device primary | Why | Fallback |
 |----------|-------------------|-----|----------|
-| **YouTube** | bundled **yt-dlp** (`android_vr` client) | needs no JS challenge, no PO token; runs from *your* IP, which YouTube blocks far less than a datacenter | server |
+| **YouTube** | bundled **yt-dlp** (default clients + QuickJS) | yt-dlp's maintained client rotation stays downloadable and the bundled QuickJS solves the JS challenges; runs from *your* IP, which YouTube blocks far less than a datacenter | server |
 | **Instagram** | a hidden **WebView** (+ optional sign-in) | Instagram fingerprints the TLS handshake and hydrates the URL with JS — only a real browser gets through, and Android's WebView *is* Chromium; signing in unlocks login-only reels | server |
 | **TikTok** | a hidden **WebView** | same browser check; the URL is read from the page's `__UNIVERSAL_DATA_FOR_REHYDRATION__` JSON and fetched with a `tiktok.com` Referer + the page cookies | server |
 | **Facebook** | a hidden **WebView** (desktop UA) | the public video page embeds `browser_native_hd_url` in its HTML — but only the *desktop* page, so the extractor presents a desktop user-agent | server |
 
 **How the engines differ:**
 
-- **yt-dlp on the device** has no JavaScript runtime and no `curl_cffi`, so it can do YouTube (via
-  `android_vr`) but *cannot* do Instagram/TikTok/Facebook at all — those require browser TLS impersonation.
+- **yt-dlp on the device** ships with a bundled **QuickJS** runtime (youtubedl-android ≥ 0.18) for
+  yt-dlp's JS challenges, but has no `curl_cffi`, so it can do YouTube (yt-dlp's default client
+  rotation — deliberately no pinned `player_client`, see `YtDlpArgsBuilder`) but *cannot* do
+  Instagram/TikTok/Facebook at all — those require browser TLS impersonation.
 - **The WebView** is real Chromium: it presents the genuine Chrome TLS fingerprint and runs the page's
   JS, then reads the direct video URL — each platform hides it differently:
   - **Instagram** — public reels are scraped from the embed's hydrated JSON; signed-in/gated reels go

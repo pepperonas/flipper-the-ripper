@@ -94,15 +94,8 @@ constructor(
             try {
                 val request = YoutubeDLRequest(url)
                 request.addOption("--no-playlist")
-                if (platform == Platform.YOUTUBE) {
-                    // Same client list as the download path (see YtDlpArgsBuilder.YOUTUBE_PLAYER_CLIENTS).
-                    // These must agree: resolving with clients whose formats the download step cannot
-                    // fetch produces a preview that then fails to download.
-                    request.addOption(
-                        "--extractor-args",
-                        "youtube:player_client=${YtDlpArgsBuilder.YOUTUBE_PLAYER_CLIENTS}",
-                    )
-                }
+                // No YouTube player_client override — resolve and download must agree, and both use
+                // yt-dlp's maintained default rotation (see YtDlpArgsBuilder for the full history).
                 val info: LibVideoInfo = YoutubeDL.getInstance().getInfo(request)
                 EngineResult.Success(info.toDomain(url, platform))
             } catch (e: YoutubeDLException) {

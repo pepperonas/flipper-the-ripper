@@ -46,6 +46,10 @@ object YtDlpArgsBuilder {
      * [build] — which does own the ordering — still emits `--` right before the URL. For the engine
      * path the guard's job is done by validating the URL scheme instead (see [YoutubeDlEngine]).
      */
+    // `platform` is currently unused (the only per-platform switch — the YouTube player_client pin —
+    // is gone, see the history note below) but stays in the signature: it IS the contract every
+    // caller already supplies, and the next platform-specific flag will need it again.
+    @Suppress("UnusedParameter")
     fun buildOptions(
         platform: Platform,
         mode: DownloadMode,
@@ -77,10 +81,7 @@ object YtDlpArgsBuilder {
                 }
         }
 
-        if (platform == Platform.YOUTUBE) {
-            args += listOf("--extractor-args", "youtube:player_client=$YOUTUBE_PLAYER_CLIENTS")
-        }
-
+        // No YouTube player_client override — see the YOUTUBE_PLAYER_CLIENTS history below.
         args += "--no-playlist"
         args += "--no-mtime"
 
@@ -93,24 +94,19 @@ object YtDlpArgsBuilder {
     const val OUTPUT_TEMPLATE = "%(title).100B [%(id)s].%(ext)s"
 
     /**
-     * The YouTube player client used **on device**. Exactly one clears both of YouTube's gates without
-     * machinery a stock Android app cannot ship:
+     * **History — why there is deliberately NO `player_client` override any more (2026-08):**
      *
-     *  1. the `n`-signature **JavaScript challenge** — every `web*` client (`web`, `web_safari`,
-     *     `web_embedded`, `mweb`) needs a JS runtime to solve it. There is none on Android, so those
-     *     clients fail with "n challenge solving failed: Some formats may be missing".
-     *  2. the **GVS PO Token**, demanded before googlevideo serves the media — `ios`, `android`, `mweb`
-     *     and `tv_simply` all require one, so their formats are skipped with "…require a GVS PO Token
-     *     which was not provided" and the download fails even though extraction looked fine.
+     * Until v1.3.1 the app pinned `player_client=android_vr` — at the time the only client that
+     * needed neither a JS runtime (which the app didn't have) nor a GVS PO token. Both premises
+     * expired: youtubedl-android ≥ 0.18 bundles a **QuickJS** runtime that yt-dlp uses for the JS
+     * challenges, and YouTube extended PO-token enforcement to `android_vr` — its media fetches now
+     * die with **HTTP 403 mid-stream** (reproduced on-device AND with desktop yt-dlp 2026.08.19).
      *
-     * `android_vr` is an app client (no JS challenge) that needs no PO token — the only combination
-     * that leaves a downloadable format. `tv` is token-free but serves DRM without account cookies, and
-     * `default` resolves into the gated clients above, so both are excluded.
-     *
-     * The server backend deliberately uses a *wider* list (it runs deno, so it can solve the JS
-     * challenge); see `backend/app.py`.
+     * yt-dlp's *default* client rotation is maintained release-by-release to stay downloadable
+     * (2026.08 resolves via `visionos`, tomorrow something else) and the app auto-updates yt-dlp,
+     * so pinning a client only re-creates the rot. Verified with a QuickJS-only runtime: default
+     * clients extract, download and merge fine — exactly the on-device setup.
      *
      * Source: yt-dlp PO Token Guide (https://github.com/yt-dlp/yt-dlp/wiki/PO-Token-Guide).
      */
-    const val YOUTUBE_PLAYER_CLIENTS = "android_vr"
 }

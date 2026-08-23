@@ -25,45 +25,15 @@ class YtDlpArgsBuilderTest {
     }
 
     @Test
-    fun `youtube gets the player-client workaround`() {
-        val args = YtDlpArgsBuilder.build("https://youtu.be/x", Platform.YOUTUBE, DownloadMode.VIDEO, template)
-        assertThat(args).containsAtLeast(
-            "--extractor-args",
-            "youtube:player_client=${YtDlpArgsBuilder.YOUTUBE_PLAYER_CLIENTS}",
-        ).inOrder()
-    }
-
-    @Test
-    fun `youtube uses only a client that needs neither a JS runtime nor a PO token`() {
-        // On-device there is no JS runtime and no PO-token provider, so a client failing either gate
-        // yields no downloadable format even though extraction succeeded. This asserts the intersection
-        // of both constraints, which is what actually makes YouTube downloads work on a stock device.
-        val clients = YtDlpArgsBuilder.YOUTUBE_PLAYER_CLIENTS.split(",").map { it.trim() }
-
-        assertThat(clients).containsExactly("android_vr")
-        // Need the n-sig JavaScript challenge -> "n challenge solving failed".
-        assertThat(clients).containsNoneOf("web", "web_safari", "web_embedded", "mweb")
-        // Require a GVS PO token -> formats skipped, download fails.
-        assertThat(clients).containsNoneOf("ios", "android", "tv_simply")
-        // `tv` is DRM without cookies; `default` resolves into the gated clients above.
-        assertThat(clients).containsNoneOf("tv", "default")
-    }
-
-    @Test
-    fun `the youtube extractor arg is a single token yt-dlp can parse`() {
-        val args = YtDlpArgsBuilder.build("https://youtu.be/x", Platform.YOUTUBE, DownloadMode.VIDEO, template)
-        val value = args[args.indexOf("--extractor-args") + 1]
-
-        assertThat(value).startsWith("youtube:player_client=")
-        assertThat(value).doesNotContain(" ")
-    }
-
-    @Test
-    fun `non-youtube platforms omit the youtube extractor arg`() {
-        val ig = YtDlpArgsBuilder.build("https://instagram.com/reel/x", Platform.INSTAGRAM, DownloadMode.VIDEO, template)
-        val tt = YtDlpArgsBuilder.build("https://tiktok.com/@a/video/1", Platform.TIKTOK, DownloadMode.VIDEO, template)
-        assertThat(ig).doesNotContain("--extractor-args")
-        assertThat(tt).doesNotContain("--extractor-args")
+    fun `no platform pins a youtube player client`() {
+        // The android_vr pin died in 2026-08 (YouTube extended PO-token enforcement to it — media
+        // fetches 403 mid-stream). With QuickJS bundled (youtubedl-android >= 0.18), yt-dlp's own
+        // maintained default rotation is the thing that keeps working, refreshed by the auto-update.
+        // Pinning any client re-creates the rot, so no build may emit --extractor-args for YouTube.
+        listOf(Platform.YOUTUBE, Platform.INSTAGRAM, Platform.TIKTOK, Platform.FACEBOOK).forEach { p ->
+            val args = YtDlpArgsBuilder.build("https://example.com/x", p, DownloadMode.VIDEO, template)
+            assertThat(args).doesNotContain("--extractor-args")
+        }
     }
 
     @Test

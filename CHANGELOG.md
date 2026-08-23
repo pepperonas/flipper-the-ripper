@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.2] - 2026-08-23
+
+### Fixed
+- **YouTube downloads work again.** Two independent breakages had accumulated:
+  1. The bundled yt-dlp was frozen at its Sep-2024 release — YouTube refuses extractors that old
+     ("Sign in to confirm you're not a bot" → every download failed with "The platform refused this
+     request"). The engine library (youtubedl-android) is bumped 0.17.2 → **0.18.1**, which bundles
+     **yt-dlp 2025.11.12** plus a **QuickJS** runtime for yt-dlp's JS challenges.
+  2. The pinned `android_vr` player client is dead — YouTube extended PO-token enforcement to it, so
+     its media fetches now abort with **HTTP 403 mid-stream** (reproduced on-device and with desktop
+     yt-dlp 2026.08.19). The pin is removed: with QuickJS available, yt-dlp's **maintained default
+     client rotation** is what keeps working, and the auto-updater keeps it current. Verified with a
+     QuickJS-only runtime (extract → download → merge) and on-device.
+- **A stale engine now heals itself mid-download.** If a YouTube download fails in a stale-looking
+  way (bot-block, mid-stream 403, "no formats"), the app force-updates yt-dlp and retries once —
+  but only when the update actually installed something new. This closes the fresh-install race
+  where the first download starts before the background updater has replaced the bundled binary.
+- **A shared link now always shows you the download.** Sharing a link into the app while it sat on
+  the History/Settings tab started the download invisibly — you had to navigate around to find it.
+  Navigation after a download starts now goes through an app-level navigator that works regardless
+  of which tab is open: auto-download jumps to **History**, share-without-auto-download opens
+  **Home** with the link prefilled.
+- **A shared link can no longer enqueue the same download twice.** Two causes fixed: the incoming
+  link bus replayed the last link to every new collector (an Activity/ViewModel recreation
+  re-triggered the download), and a recreated Activity re-consumed its stale share intent. The bus
+  is now consume-once, and only a fresh launch reads the launch intent.
+
+### Added
+- **Automatic update checks on every shared-in link** (throttled to 12 h), not just at app start —
+  a warm process never re-runs the start-up check, which is exactly when most links arrive. This
+  keeps yt-dlp fresh so platform breakage heals itself between app releases.
+- **In-app update notice.** The app checks GitHub for a newer release (same 12 h throttle) and shows
+  a dismissible card on Home linking to the release page. Dismissing a version keeps it hidden;
+  anything newer re-appears.
+
 ## [1.3.1] - 2026-07-30
 
 ### Added

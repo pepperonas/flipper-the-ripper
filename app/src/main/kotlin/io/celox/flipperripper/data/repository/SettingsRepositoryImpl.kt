@@ -9,6 +9,7 @@ import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.celox.flipperripper.domain.model.AppUpdate
 import io.celox.flipperripper.domain.model.DownloadMode
 import io.celox.flipperripper.domain.model.ThemeMode
 import io.celox.flipperripper.domain.model.UserPreferences
@@ -31,6 +32,10 @@ constructor(@ApplicationContext private val context: Context) : SettingsReposito
         val DEFAULT_MODE = stringPreferencesKey("default_mode")
         val CLIPBOARD = booleanPreferencesKey("clipboard_detection")
         val LAST_ENGINE_UPDATE = longPreferencesKey("last_engine_update_ms")
+        val LAST_APP_UPDATE_CHECK = longPreferencesKey("last_app_update_check_ms")
+        val KNOWN_UPDATE_VERSION = stringPreferencesKey("known_update_version")
+        val KNOWN_UPDATE_URL = stringPreferencesKey("known_update_url")
+        val DISMISSED_UPDATE_VERSION = stringPreferencesKey("dismissed_update_version")
     }
 
     override val preferences: Flow<UserPreferences> =
@@ -71,5 +76,33 @@ constructor(@ApplicationContext private val context: Context) : SettingsReposito
 
     override suspend fun setLastEngineUpdateMs(epochMs: Long) {
         context.dataStore.edit { it[Keys.LAST_ENGINE_UPDATE] = epochMs }
+    }
+
+    override val lastAppUpdateCheckMs: Flow<Long> =
+        context.dataStore.data.map { it[Keys.LAST_APP_UPDATE_CHECK] ?: 0L }
+
+    override suspend fun setLastAppUpdateCheckMs(epochMs: Long) {
+        context.dataStore.edit { it[Keys.LAST_APP_UPDATE_CHECK] = epochMs }
+    }
+
+    override val knownAppUpdate: Flow<AppUpdate?> =
+        context.dataStore.data.map { prefs ->
+            val version = prefs[Keys.KNOWN_UPDATE_VERSION]
+            val url = prefs[Keys.KNOWN_UPDATE_URL]
+            if (version.isNullOrBlank() || url.isNullOrBlank()) null else AppUpdate(version, url)
+        }
+
+    override suspend fun setKnownAppUpdate(update: AppUpdate) {
+        context.dataStore.edit {
+            it[Keys.KNOWN_UPDATE_VERSION] = update.version
+            it[Keys.KNOWN_UPDATE_URL] = update.url
+        }
+    }
+
+    override val dismissedUpdateVersion: Flow<String?> =
+        context.dataStore.data.map { it[Keys.DISMISSED_UPDATE_VERSION] }
+
+    override suspend fun setDismissedUpdateVersion(version: String) {
+        context.dataStore.edit { it[Keys.DISMISSED_UPDATE_VERSION] = version }
     }
 }

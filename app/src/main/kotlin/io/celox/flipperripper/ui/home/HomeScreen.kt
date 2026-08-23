@@ -67,10 +67,7 @@ import io.celox.flipperripper.ui.util.ObserveAsEvents
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(
-    onDownloadStarted: () -> Unit,
-    viewModel: HomeViewModel = hiltViewModel(),
-) {
+fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
@@ -78,7 +75,6 @@ fun HomeScreen(
 
     ObserveAsEvents(viewModel.events) { event ->
         when (event) {
-            is HomeEvent.DownloadStarted -> onDownloadStarted()
             is HomeEvent.ShowMessage -> snackbarHostState.showSnackbar(event.message)
         }
     }
@@ -111,6 +107,32 @@ fun HomeScreen(
             Spacer(Modifier.height(8.dp))
             Hero()
             Spacer(Modifier.height(20.dp))
+
+            AnimatedVisibility(
+                visible = state.updateNotice != null,
+                enter = fadeIn() + scaleIn(initialScale = 0.9f),
+                exit = fadeOut(),
+            ) {
+                state.updateNotice?.let { update ->
+                    Column {
+                        UpdateNoticeCard(
+                            version = update.version,
+                            onGet = {
+                                runCatching {
+                                    context.startActivity(
+                                        android.content.Intent(
+                                            android.content.Intent.ACTION_VIEW,
+                                            android.net.Uri.parse(update.url),
+                                        ),
+                                    )
+                                }
+                            },
+                            onDismiss = { viewModel.dismissUpdateNotice() },
+                        )
+                        Spacer(Modifier.height(12.dp))
+                    }
+                }
+            }
 
             AnimatedVisibility(visible = !state.engineReady) {
                 Column {
@@ -278,6 +300,41 @@ private fun EngineBanner() {
                 stringResource(R.string.home_engine_initializing),
                 color = MaterialTheme.colorScheme.onSecondaryContainer,
             )
+        }
+    }
+}
+
+@Composable
+private fun UpdateNoticeCard(version: String, onGet: () -> Unit, onDismiss: () -> Unit) {
+    val getInteraction = remember { MutableInteractionSource() }
+    Card(
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(Modifier.padding(20.dp)) {
+            Text(
+                stringResource(R.string.home_update_available, version),
+                style = MaterialTheme.typography.titleMediumEmphasized,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+            )
+            Spacer(Modifier.height(6.dp))
+            Text(
+                stringResource(R.string.home_update_body),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+            )
+            Spacer(Modifier.height(12.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(
+                    onClick = onGet,
+                    interactionSource = getInteraction,
+                    modifier = Modifier.springPressed(getInteraction),
+                ) { Text(stringResource(R.string.home_update_get)) }
+                androidx.compose.material3.TextButton(onClick = onDismiss) {
+                    Text(stringResource(R.string.home_dismiss))
+                }
+            }
         }
     }
 }

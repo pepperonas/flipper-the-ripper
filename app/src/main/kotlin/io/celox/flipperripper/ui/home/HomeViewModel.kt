@@ -3,6 +3,7 @@ package io.celox.flipperripper.ui.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.celox.flipperripper.BuildConfig
 import io.celox.flipperripper.domain.model.DownloadMode
 import io.celox.flipperripper.domain.model.DownloadRequest
 import io.celox.flipperripper.domain.model.EngineResult
@@ -12,12 +13,16 @@ import io.celox.flipperripper.domain.usecase.PeekClipboardUrlUseCase
 import io.celox.flipperripper.domain.usecase.ResolveUrlUseCase
 import io.celox.flipperripper.domain.usecase.ResolveVideoInfoUseCase
 import io.celox.flipperripper.domain.usecase.StartDownloadUseCase
+import io.celox.flipperripper.domain.util.AppVersions
 import io.celox.flipperripper.domain.util.UrlParser
+import io.celox.flipperripper.ui.AppNavTarget
+import io.celox.flipperripper.ui.AppNavigator
 import io.celox.flipperripper.ui.IncomingLinkBus
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
@@ -35,6 +40,7 @@ constructor(
     observeEngineReady: ObserveEngineReadyUseCase,
     private val settingsRepository: SettingsRepository,
     private val incomingLinkBus: IncomingLinkBus,
+    private val appNavigator: AppNavigator,
 ) : ViewModel() {
     private val _state = MutableStateFlow(HomeUiState())
     val state = _state.asStateFlow()
@@ -59,6 +65,19 @@ constructor(
         viewModelScope.launch {
             incomingLinkBus.links.collect { handleIncomingText(it) }
         }
+        viewModelScope.launch {
+            combine(
+                settingsRepository.knownAppUpdate,
+                settingsRepository.dismissedUpdateVersion,
+            ) { known, dismissed ->
+                AppVersions.visibleUpdate(BuildConfig.VERSION_NAME, known, dismissed)
+            }.collect { notice -> _state.update { it.copy(updateNotice = notice) } }
+        }
+    }
+
+    fun dismissUpdateNotice() {
+        val version = _state.value.updateNotice?.version ?: return
+        viewModelScope.launch { settingsRepository.setDismissedUpdateVersion(version) }
     }
 
     fun onUrlChange(text: String) {
@@ -138,8 +157,10 @@ constructor(
                 )
             when (val result = startDownload(request)) {
                 is EngineResult.Success -> {
-                    _events.send(HomeEvent.DownloadStarted(result.value))
                     _state.update { HomeUiState(engineReady = it.engineReady, defaultMode = it.defaultMode) }
+                    // Through the app-level navigator, not a Home-screen event: a download started by
+                    // a shared link must jump to History even when Home is not composed at all.
+                    appNavigator.navigateTo(AppNavTarget.HISTORY)
                 }
                 is EngineResult.Failure ->
                     _state.update { it.copy(errorMessage = result.error.message) }
@@ -152,7 +173,14 @@ constructor(
         onUrlChange(parsed.url)
         viewModelScope.launch {
             val prefs = settingsRepository.preferences.first()
-            if (prefs.autoDownloadOnShare) download(prefs.defaultMode) else resolve()
+            if (prefs.autoDownloadOnShare) {
+                download(prefs.defaultMode)
+            } else {
+                // Bring the user to the prefilled form — a share that lands while another tab is
+                // open would otherwise resolve invisibly.
+                appNavigator.navigateTo(AppNavTarget.HOME)
+                resolve()
+            }
         }
     }
 }

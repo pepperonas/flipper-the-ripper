@@ -37,8 +37,8 @@ android {
         applicationId = "io.celox.flipperripper"
         minSdk = 24
         targetSdk = 35
-        versionCode = 19
-        versionName = "1.3.1"
+        versionCode = 20
+        versionName = "1.3.2"
 
         testInstrumentationRunner = "io.celox.flipperripper.HiltTestRunner"
         vectorDrawables { useSupportLibrary = true }
@@ -272,6 +272,10 @@ kover {
                     "io.celox.flipperripper.data.engine.WebViewExtractor*",
                     "io.celox.flipperripper.data.engine.WebViewYtDlpEngine*",
                     "io.celox.flipperripper.data.engine.InstagramSession*",
+                    // Network + wiring around updates; the decisions live in the covered
+                    // AppVersions/AppReleaseParser.
+                    "io.celox.flipperripper.data.update.AppUpdateChecker*",
+                    "io.celox.flipperripper.data.update.UpdateCoordinator*",
                     "io.celox.flipperripper.ui.login.*",
                     "io.celox.flipperripper.data.repository.BackendConfigRepositoryImpl*",
                     "io.celox.flipperripper.data.media.*",

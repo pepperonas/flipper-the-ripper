@@ -139,6 +139,27 @@ class FakeSettingsRepository(initial: UserPreferences = UserPreferences()) : Set
     override suspend fun setLastEngineUpdateMs(epochMs: Long) {
         lastUpdate.value = epochMs
     }
+
+    val lastAppCheck = MutableStateFlow(0L)
+    override val lastAppUpdateCheckMs: Flow<Long> = lastAppCheck
+
+    override suspend fun setLastAppUpdateCheckMs(epochMs: Long) {
+        lastAppCheck.value = epochMs
+    }
+
+    val knownUpdate = MutableStateFlow<io.celox.flipperripper.domain.model.AppUpdate?>(null)
+    override val knownAppUpdate: Flow<io.celox.flipperripper.domain.model.AppUpdate?> = knownUpdate
+
+    override suspend fun setKnownAppUpdate(update: io.celox.flipperripper.domain.model.AppUpdate) {
+        knownUpdate.value = update
+    }
+
+    val dismissedVersion = MutableStateFlow<String?>(null)
+    override val dismissedUpdateVersion: Flow<String?> = dismissedVersion
+
+    override suspend fun setDismissedUpdateVersion(version: String) {
+        dismissedVersion.value = version
+    }
 }
 
 class FakeClipboardRepository(var suggestion: ParsedUrl? = null) : ClipboardRepository {

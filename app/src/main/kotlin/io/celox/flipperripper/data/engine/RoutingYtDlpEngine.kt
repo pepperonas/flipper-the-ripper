@@ -59,8 +59,22 @@ constructor(
     override suspend fun download(
         spec: DownloadSpec,
         onProgress: (DownloadProgress) -> Unit,
-    ): EngineResult<DownloadedFile> =
-        runChain(spec.url) { engine -> engine.download(spec, onProgress) }
+    ): EngineResult<DownloadedFile> {
+        val first = runChain(spec.url) { engine -> engine.download(spec, onProgress) }
+        // Self-healing: a stale-looking yt-dlp failure (bot-block, media 403) triggers a forced
+        // engine update and ONE retry. This covers the fresh-install race — the first download can
+        // start before the background updater has replaced the bundled (aging) yt-dlp — and any
+        // future period where YouTube breaks the shipped extractor between app releases.
+        if (first is EngineResult.Failure &&
+            StaleEngineRetry.shouldUpdateAndRetry(spec.platform, first.error)
+        ) {
+            val update = local.update()
+            if (update is EngineResult.Success && StaleEngineRetry.updateJustifiesRetry(update.value)) {
+                return runChain(spec.url) { engine -> engine.download(spec, onProgress) }
+            }
+        }
+        return first
+    }
 
     /** Try each engine the routing selects until one succeeds or a terminal error stops the chain. */
     private suspend fun <T> runChain(

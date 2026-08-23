@@ -1,5 +1,6 @@
 package io.celox.flipperripper.domain.repository
 
+import io.celox.flipperripper.domain.model.AppUpdate
 import io.celox.flipperripper.domain.model.DownloadMode
 import io.celox.flipperripper.domain.model.ThemeMode
 import io.celox.flipperripper.domain.model.UserPreferences
@@ -23,4 +24,19 @@ interface SettingsRepository {
     val lastEngineUpdateMs: Flow<Long>
 
     suspend fun setLastEngineUpdateMs(epochMs: Long)
+
+    /** Epoch millis of the last app-release check against GitHub (0 if never). */
+    val lastAppUpdateCheckMs: Flow<Long>
+
+    suspend fun setLastAppUpdateCheckMs(epochMs: Long)
+
+    /** The newest published release seen on GitHub, kept so the notice survives restarts. */
+    val knownAppUpdate: Flow<AppUpdate?>
+
+    suspend fun setKnownAppUpdate(update: AppUpdate)
+
+    /** Version tag the user dismissed the update notice for (re-shown for anything newer). */
+    val dismissedUpdateVersion: Flow<String?>
+
+    suspend fun setDismissedUpdateVersion(version: String)
 }

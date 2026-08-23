@@ -21,6 +21,9 @@
     <string name="home_clipboard_use">Use it</string>
     <string name="home_dismiss">Dismiss</string>
     <string name="home_engine_initializing">Preparing the download engine…</string>
+    <string name="home_update_available">Update %1$s is available</string>
+    <string name="home_update_body">A newer version of Flipper the Ripper is on GitHub — with the latest platform fixes.</string>
+    <string name="home_update_get">Get update</string>
     <string name="home_unsupported">This link is not from a supported platform.</string>
     <string name="home_mode_video">Video</string>
     <string name="home_mode_audio">Audio</string>

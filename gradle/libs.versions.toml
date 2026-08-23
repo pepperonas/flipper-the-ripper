@@ -19,7 +19,10 @@ kotlinxCoroutines = "1.9.0"
 datastore = "1.1.1"
 room = "2.6.1"
 workManager = "2.10.0"
-youtubedlAndroid = "0.17.2"
+# 0.18.1 bundles yt-dlp 2025.11.12 + a QuickJS runtime (libqjs) that newer yt-dlp uses to solve
+# YouTube's JS challenges on-device. 0.17.2 shipped yt-dlp 2024-09 — YouTube refuses its requests
+# ("Sign in to confirm you're not a bot" → LoginRequired), which broke every YouTube download.
+youtubedlAndroid = "0.18.1"
 coil = "2.7.0"
 okhttp = "4.12.0"
 

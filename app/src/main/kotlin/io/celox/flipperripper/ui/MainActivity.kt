@@ -12,6 +12,7 @@ import androidx.compose.runtime.getValue
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dagger.hilt.android.AndroidEntryPoint
+import io.celox.flipperripper.data.update.UpdateCoordinator
 import io.celox.flipperripper.domain.model.UserPreferences
 import io.celox.flipperripper.domain.repository.SettingsRepository
 import io.celox.flipperripper.ui.theme.FlipperTheme
@@ -21,7 +22,11 @@ import javax.inject.Inject
 class MainActivity : ComponentActivity() {
     @Inject lateinit var incomingLinkBus: IncomingLinkBus
 
+    @Inject lateinit var appNavigator: AppNavigator
+
     @Inject lateinit var settingsRepository: SettingsRepository
+
+    @Inject lateinit var updateCoordinator: UpdateCoordinator
 
     private val notificationPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { /* best-effort */ }
@@ -29,13 +34,16 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        handleIntent(intent)
+        // Only a FRESH launch may consume the launch intent. After a recreation (config change,
+        // process restore) getIntent() still returns the old share intent — re-posting it enqueued
+        // the same download a second time.
+        if (savedInstanceState == null) handleIntent(intent)
         requestNotificationPermissionIfNeeded()
 
         setContent {
             val prefs by settingsRepository.preferences.collectAsStateWithLifecycle(initialValue = UserPreferences())
             FlipperTheme(themeMode = prefs.themeMode, dynamicColor = prefs.useDynamicColor) {
-                FlipperApp()
+                FlipperApp(appNavigator)
             }
         }
     }
@@ -50,6 +58,9 @@ class MainActivity : ComponentActivity() {
     private fun handleIntent(intent: Intent?) {
         if (intent?.action == Intent.ACTION_SEND && intent.type == "text/plain") {
             intent.getStringExtra(Intent.EXTRA_TEXT)?.let { incomingLinkBus.post(it) }
+            // A link is about to hit the extractor — the freshest moment to make sure yt-dlp and
+            // the app itself are current. Throttled + best-effort inside the coordinator.
+            updateCoordinator.runChecksAsync()
         }
     }
 

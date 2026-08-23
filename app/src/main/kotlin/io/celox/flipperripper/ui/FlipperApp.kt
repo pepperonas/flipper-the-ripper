@@ -30,6 +30,7 @@ import io.celox.flipperripper.ui.login.InstagramLoginScreen
 import io.celox.flipperripper.ui.motion.rememberReduceMotion
 import io.celox.flipperripper.ui.navigation.Destination
 import io.celox.flipperripper.ui.settings.SettingsScreen
+import io.celox.flipperripper.ui.util.ObserveAsEvents
 
 // Material 3 "fade-through" for lateral (tab) navigation: the outgoing screen leaves first, then the
 // incoming one arrives. The previous timings overlapped (400 ms in vs 200 ms out) and only scaled on
@@ -58,11 +59,22 @@ private fun NavController.navigateToTab(route: String) {
 }
 
 @Composable
-fun FlipperApp() {
+fun FlipperApp(appNavigator: AppNavigator) {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination
     val reduceMotion = rememberReduceMotion()
+
+    // App-level navigation (e.g. a shared link auto-started a download → show History). Collected
+    // here because this composable exists for the whole app lifetime, unlike any single screen.
+    ObserveAsEvents(appNavigator.events) { target ->
+        val route =
+            when (target) {
+                AppNavTarget.HOME -> Destination.HOME.route
+                AppNavTarget.HISTORY -> Destination.HISTORY.route
+            }
+        navController.navigateToTab(route)
+    }
 
     Scaffold(
         bottomBar = {
@@ -95,11 +107,7 @@ fun FlipperApp() {
             popEnterTransition = { if (reduceMotion) EnterTransition.None else fadeThroughEnter() },
             popExitTransition = { if (reduceMotion) ExitTransition.None else fadeThroughExit() },
         ) {
-            composable(Destination.HOME.route) {
-                HomeScreen(
-                    onDownloadStarted = { navController.navigateToTab(Destination.HISTORY.route) },
-                )
-            }
+            composable(Destination.HOME.route) { HomeScreen() }
             composable(Destination.HISTORY.route) { HistoryScreen() }
             composable(Destination.SETTINGS.route) {
                 SettingsScreen(onOpenInstagramLogin = { navController.navigate(INSTAGRAM_LOGIN_ROUTE) })

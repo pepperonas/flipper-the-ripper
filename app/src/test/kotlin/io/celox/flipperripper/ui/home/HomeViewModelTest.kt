@@ -19,6 +19,8 @@ import io.celox.flipperripper.testing.FakeEngineRepository
 import io.celox.flipperripper.testing.FakeSettingsRepository
 import io.celox.flipperripper.testing.FakeVideoRepository
 import io.celox.flipperripper.testing.MainDispatcherRule
+import io.celox.flipperripper.ui.AppNavTarget
+import io.celox.flipperripper.ui.AppNavigator
 import io.celox.flipperripper.ui.IncomingLinkBus
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -37,6 +39,7 @@ class HomeViewModelTest {
     private val clipboardRepo = FakeClipboardRepository()
     private val settings = FakeSettingsRepository()
     private val bus = IncomingLinkBus()
+    private val navigator = AppNavigator()
 
     private fun createViewModel() =
         HomeViewModel(
@@ -47,6 +50,7 @@ class HomeViewModelTest {
             observeEngineReady = ObserveEngineReadyUseCase(engineRepo),
             settingsRepository = settings,
             incomingLinkBus = bus,
+            appNavigator = navigator,
         )
 
     @Test
@@ -93,17 +97,17 @@ class HomeViewModelTest {
         }
 
     @Test
-    fun `download emits DownloadStarted and resets input`() =
+    fun `download navigates to History app-wide and resets input`() =
         runTest {
             downloadRepo.nextId = "rec-9"
             val vm = createViewModel()
             vm.onUrlChange("https://youtu.be/abc")
-            vm.events.test {
+            navigator.events.test {
                 vm.download(DownloadMode.VIDEO)
                 advanceUntilIdle()
-                val event = awaitItem()
-                assertThat(event).isInstanceOf(HomeEvent.DownloadStarted::class.java)
-                assertThat((event as HomeEvent.DownloadStarted).recordId).isEqualTo("rec-9")
+                // Through AppNavigator, NOT a Home-screen event: the jump to History must also
+                // happen when Home is not composed (a link shared while another tab was open).
+                assertThat(awaitItem()).isEqualTo(AppNavTarget.HISTORY)
             }
             assertThat(downloadRepo.enqueued).hasSize(1)
             assertThat(vm.state.value.urlInput).isEmpty()
@@ -127,27 +131,79 @@ class HomeViewModelTest {
         }
 
     @Test
-    fun `shared link with auto-download enqueues immediately`() =
+    fun `shared link with auto-download enqueues immediately and shows History`() =
         runTest {
             settings.state.value = UserPreferences(autoDownloadOnShare = true)
             val vm = createViewModel()
             advanceUntilIdle()
-            bus.post("Watch this https://www.instagram.com/reel/abc/")
-            advanceUntilIdle()
+            navigator.events.test {
+                bus.post("Watch this https://www.instagram.com/reel/abc/")
+                advanceUntilIdle()
+                assertThat(awaitItem()).isEqualTo(AppNavTarget.HISTORY)
+            }
             assertThat(downloadRepo.enqueued).hasSize(1)
             assertThat(downloadRepo.enqueued.first().platform).isEqualTo(Platform.INSTAGRAM)
         }
 
     @Test
-    fun `shared link without auto-download only resolves`() =
+    fun `shared link without auto-download resolves and shows Home`() =
         runTest {
             settings.state.value = UserPreferences(autoDownloadOnShare = false)
             val vm = createViewModel()
             advanceUntilIdle()
-            bus.post("https://www.instagram.com/reel/abc/")
-            advanceUntilIdle()
+            navigator.events.test {
+                bus.post("https://www.instagram.com/reel/abc/")
+                advanceUntilIdle()
+                assertThat(awaitItem()).isEqualTo(AppNavTarget.HOME)
+            }
             assertThat(downloadRepo.enqueued).isEmpty()
             assertThat(vm.state.value.videoInfo).isNotNull()
+        }
+
+    @Test
+    fun `a consumed shared link is not re-delivered to a recreated ViewModel`() =
+        runTest {
+            // Regression: the bus used to replay the last link to every new collector — recreating
+            // the Activity/ViewModel enqueued the same shared download a second time.
+            settings.state.value = UserPreferences(autoDownloadOnShare = true)
+            val first = createViewModel()
+            advanceUntilIdle()
+            bus.post("https://www.instagram.com/reel/abc/")
+            advanceUntilIdle()
+            assertThat(first.state.value.urlInput).isNotNull()
+            assertThat(downloadRepo.enqueued).hasSize(1)
+
+            val second = createViewModel()
+            advanceUntilIdle()
+            // The recreated collector must find the bus empty — no second enqueue, no stale prefill.
+            assertThat(second.state.value.urlInput).isEmpty()
+            assertThat(downloadRepo.enqueued).hasSize(1)
+        }
+
+    @Test
+    fun `a link shared before any collector exists is still delivered once`() =
+        runTest {
+            // Cold start: the Activity posts the share before the Home ViewModel collects.
+            settings.state.value = UserPreferences(autoDownloadOnShare = true)
+            bus.post("https://www.instagram.com/reel/abc/")
+            val vm = createViewModel()
+            advanceUntilIdle()
+            assertThat(downloadRepo.enqueued).hasSize(1)
+        }
+
+    @Test
+    fun `update notice appears for a newer release and dismiss hides it`() =
+        runTest {
+            val vm = createViewModel()
+            advanceUntilIdle()
+            assertThat(vm.state.value.updateNotice).isNull()
+            settings.knownUpdate.value =
+                io.celox.flipperripper.domain.model.AppUpdate("v99.0.0", "https://example.com/rel")
+            advanceUntilIdle()
+            assertThat(vm.state.value.updateNotice?.version).isEqualTo("v99.0.0")
+            vm.dismissUpdateNotice()
+            advanceUntilIdle()
+            assertThat(vm.state.value.updateNotice).isNull()
         }
 
     @Test
