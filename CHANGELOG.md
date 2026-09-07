@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-09-07
+
 ### Added
 - **About section** (Settings → About): app mark, version + build from `BuildConfig`, "Made by
   Martin Pfeffer", links to [celox.io](https://celox.io), the
@@ -455,7 +457,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Signed release builds, GitHub Actions CI (build, lint, detekt, unit tests, coverage) and an
   automated tag-driven release workflow.
 
-[Unreleased]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.2.7...HEAD
+[Unreleased]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.5.0...HEAD
+[1.5.0]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.4.0...v1.5.0
+[1.4.0]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.3.2...v1.4.0
+[1.3.2]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.3.1...v1.3.2
+[1.3.1]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.3.0...v1.3.1
+[1.3.0]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.2.7...v1.3.0
 [1.2.7]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.2.6...v1.2.7
 [1.2.6]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.2.5...v1.2.6
 [1.2.5]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.2.4...v1.2.5
