@@ -7,7 +7,7 @@
 **A modern, open-source Android app to download publicly accessible videos from YouTube, Instagram, TikTok, Facebook, X and Dailymotion.**
 
 [![version](https://img.shields.io/badge/version-1.6.0-7B4DFF?style=for-the-badge&logo=android&logoColor=white)](https://github.com/pepperonas/flipper-the-ripper/releases/latest)
-[![unit tests](https://img.shields.io/badge/unit%20tests-204-2E9E5B?style=for-the-badge&logo=junit5&logoColor=white)](app/src/test)
+[![unit tests](https://img.shields.io/badge/unit%20tests-211-2E9E5B?style=for-the-badge&logo=junit5&logoColor=white)](app/src/test)
 [![lines of code](https://img.shields.io/badge/lines%20of%20code-6.5k-4B6BDF?style=for-the-badge&logo=kotlin&logoColor=white)](app/src/main/kotlin)
 
 [![CI](https://img.shields.io/github/actions/workflow/status/pepperonas/flipper-the-ripper/ci.yml?branch=main&label=build&logo=github)](https://github.com/pepperonas/flipper-the-ripper/actions/workflows/ci.yml)
@@ -37,7 +37,7 @@
 
 ## 📸 Screenshots
 
-<img src="docs/screenshots/mockups.png" alt="Home, About, the clear-history confirmation and the light theme" width="100%">
+<img src="docs/screenshots/mockups.png" alt="Home, the engine update status, the clear-history confirmation and the light theme" width="100%">
 
 <sub>Material 3 **Expressive** throughout: spring-based screen transitions, one drawn mark, a compact 64 dp navigation bar, and dynamic color in dark and light.</sub>
 

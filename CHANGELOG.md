@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **The engine update says what happened, in words.** Tapping *Update yt-dlp* used to answer with the
+  library's enum name — "Engine updated: ALREADY_UP_TO_DATE" — which is a machine talking. The raw
+  status is now parsed into a small `EngineUpdateOutcome` (updated / already current / unrecognised)
+  and the wording lives in string resources: *"yt-dlp updated — broken downloads should work again"*
+  or *"yt-dlp is already up to date"*. An unknown status is still shown rather than swallowed, so a
+  future library version cannot quietly turn into a false success. Parsing tolerates case and
+  whitespace, because this crosses a library boundary.
+- **The update button now shows that it is working.** Fetching the engine is a network call that takes
+  seconds; the button previously looked idle throughout, which invites a second tap. It now shows a
+  progress indicator and "Updating…", and is disabled while the fetch runs.
+
+### Fixed
+- **A second tap could start a second engine update.** The guard against that sat *inside* the
+  coroutine, so two taps in the same frame both passed it and both fetched. The flag is claimed
+  synchronously now. Found by a test written for the new button state, not in the field.
+
+### Added
+- Unit tests for the update outcome and the button state (204 → 211), including a test that the
+  wording and the self-healing retry rule agree on what counts as a real update — if they ever
+  diverged, the app would claim it updated while refusing to retry on that basis.
+
 ### Added
 - **README badges that are checked against reality.** Version, unit-test count, instrumented-test
   count and lines of code now sit at the top of the README, and `ReadmeBadgesTest` measures each one

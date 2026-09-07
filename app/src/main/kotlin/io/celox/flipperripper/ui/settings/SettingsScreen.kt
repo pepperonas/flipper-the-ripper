@@ -9,8 +9,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -38,7 +40,9 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.celox.flipperripper.R
+import io.celox.flipperripper.domain.model.EngineUpdateOutcome
 import io.celox.flipperripper.domain.model.ThemeMode
+import io.celox.flipperripper.ui.components.ExpressiveLoadingIndicator
 import io.celox.flipperripper.ui.components.SegmentedToggle
 import io.celox.flipperripper.ui.components.springPressed
 import io.celox.flipperripper.ui.theme.FieldShape
@@ -60,12 +64,28 @@ fun SettingsScreen(
     val scope = rememberCoroutineScope()
     val savedServerMsg = stringResource(R.string.settings_server_saved)
     val openFailedMsg = stringResource(R.string.about_open_failed)
+    val engineUpdatedMsg = stringResource(R.string.settings_engine_updated)
+    val engineCurrentMsg = stringResource(R.string.settings_engine_already_current)
+    val engineUnknownFmt = stringResource(R.string.settings_engine_update_unknown)
+    val updatingEngine by viewModel.updatingEngine.collectAsStateWithLifecycle()
 
     // Re-read the Instagram login state whenever Settings is shown, so it reflects a just-completed
     // (or cleared) login when the login screen pops back here.
     androidx.compose.runtime.LaunchedEffect(Unit) { viewModel.refreshInstagram() }
 
-    ObserveAsEvents(viewModel.messages) { message -> snackbarHostState.showSnackbar(message) }
+    ObserveAsEvents(viewModel.messages) { message ->
+        val text =
+            when (message) {
+                is SettingsMessage.Plain -> message.text
+                is SettingsMessage.EngineUpdate ->
+                    when (val outcome = message.outcome) {
+                        EngineUpdateOutcome.Updated -> engineUpdatedMsg
+                        EngineUpdateOutcome.AlreadyCurrent -> engineCurrentMsg
+                        is EngineUpdateOutcome.Unrecognised -> String.format(engineUnknownFmt, outcome.raw)
+                    }
+            }
+        snackbarHostState.showSnackbar(text)
+    }
 
     Scaffold(
         topBar = {
@@ -175,9 +195,20 @@ fun SettingsScreen(
                 val interaction = remember { MutableInteractionSource() }
                 FilledTonalButton(
                     onClick = viewModel::updateEngineNow,
+                    enabled = !updatingEngine,
                     interactionSource = interaction,
                     modifier = Modifier.height(Sizes.buttonHeight).springPressed(interaction),
-                ) { Text(stringResource(R.string.settings_update_engine)) }
+                ) {
+                    // Fetching the engine takes seconds over the network; an unchanged button reads as
+                    // "nothing happened" and invites a second tap.
+                    if (updatingEngine) {
+                        ExpressiveLoadingIndicator(modifier = Modifier.size(ButtonDefaults.IconSize))
+                        Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+                        Text(stringResource(R.string.settings_update_engine_running))
+                    } else {
+                        Text(stringResource(R.string.settings_update_engine))
+                    }
+                }
             }
 
             SettingsSection(stringResource(R.string.settings_about)) {
