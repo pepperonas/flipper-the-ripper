@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **README badges that are checked against reality.** Version, unit-test count, instrumented-test
+  count and lines of code now sit at the top of the README, and `ReadmeBadgesTest` measures each one
+  against the thing it claims to describe — the version against `build.gradle.kts`, the counts against
+  the test sources, the line count against the Kotlin sources (with 10 % of headroom, because a badge
+  that turns the build red for one added line would just get deleted). A PayPal donate button closes
+  the badge block, pinned to the author's own account.
+- **New unit tests (186 → 204).**
+  - `VectorDrawableTest` guards the drawn marks as *files*: 108dp canvas, `evenOdd` plus at least two
+    subpaths (without both, the glyph stops being a hole and becomes an overlay), everything inside
+    the 33dp safe-zone radius, the punched glyph clear of the disc's lobe valleys, a themed-icon layer
+    that is its own file in one flat colour, and in-app marks left black so the caller's tint decides.
+    It measures with a small real path parser — a regex over the path string reads the deltas of `h`
+    and the radii of `a` as absolute coordinates, which is exactly how an earlier check reported a
+    glyph far outside a canvas it comfortably fits. The parser has its own test with hand-computed
+    values for relative commands, arcs and `Z`.
+  - `DesignTokensTest` keeps the spacing, shape and size scales ordered, holds real controls at or
+    above the 48dp touch minimum, and pins the mark sizes in a sensible order.
+
+### Changed
+- **README screenshots are now device mockups** — one image showing Home, About, the clear-history
+  confirmation and the light theme in phone frames, on a transparent background so it sits equally
+  well in GitHub's light and dark themes.
+
 ## [1.6.0] - 2026-09-07
 
 ### Added

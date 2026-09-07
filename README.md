@@ -6,16 +6,24 @@
 
 **A modern, open-source Android app to download publicly accessible videos from YouTube, Instagram, TikTok, Facebook, X and Dailymotion.**
 
+[![version](https://img.shields.io/badge/version-1.6.0-7B4DFF?style=for-the-badge&logo=android&logoColor=white)](https://github.com/pepperonas/flipper-the-ripper/releases/latest)
+[![unit tests](https://img.shields.io/badge/unit%20tests-204-2E9E5B?style=for-the-badge&logo=junit5&logoColor=white)](app/src/test)
+[![lines of code](https://img.shields.io/badge/lines%20of%20code-6.5k-4B6BDF?style=for-the-badge&logo=kotlin&logoColor=white)](app/src/main/kotlin)
+
 [![CI](https://img.shields.io/github/actions/workflow/status/pepperonas/flipper-the-ripper/ci.yml?branch=main&label=build&logo=github)](https://github.com/pepperonas/flipper-the-ripper/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/github/actions/workflow/status/pepperonas/flipper-the-ripper/ci.yml?branch=main&label=tests&logo=junit5)](https://github.com/pepperonas/flipper-the-ripper/actions/workflows/ci.yml)
+[![Release workflow](https://img.shields.io/github/actions/workflow/status/pepperonas/flipper-the-ripper/release.yml?label=release&logo=githubactions)](https://github.com/pepperonas/flipper-the-ripper/actions/workflows/release.yml)
+[![instrumented](https://img.shields.io/badge/instrumented-10-2E9E5B?logo=android&logoColor=white)](app/src/androidTest)
 [![Coverage](https://img.shields.io/badge/coverage-%E2%89%A580%25-brightgreen?logo=kotlin)](https://github.com/pepperonas/flipper-the-ripper/actions/workflows/ci.yml)
+[![platforms](https://img.shields.io/badge/platforms-6-8A63FF?logo=youtube&logoColor=white)](#-features)
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.0-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org)
-[![Android](https://img.shields.io/badge/Android-Jetpack%20Compose-3DDC84?logo=android&logoColor=white)](https://developer.android.com/jetpack/compose)
+[![Compose](https://img.shields.io/badge/Jetpack%20Compose-1.11-3DDC84?logo=android&logoColor=white)](https://developer.android.com/jetpack/compose)
+[![Material 3 Expressive](https://img.shields.io/badge/Material%203-Expressive-6C4BE0?logo=materialdesign&logoColor=white)](https://m3.material.io/blog/m3-expressive-motion-theming)
 [![API](https://img.shields.io/badge/API-24%2B-blue?logo=android)](https://developer.android.com/tools/releases/platforms)
 [![Release](https://img.shields.io/github/v/release/pepperonas/flipper-the-ripper?logo=github)](https://github.com/pepperonas/flipper-the-ripper/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/pepperonas/flipper-the-ripper/total?logo=github)](https://github.com/pepperonas/flipper-the-ripper/releases)
-[![Release workflow](https://img.shields.io/github/actions/workflow/status/pepperonas/flipper-the-ripper/release.yml?label=release&logo=githubactions)](https://github.com/pepperonas/flipper-the-ripper/actions/workflows/release.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+[![Donate with PayPal](https://img.shields.io/badge/PayPal-support%20this%20project-00457C?style=for-the-badge&logo=paypal&logoColor=white)](https://www.paypal.com/donate/?business=martin.pfeffer@celox.io&currency_code=EUR&item_name=Flipper%20the%20Ripper)
 
 </div>
 
@@ -29,11 +37,9 @@
 
 ## 📸 Screenshots
 
-Material 3 **Expressive** UI with spring physics, one drawn mark throughout, and dynamic color — in dark and light.
+<img src="docs/screenshots/mockups.png" alt="Home, About, the clear-history confirmation and the light theme" width="100%">
 
-| Home (dark) | About (dark) | Home (light) | History |
-|:---:|:---:|:---:|:---:|
-| <img src="docs/screenshots/home.png" width="200"/> | <img src="docs/screenshots/settings.png" width="200"/> | <img src="docs/screenshots/light.png" width="200"/> | <img src="docs/screenshots/history.png" width="200"/> |
+<sub>Material 3 **Expressive** throughout: spring-based screen transitions, one drawn mark, a compact 64 dp navigation bar, and dynamic color in dark and light.</sub>
 
 ## ✨ Features
 
