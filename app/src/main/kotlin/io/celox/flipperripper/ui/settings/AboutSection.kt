@@ -32,7 +32,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import io.celox.flipperripper.BuildConfig
 import io.celox.flipperripper.R
-import io.celox.flipperripper.ui.components.MorphingMotif
+import io.celox.flipperripper.ui.components.AppMark
 import io.celox.flipperripper.ui.components.springPressed
 import io.celox.flipperripper.ui.theme.Sizes
 import io.celox.flipperripper.ui.theme.Spacing
@@ -53,7 +53,7 @@ fun AboutSection(onOpenFailed: () -> Unit) {
     }
 
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.lg)) {
-        MorphingMotif(modifier = Modifier.size(Sizes.aboutMotif), color = MaterialTheme.colorScheme.primary)
+        AppMark(modifier = Modifier.size(Sizes.aboutMotif))
         Column {
             Text(stringResource(R.string.app_name), style = MaterialTheme.typography.titleMediumEmphasized)
             Text(

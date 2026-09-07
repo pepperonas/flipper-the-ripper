@@ -17,6 +17,8 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.DeleteSweep
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.ContainedLoadingIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -31,11 +33,15 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -48,7 +54,8 @@ import io.celox.flipperripper.domain.model.DownloadMode
 import io.celox.flipperripper.domain.model.DownloadRecord
 import io.celox.flipperripper.domain.model.DownloadStatus
 import io.celox.flipperripper.domain.model.isActive
-import io.celox.flipperripper.ui.components.MorphingMotif
+import io.celox.flipperripper.ui.components.EmptyDownloadsMark
+import io.celox.flipperripper.ui.components.VideoPlaceholder
 import io.celox.flipperripper.ui.theme.Sizes
 import io.celox.flipperripper.ui.theme.Spacing
 import io.celox.flipperripper.util.MediaIntents
@@ -57,6 +64,20 @@ import io.celox.flipperripper.util.MediaIntents
 @Composable
 fun HistoryScreen(viewModel: HistoryViewModel = hiltViewModel()) {
     val records by viewModel.history.collectAsStateWithLifecycle()
+    // Clearing the history cannot be undone, so the button only *asks*; nothing is removed until the
+    // dialog is confirmed. Survives rotation, so a config change can never silently drop the question.
+    var askClearAll by rememberSaveable { mutableStateOf(false) }
+
+    if (askClearAll) {
+        ClearHistoryDialog(
+            entryCount = records.size,
+            onConfirm = {
+                askClearAll = false
+                viewModel.clearAll()
+            },
+            onDismiss = { askClearAll = false },
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -69,7 +90,7 @@ fun HistoryScreen(viewModel: HistoryViewModel = hiltViewModel()) {
                 },
                 actions = {
                     if (records.isNotEmpty()) {
-                        IconButton(onClick = viewModel::clearAll) {
+                        IconButton(onClick = { askClearAll = true }) {
                             Icon(
                                 Icons.Outlined.DeleteSweep,
                                 contentDescription = stringResource(R.string.history_clear_all),
@@ -112,6 +133,31 @@ fun HistoryScreen(viewModel: HistoryViewModel = hiltViewModel()) {
     }
 }
 
+/**
+ * Asks before the whole history goes.
+ *
+ * Deliberately names what is *not* lost: clearing only drops the list entries — the downloaded files
+ * stay in Movies/FlipperTheRipper. Without that sentence the safe choice looks like the risky one.
+ */
+@Composable
+fun ClearHistoryDialog(entryCount: Int, onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = { Icon(Icons.Outlined.DeleteSweep, contentDescription = null) },
+        title = { Text(stringResource(R.string.history_clear_title)) },
+        text = { Text(pluralStringResource(R.plurals.history_clear_body, entryCount, entryCount)) },
+        confirmButton = {
+            TextButton(
+                onClick = onConfirm,
+                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
+            ) { Text(stringResource(R.string.history_clear_confirm)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
+        },
+    )
+}
+
 @Composable
 private fun EmptyState(modifier: Modifier) {
     Column(
@@ -119,7 +165,7 @@ private fun EmptyState(modifier: Modifier) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        MorphingMotif(modifier = Modifier.size(Sizes.emptyMotif), color = MaterialTheme.colorScheme.primary)
+        EmptyDownloadsMark(modifier = Modifier.size(Sizes.emptyMotif))
         Spacer(Modifier.height(Spacing.xl))
         Text(
             stringResource(R.string.history_empty),
@@ -229,7 +275,10 @@ private fun Thumbnail(record: DownloadRecord) {
             modifier = Modifier.size(width = Sizes.thumbnailWidth, height = Sizes.thumbnailHeight).clip(shape),
             contentAlignment = Alignment.Center,
         ) {
-            MorphingMotif(modifier = Modifier.size(Spacing.xxl), color = MaterialTheme.colorScheme.primary)
+            VideoPlaceholder(
+                modifier = Modifier.size(Sizes.thumbnailGlyph),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }

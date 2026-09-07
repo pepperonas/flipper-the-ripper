@@ -39,6 +39,13 @@
     <string name="history_cancel">Cancel</string>
     <string name="history_delete">Delete</string>
     <string name="history_clear_all">Clear all</string>
+    <string name="history_clear_title">Clear download history?</string>
+    <!-- A count of one must not read "all 1 entries"; Android picks the right form per language. -->
+    <plurals name="history_clear_body">
+        <item quantity="one">This removes the one entry from the list. The downloaded video stays on your device.</item>
+        <item quantity="other">This removes all %1$d entries from the list. The downloaded videos stay on your device.</item>
+    </plurals>
+    <string name="history_clear_confirm">Clear history</string>
     <string name="history_status_queued">Queued</string>
     <string name="history_status_running">Downloading…</string>
     <string name="history_status_saved">Saved</string>

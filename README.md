@@ -29,9 +29,9 @@
 
 ## 📸 Screenshots
 
-Material 3 **Expressive** UI with spring physics, shape-morphing motifs and dynamic color — in dark and light.
+Material 3 **Expressive** UI with spring physics, one drawn mark throughout, and dynamic color — in dark and light.
 
-| Home (dark) | Settings (dark) | Settings (light) | History |
+| Home (dark) | About (dark) | Home (light) | History |
 |:---:|:---:|:---:|:---:|
 | <img src="docs/screenshots/home.png" width="200"/> | <img src="docs/screenshots/settings.png" width="200"/> | <img src="docs/screenshots/light.png" width="200"/> | <img src="docs/screenshots/history.png" width="200"/> |
 
@@ -42,6 +42,7 @@ Material 3 **Expressive** UI with spring physics, shape-morphing motifs and dyna
 - **One-tap flow** — analyse → detect platform → resolve metadata → download, with as few taps as possible (auto-download on share is configurable).
 - **Instagram sign-in (optional)** — some reels are only visible to a signed-in account. Sign in on **Instagram's own page** (*Settings → Instagram*) and the app can download the reels *your* account can see. The password is entered on Instagram, never touched by the app — only the resulting session cookie is kept, exactly as a browser does. Sign out anytime.
 - **Material 3 Expressive motion** — every screen transition is built from the theme's spring `MotionScheme` in one place (`ui/motion/ScreenTransitions.kt`): lateral fade-through with a directional slide between tabs, shared-axis rise for child screens; reduced motion collapses it to a cut.
+- **One drawn mark** — the app icon and every in-app sign share one shape: a soft Material *sunny* disc with a sharp download glyph punched through it, so the same path works coloured, outlined, tinted and as the Android themed icon.
 - **Compact bottom bar** — M3 Expressive `ShortNavigationBar` (64 dp instead of 80 dp), full-height items, filled icon on the active tab.
 - **About & support** — Settings → About shows version/build, links to celox.io, the source and the MIT licence, and a PayPal button.
 - **Title-based filenames** — files are named after the video title (`Wie man Android Apps entwickelt.mp4`) with illegal characters sanitised.
@@ -49,7 +50,7 @@ Material 3 **Expressive** UI with spring physics, shape-morphing motifs and dyna
 - **True background downloads** — keep going while the screen is locked, the app is minimised, or the device is rotated (WorkManager + foreground service).
 - **Audio-only mode** for YouTube (`.m4a`).
 - **Robust error messages** — private video, login required, region blocked, rate-limited, network error, invalid link, cancelled.
-- **Material 3 Expressive** — spring-based motion physics (`MotionScheme.expressive()`), shape-morphing `MaterialShapes` motifs, the expressive `LoadingIndicator`, emphasized typography, a spring-sliding segmented toggle, staggered list entrances, and expressive screen transitions. Dynamic color + light/dark, all guarded by `prefers-reduced-motion`.
+- **Material 3 Expressive** — spring-based motion physics (`MotionScheme.expressive()`), the expressive `LoadingIndicator`, emphasized typography, a spring-sliding segmented toggle, staggered list entrances, and expressive screen transitions. Dynamic color + light/dark, all guarded by `prefers-reduced-motion`.
 - **Self-updating extractor** — yt-dlp is refreshed automatically (throttled, on app start *and*
   whenever a link is shared in), because platforms like YouTube break old extractors within months.
   A manual **Update yt-dlp** button remains in Settings.
@@ -82,7 +83,7 @@ or run Python**. A literal 1:1 port is therefore impossible. What *is* portable 
 layer, which this app reimplements faithfully in Kotlin:
 
 - **Platform detection** (host-substring match) → [`UrlParser`](app/src/main/kotlin/io/celox/flipperripper/domain/util/UrlParser.kt)
-- **yt-dlp argument strategy** — prefer H.264 + m4a → mp4 for universal playback, audio = m4a q0, `--no-playlist`/`--no-mtime`, YouTube SABR workaround `player_client=default,ios,web_safari`, the `--` flag-injection guard, `%(title).100B [%(id)s]` naming → [`YtDlpArgsBuilder`](app/src/main/kotlin/io/celox/flipperripper/data/engine/YtDlpArgsBuilder.kt)
+- **yt-dlp argument strategy** — prefer H.264 + m4a → mp4 for universal playback, audio = m4a q0, `--no-playlist`/`--no-mtime`, deliberately no pinned `player_client` (see the history note in `YtDlpArgsBuilder`), the `--` flag-injection guard, `%(title).100B [%(id)s]` naming → [`YtDlpArgsBuilder`](app/src/main/kotlin/io/celox/flipperripper/data/engine/YtDlpArgsBuilder.kt)
 - **Error taxonomy** — `is_bot_block` / `looks_stale_or_rate_limited` plus private/region/unavailable/network buckets → [`ErrorClassifier`](app/src/main/kotlin/io/celox/flipperripper/data/engine/ErrorClassifier.kt)
 
 The engine underneath is [**youtubedl-android**](https://github.com/JunkFood02/youtubedl-android),

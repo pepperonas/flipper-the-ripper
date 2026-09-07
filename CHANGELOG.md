@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-09-07
+
+### Added
+- **Clearing the download history now asks first.** The sweep button in the Downloads toolbar opens a
+  confirmation dialog instead of wiping the list on the spot; nothing is removed until it is confirmed.
+  The dialog names the count and, just as importantly, what is *not* lost — the downloaded videos stay
+  on the device, only the list entries go. The question survives a rotation, so a config change can
+  never silently drop it. Pinned by four instrumentation tests, including the singular wording ("the
+  one entry", not "all 1 entries" — the body is a plural resource).
+
+### Changed
+- **New app icon and in-app marks.** The old shape motif — a soft blob that read as an apple — served
+  as the hero, the empty state, the thumbnail placeholder and the platform badge all at once, and said
+  nothing in any of those places. It is gone. In its place is one drawn mark: a soft eight-lobed
+  Material *sunny* disc with a sharp download arrow and tray punched clean through it. Material 3
+  Expressive asks for tension between rounded and angular forms, and here that contrast carries the
+  meaning. Because the glyph is a hole rather than an overlay, the same path serves the coloured
+  launcher icon, the themed-icon layer and every in-app use.
+  - The launcher icon uses that mark, sized inside the 66 dp adaptive-icon safe zone (disc outer
+    radius 32.7 of the permitted 33), with a **dedicated monochrome layer** — reusing the coloured
+    foreground shipped its own tint into a layer the system is supposed to colour itself.
+  - Empty history shows the mark as an outline: the same shape, still waiting to be filled.
+  - A missing thumbnail shows the disc with a play triangle cut out.
+  - The platform badge now uses a plain dot in the platform's colour: the lobed mark turns to mush
+    below roughly 24 dp, and next to a word the badge only has to answer "which platform".
+- The now-unused shape-morphing helpers (`MorphPolygonShape`, `MotionPolicy`) are removed.
+
+### Fixed
+- **An instrumentation test had been failing permanently.** `MediaStoreWriterInstrumentedTest` passed
+  `Dispatchers.IO` to `runTest`, which kotlinx-coroutines-test rejects outright ("Dispatcher must
+  implement TestDispatcher") — so the one test covering the real MediaStore write path never ran. It
+  uses `runBlocking` now, which is the right tool for real file I/O anyway.
+
 ## [1.5.0] - 2026-09-07
 
 ### Added
@@ -457,7 +490,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Signed release builds, GitHub Actions CI (build, lint, detekt, unit tests, coverage) and an
   automated tag-driven release workflow.
 
-[Unreleased]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.5.0...HEAD
+[Unreleased]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.6.0...HEAD
+[1.6.0]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.3.2...v1.4.0
 [1.3.2]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.3.1...v1.3.2

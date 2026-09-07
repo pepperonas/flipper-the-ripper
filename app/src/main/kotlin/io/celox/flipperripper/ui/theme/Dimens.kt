@@ -51,6 +51,12 @@ object Sizes {
     val thumbnailWidth: Dp = 96.dp
     val thumbnailHeight: Dp = 56.dp
 
+    /** The dot marking a platform in its badge. */
+    val platformDot: Dp = 10.dp
+
+    /** The placeholder glyph inside an empty thumbnail. */
+    val thumbnailGlyph: Dp = 28.dp
+
     /** The expressive loading indicator when it sits inline with text. */
     val inlineIndicator: Dp = 32.dp
 

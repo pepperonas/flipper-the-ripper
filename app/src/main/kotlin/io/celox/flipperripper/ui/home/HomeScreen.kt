@@ -55,8 +55,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import io.celox.flipperripper.R
 import io.celox.flipperripper.domain.model.DownloadMode
+import io.celox.flipperripper.ui.components.AppMark
 import io.celox.flipperripper.ui.components.ExpressiveLoadingIndicator
-import io.celox.flipperripper.ui.components.MorphingMotif
 import io.celox.flipperripper.ui.components.PlatformBadge
 import io.celox.flipperripper.ui.components.SegmentedToggle
 import io.celox.flipperripper.ui.components.springPressed
@@ -246,7 +246,7 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
 @Composable
 private fun Hero() {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.lg)) {
-        MorphingMotif(modifier = Modifier.size(Sizes.heroMotif), color = MaterialTheme.colorScheme.primary)
+        AppMark(modifier = Modifier.size(Sizes.heroMotif))
         Column {
             Text(
                 text = stringResource(R.string.home_tagline),

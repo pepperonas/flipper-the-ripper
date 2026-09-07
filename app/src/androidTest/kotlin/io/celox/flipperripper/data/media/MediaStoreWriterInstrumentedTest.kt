@@ -7,8 +7,7 @@ import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import io.celox.flipperripper.domain.model.DownloadMode
 import io.celox.flipperripper.domain.model.EngineResult
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -32,9 +31,11 @@ class MediaStoreWriterInstrumentedTest {
     @Before
     fun setUp() = hiltRule.inject()
 
+    // Deliberately runBlocking, not runTest: this exercises real MediaStore I/O, and runTest rejects a
+    // non-TestDispatcher outright (kotlinx-coroutines-test 1.6+), which left the test permanently red.
     @Test
     fun savesVideoAndReturnsContentUri() =
-        runTest(Dispatchers.IO) {
+        runBlocking<Unit> {
             val context = InstrumentationRegistry.getInstrumentation().targetContext
             val source = File(context.cacheDir, "sample-${System.nanoTime()}.mp4")
             source.writeBytes(ByteArray(2048) { it.toByte() })
