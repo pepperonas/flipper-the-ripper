@@ -49,4 +49,8 @@ fun Platform.accentColor(): Color =
         Platform.INSTAGRAM -> Color(0xFFE1306C)
         Platform.TIKTOK -> Color(0xFF25F4EE)
         Platform.FACEBOOK -> Color(0xFF1877F2)
+        // X's brand is pure black — invisible on the dark surface — so the badge uses its mid-grey
+        // secondary tone, which reads on both themes.
+        Platform.X -> Color(0xFF8B98A5)
+        Platform.DAILYMOTION -> Color(0xFF0066DC)
     }

@@ -14,12 +14,12 @@ import io.celox.flipperripper.domain.model.Platform
  * pattern, so every **non-terminal** YouTube failure qualifies; the guard against pointless loops
  * is [updateJustifiesRetry] — no fresh yt-dlp, no retry.
  *
- * Only yt-dlp platforms qualify: a WebView-extracted failure (Instagram/TikTok/Facebook) has
- * nothing to gain from a yt-dlp update.
+ * Only yt-dlp platforms qualify (YouTube, X, Dailymotion — see [EngineRouting.usesYtDlp]): a
+ * WebView-extracted failure (Instagram/TikTok/Facebook) has nothing to gain from a yt-dlp update.
  */
 object StaleEngineRetry {
     fun shouldUpdateAndRetry(platform: Platform, error: DownloadError): Boolean {
-        if (platform != Platform.YOUTUBE) return false
+        if (!EngineRouting.usesYtDlp(platform)) return false
         return when (error) {
             is DownloadError.LoginRequired -> true
             is DownloadError.RateLimitedOrStale -> true

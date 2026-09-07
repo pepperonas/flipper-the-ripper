@@ -40,7 +40,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <!-- Receive a shared link from Instagram / TikTok / YouTube. -->
+            <!-- Receive a shared link from YouTube / Instagram / TikTok / Facebook / X / Dailymotion. -->
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />

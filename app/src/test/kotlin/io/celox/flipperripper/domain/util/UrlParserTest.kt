@@ -31,6 +31,35 @@ class UrlParserTest {
     }
 
     @Test
+    fun `detects x across its current and legacy hosts`() {
+        assertThat(UrlParser.detectPlatform("https://x.com/SpaceX/status/2095087210479382726")).isEqualTo(Platform.X)
+        assertThat(UrlParser.detectPlatform("https://www.x.com/SpaceX/status/1")).isEqualTo(Platform.X)
+        assertThat(UrlParser.detectPlatform("https://twitter.com/SpaceX/status/1")).isEqualTo(Platform.X)
+        assertThat(UrlParser.detectPlatform("https://mobile.twitter.com/SpaceX/status/1")).isEqualTo(Platform.X)
+        assertThat(UrlParser.detectPlatform("https://x.com/i/status/1")).isEqualTo(Platform.X)
+    }
+
+    @Test
+    fun `detects dailymotion long and short hosts`() {
+        assertThat(UrlParser.detectPlatform("https://www.dailymotion.com/video/xb4g82i")).isEqualTo(Platform.DAILYMOTION)
+        assertThat(UrlParser.detectPlatform("https://dailymotion.com/video/xb4g82i")).isEqualTo(Platform.DAILYMOTION)
+        assertThat(UrlParser.detectPlatform("https://dai.ly/xb4g82i")).isEqualTo(Platform.DAILYMOTION)
+    }
+
+    @Test
+    fun `a host is matched as a registrable domain, never as a substring`() {
+        // "x.com" is a suffix of many unrelated hosts — a substring match would claim them all.
+        assertThat(UrlParser.detectPlatform("https://www.netflix.com/watch/1")).isNull()
+        assertThat(UrlParser.detectPlatform("https://www.dropbox.com/s/abc")).isNull()
+        assertThat(UrlParser.detectPlatform("https://myx.com/1")).isNull()
+        // A look-alike that merely *contains* a supported host must not pass either.
+        assertThat(UrlParser.detectPlatform("https://youtube.com.evil.example/watch")).isNull()
+        assertThat(UrlParser.detectPlatform("https://notyoutube.com/watch")).isNull()
+        // …while genuine subdomains still do.
+        assertThat(UrlParser.detectPlatform("https://music.youtube.com/watch?v=x")).isEqualTo(Platform.YOUTUBE)
+    }
+
+    @Test
     fun `rejects unsupported and non-http`() {
         assertThat(UrlParser.detectPlatform("https://vimeo.com/123")).isNull()
         assertThat(UrlParser.detectPlatform("ftp://youtube.com/x")).isNull()

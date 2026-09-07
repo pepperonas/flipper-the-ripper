@@ -17,6 +17,14 @@ class PlatformWebTest {
     }
 
     @Test
+    fun `yt-dlp platforms map to their own site too, never to another platform`() {
+        // They never reach the CDN downloader, but if one ever does, a foreign site's Referer is a 403.
+        assertThat(PlatformWeb.referer(Platform.YOUTUBE)).isEqualTo("https://www.youtube.com/")
+        assertThat(PlatformWeb.referer(Platform.X)).isEqualTo("https://x.com/")
+        assertThat(PlatformWeb.referer(Platform.DAILYMOTION)).isEqualTo("https://www.dailymotion.com/")
+    }
+
+    @Test
     fun `every platform yields a usable https referer`() {
         Platform.entries.forEach { p ->
             assertThat(PlatformWeb.referer(p)).startsWith("https://")

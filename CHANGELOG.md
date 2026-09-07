@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-09-07
+
+### Added
+- **X (Twitter) support.** Public video posts on `x.com` and `twitter.com` (incl. `mobile.`/`www.`)
+  download on-device through the bundled yt-dlp, which talks to X's guest-token GraphQL API — no
+  sign-in, no browser check, no JS challenge; the video arrives as a plain progressive MP4. Verified
+  under the exact on-device toolchain (PATH-stripped desktop yt-dlp, same arguments): a 19 s SpaceX
+  clip, 2.7 MB. Posts marked sensitive, protected accounts and login-only content are not supported;
+  live broadcasts resolve but are whole-stream recordings (a NASA launch stream ran past 1.2 GB).
+- **Dailymotion support.** `dailymotion.com/video/…` and `dai.ly/…` links download on-device through
+  yt-dlp (public metadata + HLS manifest, segments assembled by yt-dlp's native HLS downloader, the
+  container fixed up by the bundled ffmpeg). Verified the same way: a 60 s 1080p clip, 31 MB.
+- Both new platforms take part in the **self-healing stale-engine retry** introduced in 1.3.2: a
+  non-terminal failure forces a yt-dlp update and retries once — the rule is now "every yt-dlp-routed
+  platform" (`EngineRouting.usesYtDlp`) instead of "YouTube".
+
+### Changed
+- **Host detection matches registrable domains, not substrings.** Adding `x.com` exposed that the
+  old `host.contains(…)` match would have claimed every host *ending* in it — `netflix.com`,
+  `dropbox.com` — and already accepted look-alikes such as `youtube.com.evil.example`. A host now has
+  to *be* the platform domain or a subdomain of it; genuine subdomains (`m.facebook.com`,
+  `vm.tiktok.com`, `music.youtube.com`) keep working. Pinned by tests.
+- The home screen hint and the share-target comment list all six platforms; each platform now maps to
+  its *own* site as download `Referer` (the yt-dlp platforms never reach the CDN downloader, but a
+  foreign site's Referer would be a 403 if one ever did).
+
 ## [1.3.2] - 2026-08-23
 
 ### Fixed

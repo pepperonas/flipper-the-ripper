@@ -46,6 +46,29 @@ class EngineRoutingTest {
     }
 
     @Test
+    fun `x and dailymotion run on the device through yt-dlp`() {
+        // Both are served by yt-dlp's guest APIs (X: guest token + GraphQL; Dailymotion: public HLS) —
+        // no browser fingerprint check, no JS challenge — so the bundled yt-dlp is the primary.
+        listOf(Platform.X, Platform.DAILYMOTION).forEach { platform ->
+            assertThat(EngineRouting.order(platform, serverConfigured = false, preferServer = false))
+                .containsExactly(EngineKind.ON_DEVICE)
+            assertThat(EngineRouting.order(platform, serverConfigured = true, preferServer = false))
+                .containsExactly(EngineKind.ON_DEVICE, EngineKind.SERVER)
+                .inOrder()
+        }
+    }
+
+    @Test
+    fun `usesYtDlp mirrors the on-device primary`() {
+        Platform.entries.forEach { platform ->
+            val primary = EngineRouting.order(platform, serverConfigured = false, preferServer = false).single()
+            assertThat(EngineRouting.usesYtDlp(platform)).isEqualTo(primary == EngineKind.ON_DEVICE)
+        }
+        assertThat(EngineRouting.usesYtDlp(Platform.X)).isTrue()
+        assertThat(EngineRouting.usesYtDlp(Platform.INSTAGRAM)).isFalse()
+    }
+
+    @Test
     fun `an explicit server preference puts the server first, primary as fallback`() {
         assertThat(EngineRouting.order(Platform.YOUTUBE, serverConfigured = true, preferServer = true))
             .containsExactly(EngineKind.SERVER, EngineKind.ON_DEVICE)

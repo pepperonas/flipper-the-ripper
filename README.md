@@ -4,7 +4,7 @@
 
 # 🎬 Flipper the Ripper
 
-**A modern, open-source Android app to download publicly accessible videos from Instagram, YouTube, TikTok and Facebook.**
+**A modern, open-source Android app to download publicly accessible videos from YouTube, Instagram, TikTok, Facebook, X and Dailymotion.**
 
 [![CI](https://img.shields.io/github/actions/workflow/status/pepperonas/flipper-the-ripper/ci.yml?branch=main&label=build&logo=github)](https://github.com/pepperonas/flipper-the-ripper/actions/workflows/ci.yml)
 [![Tests](https://img.shields.io/github/actions/workflow/status/pepperonas/flipper-the-ripper/ci.yml?branch=main&label=tests&logo=junit5)](https://github.com/pepperonas/flipper-the-ripper/actions/workflows/ci.yml)
@@ -37,7 +37,7 @@ Material 3 **Expressive** UI with spring physics, shape-morphing motifs and dyna
 
 ## ✨ Features
 
-- **Share integration** — tap *Share* in Instagram / TikTok / YouTube / Facebook and pick **Flipper the Ripper**; the link is imported automatically.
+- **Share integration** — tap *Share* in YouTube / Instagram / TikTok / Facebook / X / Dailymotion and pick **Flipper the Ripper**; the link is imported automatically.
 - **Clipboard detection** — copied a link instead? On launch the app offers to download a supported URL found on the clipboard.
 - **One-tap flow** — analyse → detect platform → resolve metadata → download, with as few taps as possible (auto-download on share is configurable).
 - **Instagram sign-in (optional)** — some reels are only visible to a signed-in account. Sign in on **Instagram's own page** (*Settings → Instagram*) and the app can download the reels *your* account can see. The password is entered on Instagram, never touched by the app — only the resulting session cookie is kept, exactly as a browser does. Sign out anytime.
@@ -84,13 +84,13 @@ layer, which this app reimplements faithfully in Kotlin:
 
 The engine underneath is [**youtubedl-android**](https://github.com/JunkFood02/youtubedl-android),
 which bundles the **real yt-dlp + ffmpeg** as native libraries — the same engine that powers apps like
-Seal. That drives **YouTube** on the device.
+Seal. That drives **YouTube, X and Dailymotion** on the device.
 
 The browser-gated platforms need more than yt-dlp: **Instagram, TikTok and Facebook** fingerprint the TLS
 handshake and hydrate the video URL with JavaScript, so they are handled by an on-device **WebView
 extractor** (real Chromium) instead — see [How downloads are routed](#how-downloads-are-routed) for the
 per-platform detail. The `inspector-rust` policy layer still governs the shared concerns (platform
-detection, error taxonomy, naming) across all four.
+detection, error taxonomy, naming) across all six.
 
 ### Decision: reuse vs. JNI vs. re-port
 
@@ -242,6 +242,8 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 **Do TikTok and Facebook work?** Yes — both download on-device through the WebView (TikTok reads the URL from the page's rehydration JSON; Facebook from the public video page's HTML). Facebook videos that require a login, and private/age-restricted content, are not supported.
 
+**Do X (Twitter) and Dailymotion work?** Yes — both go through the bundled yt-dlp on the device, using the platforms' guest APIs (no sign-in). Paste or share an `x.com` / `twitter.com` post link (the post itself must carry the video — a post that only *links* to a video elsewhere is not a video post) or a `dailymotion.com` / `dai.ly` link. Posts marked sensitive/NSFW, protected accounts and login-only content are not supported. Live broadcasts (X Spaces/live streams) resolve, but they are recordings of the whole stream and can be very large.
+
 **Where do files go?** The public *Movies/FlipperTheRipper* folder (audio → *Music/FlipperTheRipper*), visible in Gallery/Photos/file managers.
 
 **Does it work on an x86 emulator?** No — use an ARM system image or a physical device.
@@ -267,6 +269,8 @@ falls back to a configured server if the primary can't get it:
 | Platform | On-device primary | Why | Fallback |
 |----------|-------------------|-----|----------|
 | **YouTube** | bundled **yt-dlp** (default clients + QuickJS) | yt-dlp's maintained client rotation stays downloadable and the bundled QuickJS solves the JS challenges; runs from *your* IP, which YouTube blocks far less than a datacenter | server |
+| **X** | bundled **yt-dlp** | yt-dlp's `twitter` extractor talks to X's guest-token GraphQL API — no browser check, no JS challenge; a public post's video comes as a plain progressive MP4 | server |
+| **Dailymotion** | bundled **yt-dlp** | public metadata + HLS manifest; yt-dlp's native HLS downloader assembles the segments and the bundled ffmpeg fixes the container | server |
 | **Instagram** | a hidden **WebView** (+ optional sign-in) | Instagram fingerprints the TLS handshake and hydrates the URL with JS — only a real browser gets through, and Android's WebView *is* Chromium; signing in unlocks login-only reels | server |
 | **TikTok** | a hidden **WebView** | same browser check; the URL is read from the page's `__UNIVERSAL_DATA_FOR_REHYDRATION__` JSON and fetched with a `tiktok.com` Referer + the page cookies | server |
 | **Facebook** | a hidden **WebView** (desktop UA) | the public video page embeds `browser_native_hd_url` in its HTML — but only the *desktop* page, so the extractor presents a desktop user-agent | server |
@@ -275,8 +279,9 @@ falls back to a configured server if the primary can't get it:
 
 - **yt-dlp on the device** ships with a bundled **QuickJS** runtime (youtubedl-android ≥ 0.18) for
   yt-dlp's JS challenges, but has no `curl_cffi`, so it can do YouTube (yt-dlp's default client
-  rotation — deliberately no pinned `player_client`, see `YtDlpArgsBuilder`) but *cannot* do
-  Instagram/TikTok/Facebook at all — those require browser TLS impersonation.
+  rotation — deliberately no pinned `player_client`, see `YtDlpArgsBuilder`), X and Dailymotion (both
+  served by guest APIs), but *cannot* do Instagram/TikTok/Facebook at all — those require browser TLS
+  impersonation.
 - **The WebView** is real Chromium: it presents the genuine Chrome TLS fingerprint and runs the page's
   JS, then reads the direct video URL — each platform hides it differently:
   - **Instagram** — public reels are scraped from the embed's hydrated JSON; signed-in/gated reels go

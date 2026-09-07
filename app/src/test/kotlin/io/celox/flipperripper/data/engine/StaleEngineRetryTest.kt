@@ -37,6 +37,17 @@ class StaleEngineRetryTest {
     }
 
     @Test
+    fun `every yt-dlp platform heals itself the same way`() {
+        // X and Dailymotion go through the same bundled yt-dlp, so a stale extractor breaks them the
+        // same way it breaks YouTube — and a fresh one heals them the same way.
+        val error = DownloadError.Unknown("Download failed: ERROR: [twitter] Unable to extract")
+        listOf(Platform.YOUTUBE, Platform.X, Platform.DAILYMOTION).forEach { platform ->
+            assertThat(StaleEngineRetry.shouldUpdateAndRetry(platform, error)).isTrue()
+            assertThat(StaleEngineRetry.shouldUpdateAndRetry(platform, DownloadError.PrivateVideo("p"))).isFalse()
+        }
+    }
+
+    @Test
     fun `webview platforms gain nothing from a yt-dlp update`() {
         val error = DownloadError.Unknown("HTTP 403 from cdn.example")
         listOf(Platform.INSTAGRAM, Platform.TIKTOK, Platform.FACEBOOK).forEach { platform ->
