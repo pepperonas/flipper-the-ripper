@@ -287,6 +287,10 @@ kover {
                     "io.celox.flipperripper.ui.home.HomeScreenKt",
                     "io.celox.flipperripper.ui.history.HistoryScreenKt",
                     "io.celox.flipperripper.ui.settings.SettingsScreenKt",
+                    "io.celox.flipperripper.ui.settings.AboutSectionKt",
+                    // Builds Compose EnterTransition/ExitTransition from the theme springs — only
+                    // exercisable inside a composition; the pure geometry (ScreenMotion) is unit-tested.
+                    "io.celox.flipperripper.ui.motion.ScreenTransitions*",
                     "io.celox.flipperripper.ui.util.*"
                 )
                 packages(

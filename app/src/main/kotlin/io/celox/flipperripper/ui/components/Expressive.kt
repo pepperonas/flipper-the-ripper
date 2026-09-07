@@ -12,7 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -72,7 +72,7 @@ fun <T> SegmentedToggle(
         modifier
             .fillMaxWidth()
             .height(48.dp)
-            .clip(RoundedCornerShape(24.dp))
+            .clip(CircleShape)
             .background(MaterialTheme.colorScheme.surfaceContainerHighest)
             .padding(4.dp)
             .selectableGroup(),
@@ -107,7 +107,7 @@ fun <T> SegmentedToggle(
                 Modifier
                     .weight(1f)
                     .height(40.dp)
-                    .clip(RoundedCornerShape(20.dp))
+                    .clip(CircleShape)
                     .background(bg)
                     .foundationClickable(
                         interactionSource = remember { MutableInteractionSource() },

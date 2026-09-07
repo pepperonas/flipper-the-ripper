@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -50,7 +49,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.dp
 import androidx.core.content.getSystemService
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -63,6 +61,9 @@ import io.celox.flipperripper.ui.components.PlatformBadge
 import io.celox.flipperripper.ui.components.SegmentedToggle
 import io.celox.flipperripper.ui.components.springPressed
 import io.celox.flipperripper.ui.motion.fadeRiseIn
+import io.celox.flipperripper.ui.theme.FieldShape
+import io.celox.flipperripper.ui.theme.Sizes
+import io.celox.flipperripper.ui.theme.Spacing
 import io.celox.flipperripper.ui.util.ObserveAsEvents
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -101,12 +102,12 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
             Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = 20.dp)
+                .padding(horizontal = Spacing.xl)
                 .verticalScroll(rememberScrollState()),
         ) {
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(Spacing.sm))
             Hero()
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(Spacing.xl))
 
             AnimatedVisibility(
                 visible = state.updateNotice != null,
@@ -129,7 +130,7 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
                             },
                             onDismiss = { viewModel.dismissUpdateNotice() },
                         )
-                        Spacer(Modifier.height(12.dp))
+                        Spacer(Modifier.height(Spacing.md))
                     }
                 }
             }
@@ -137,7 +138,7 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
             AnimatedVisibility(visible = !state.engineReady) {
                 Column {
                     EngineBanner()
-                    Spacer(Modifier.height(12.dp))
+                    Spacer(Modifier.height(Spacing.md))
                 }
             }
 
@@ -153,7 +154,7 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
                             onUse = { viewModel.acceptClipboardSuggestion() },
                             onDismiss = { viewModel.dismissClipboardSuggestion() },
                         )
-                        Spacer(Modifier.height(12.dp))
+                        Spacer(Modifier.height(Spacing.md))
                     }
                 }
             }
@@ -164,7 +165,7 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
                 label = { Text(stringResource(R.string.home_url_label)) },
                 placeholder = { Text(stringResource(R.string.home_url_hint)) },
                 singleLine = true,
-                shape = RoundedCornerShape(20.dp),
+                shape = FieldShape,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
                 trailingIcon = {
                     Row {
@@ -184,7 +185,7 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
             AnimatedVisibility(visible = state.detectedPlatform != null) {
                 state.detectedPlatform?.let {
                     Column {
-                        Spacer(Modifier.height(12.dp))
+                        Spacer(Modifier.height(Spacing.md))
                         PlatformBadge(platform = it)
                     }
                 }
@@ -192,7 +193,7 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
 
             AnimatedVisibility(visible = state.showAudioOption) {
                 Column {
-                    Spacer(Modifier.height(16.dp))
+                    Spacer(Modifier.height(Spacing.lg))
                     SegmentedToggle(
                         options =
                         listOf(
@@ -205,7 +206,7 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
                 }
             }
 
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(Spacing.xl))
             ActionRow(
                 canDownload = state.canDownload,
                 isResolving = state.isResolving,
@@ -215,13 +216,13 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
 
             AnimatedVisibility(visible = state.isResolving) {
                 Column {
-                    Spacer(Modifier.height(28.dp))
+                    Spacer(Modifier.height(Spacing.xxl))
                     ResolvingIndicator()
                 }
             }
 
             state.videoInfo?.let { info ->
-                Spacer(Modifier.height(24.dp))
+                Spacer(Modifier.height(Spacing.xxl))
                 VideoPreview(
                     title = info.title,
                     uploader = info.uploader,
@@ -232,23 +233,23 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
             AnimatedVisibility(visible = state.errorMessage != null) {
                 state.errorMessage?.let { message ->
                     Column {
-                        Spacer(Modifier.height(16.dp))
+                        Spacer(Modifier.height(Spacing.lg))
                         ErrorCard(message)
                     }
                 }
             }
-            Spacer(Modifier.height(32.dp))
+            Spacer(Modifier.height(Spacing.xxxl))
         }
     }
 }
 
 @Composable
 private fun Hero() {
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-        MorphingMotif(modifier = Modifier.size(56.dp), color = MaterialTheme.colorScheme.primary)
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.lg)) {
+        MorphingMotif(modifier = Modifier.size(Sizes.heroMotif), color = MaterialTheme.colorScheme.primary)
         Column {
             Text(
-                text = "Rip it. Keep it.",
+                text = stringResource(R.string.home_tagline),
                 style = MaterialTheme.typography.headlineSmallEmphasized,
                 fontWeight = FontWeight.Bold,
             )
@@ -270,18 +271,18 @@ private fun ActionRow(
 ) {
     val resolveInteraction = remember { MutableInteractionSource() }
     val downloadInteraction = remember { MutableInteractionSource() }
-    Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
+    Row(horizontalArrangement = Arrangement.spacedBy(Spacing.md), modifier = Modifier.fillMaxWidth()) {
         FilledTonalButton(
             onClick = onResolve,
             enabled = canDownload && !isResolving,
             interactionSource = resolveInteraction,
-            modifier = Modifier.weight(1f).height(56.dp).springPressed(resolveInteraction),
+            modifier = Modifier.weight(1f).height(Sizes.primaryButtonHeight).springPressed(resolveInteraction),
         ) { Text(stringResource(R.string.home_fetch)) }
         Button(
             onClick = onDownload,
             enabled = canDownload,
             interactionSource = downloadInteraction,
-            modifier = Modifier.weight(1f).height(56.dp).springPressed(downloadInteraction),
+            modifier = Modifier.weight(1f).height(Sizes.primaryButtonHeight).springPressed(downloadInteraction),
         ) { Text(stringResource(R.string.home_download)) }
     }
 }
@@ -289,13 +290,13 @@ private fun ActionRow(
 @Composable
 private fun EngineBanner() {
     Card(
-        shape = RoundedCornerShape(20.dp),
+        shape = FieldShape,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
         modifier = Modifier.fillMaxWidth(),
     ) {
-        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            ExpressiveLoadingIndicator(modifier = Modifier.size(28.dp))
-            Spacer(Modifier.width(16.dp))
+        Row(modifier = Modifier.padding(Spacing.lg), verticalAlignment = Alignment.CenterVertically) {
+            ExpressiveLoadingIndicator(modifier = Modifier.size(Sizes.inlineIndicator))
+            Spacer(Modifier.width(Spacing.lg))
             Text(
                 stringResource(R.string.home_engine_initializing),
                 color = MaterialTheme.colorScheme.onSecondaryContainer,
@@ -308,24 +309,24 @@ private fun EngineBanner() {
 private fun UpdateNoticeCard(version: String, onGet: () -> Unit, onDismiss: () -> Unit) {
     val getInteraction = remember { MutableInteractionSource() }
     Card(
-        shape = RoundedCornerShape(24.dp),
+        shape = MaterialTheme.shapes.extraLarge,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
         modifier = Modifier.fillMaxWidth(),
     ) {
-        Column(Modifier.padding(20.dp)) {
+        Column(Modifier.padding(Spacing.xl)) {
             Text(
                 stringResource(R.string.home_update_available, version),
                 style = MaterialTheme.typography.titleMediumEmphasized,
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
             )
-            Spacer(Modifier.height(6.dp))
+            Spacer(Modifier.height(Spacing.xs))
             Text(
                 stringResource(R.string.home_update_body),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
             )
-            Spacer(Modifier.height(12.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Spacer(Modifier.height(Spacing.md))
+            Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
                 Button(
                     onClick = onGet,
                     interactionSource = getInteraction,
@@ -343,25 +344,25 @@ private fun UpdateNoticeCard(version: String, onGet: () -> Unit, onDismiss: () -
 private fun ClipboardSuggestionCard(url: String, onUse: () -> Unit, onDismiss: () -> Unit) {
     val useInteraction = remember { MutableInteractionSource() }
     Card(
-        shape = RoundedCornerShape(24.dp),
+        shape = MaterialTheme.shapes.extraLarge,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer),
         modifier = Modifier.fillMaxWidth(),
     ) {
-        Column(Modifier.padding(20.dp)) {
+        Column(Modifier.padding(Spacing.xl)) {
             Text(
                 stringResource(R.string.home_clipboard_prompt),
                 style = MaterialTheme.typography.titleMediumEmphasized,
                 color = MaterialTheme.colorScheme.onTertiaryContainer,
             )
-            Spacer(Modifier.height(6.dp))
+            Spacer(Modifier.height(Spacing.xs))
             Text(
                 url,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onTertiaryContainer,
                 maxLines = 2,
             )
-            Spacer(Modifier.height(12.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Spacer(Modifier.height(Spacing.md))
+            Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
                 Button(
                     onClick = onUse,
                     interactionSource = useInteraction,
@@ -382,8 +383,8 @@ private fun ResolvingIndicator() {
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        ExpressiveLoadingIndicator(modifier = Modifier.size(32.dp))
-        Spacer(Modifier.width(14.dp))
+        ExpressiveLoadingIndicator(modifier = Modifier.size(Sizes.inlineIndicator))
+        Spacer(Modifier.width(Spacing.md))
         Text(stringResource(R.string.home_resolving), style = MaterialTheme.typography.bodyLarge)
     }
 }
@@ -391,7 +392,7 @@ private fun ResolvingIndicator() {
 @Composable
 private fun VideoPreview(title: String, uploader: String?, thumbnailUrl: String?) {
     Card(
-        shape = RoundedCornerShape(28.dp),
+        shape = MaterialTheme.shapes.extraLarge,
         modifier = Modifier.fillMaxWidth().fadeRiseIn(),
     ) {
         Column {
@@ -399,13 +400,13 @@ private fun VideoPreview(title: String, uploader: String?, thumbnailUrl: String?
                 AsyncImage(
                     model = thumbnailUrl,
                     contentDescription = null,
-                    modifier = Modifier.fillMaxWidth().height(200.dp),
+                    modifier = Modifier.fillMaxWidth().height(Sizes.previewImageHeight),
                 )
             }
-            Column(Modifier.padding(20.dp)) {
+            Column(Modifier.padding(Spacing.xl)) {
                 Text(title, style = MaterialTheme.typography.titleMediumEmphasized, maxLines = 3)
                 uploader?.let {
-                    Spacer(Modifier.height(4.dp))
+                    Spacer(Modifier.height(Spacing.xs))
                     Text(
                         it,
                         style = MaterialTheme.typography.bodyMedium,
@@ -420,14 +421,14 @@ private fun VideoPreview(title: String, uploader: String?, thumbnailUrl: String?
 @Composable
 private fun ErrorCard(message: String) {
     Card(
-        shape = RoundedCornerShape(20.dp),
+        shape = FieldShape,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
         modifier = Modifier.fillMaxWidth().fadeRiseIn(),
     ) {
         Text(
             text = message,
             color = MaterialTheme.colorScheme.onErrorContainer,
-            modifier = Modifier.padding(20.dp),
+            modifier = Modifier.padding(Spacing.xl),
         )
     }
 }

@@ -5,9 +5,11 @@ import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -16,6 +18,7 @@ import io.celox.flipperripper.data.update.UpdateCoordinator
 import io.celox.flipperripper.domain.model.UserPreferences
 import io.celox.flipperripper.domain.repository.SettingsRepository
 import io.celox.flipperripper.ui.theme.FlipperTheme
+import io.celox.flipperripper.ui.theme.isDarkTheme
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -42,6 +45,14 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val prefs by settingsRepository.preferences.collectAsStateWithLifecycle(initialValue = UserPreferences())
+            // System-bar icons follow the app's theme choice, not the OS: forced Light on a dark OS
+            // otherwise leaves white icons on the light surface (and vice versa).
+            val dark = isDarkTheme(prefs.themeMode)
+            LaunchedEffect(dark) {
+                val transparent = android.graphics.Color.TRANSPARENT
+                val bars = if (dark) SystemBarStyle.dark(transparent) else SystemBarStyle.light(transparent, transparent)
+                enableEdgeToEdge(statusBarStyle = bars, navigationBarStyle = bars)
+            }
             FlipperTheme(themeMode = prefs.themeMode, dynamicColor = prefs.useDynamicColor) {
                 FlipperApp(appNavigator)
             }

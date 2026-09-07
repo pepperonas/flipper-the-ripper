@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **About section** (Settings → About): app mark, version + build from `BuildConfig`, "Made by
+  Martin Pfeffer", links to [celox.io](https://celox.io), the
+  [source repository](https://github.com/pepperonas/flipper-the-ripper) and the MIT licence, and a
+  **Support via PayPal** button (`martin.pfeffer@celox.io`, EUR, project name as note). Every fact is
+  pinned in `AboutLinks` + a unit test so nothing about the author or licence can drift.
+- **Screen transitions on Material 3 Expressive springs.** One central `ScreenTransitions`
+  (`ui/motion`) builds every enter/exit from the theme's `MotionScheme`: lateral tab changes are a
+  fade-through with a directional slide (6 % of the width, default spatial spring ζ 0.8 / k 380 for
+  position + scale, effects springs for alpha — fast on the way out, default on the way in); the
+  Instagram sign-in rises over Settings as a shared-axis-Y child and sinks back on pop. Reduced motion
+  (system animator scale 0) collapses all of it to an instant cut. Measured on-device with a manual
+  clock (`ScreenTransitionsTest`, 411 dp wide): the incoming tab starts 24.3 dp to the side, crosses
+  in 11 frames (≈180 ms), overshoots by 0.4 dp for ≈110 ms and is at rest after ≈320 ms; under
+  reduced motion it is at 0 on the first frame.
+
+### Changed
+- **Compact bottom navigation.** The classic 80 dp `NavigationBar` is replaced by M3 Expressive's
+  `ShortNavigationBar`: **64 dp** (measured 168 px @ 420 dpi, was 210 px), every item still spans the
+  full 64 dp — well above the 48 dp touch minimum; the active tab shows its filled icon. Pinned by
+  `BottomBarHeightTest`, which measures both bars.
+- **One shape, spacing and size scale.** Corner radii come from `MaterialTheme.shapes` (16 thumbnails ·
+  20 fields/banners · 28 cards — the stray 24 dp cards joined the card tier), gaps from `Spacing`,
+  control sizes from `Sizes` (`ui/theme/Dimens.kt`); no dp literal is left on the screens. The
+  segmented toggle is a true pill (`CircleShape`). Hard-coded UI strings (hero tagline, history
+  status labels) moved to resources.
+- **System-bar icons follow the app's theme**, not the OS: with the app forced to Light on a dark
+  phone the clock and status icons were white on the light surface.
+
 ## [1.4.0] - 2026-09-07
 
 ### Added

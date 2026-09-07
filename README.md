@@ -41,6 +41,9 @@ Material 3 **Expressive** UI with spring physics, shape-morphing motifs and dyna
 - **Clipboard detection** — copied a link instead? On launch the app offers to download a supported URL found on the clipboard.
 - **One-tap flow** — analyse → detect platform → resolve metadata → download, with as few taps as possible (auto-download on share is configurable).
 - **Instagram sign-in (optional)** — some reels are only visible to a signed-in account. Sign in on **Instagram's own page** (*Settings → Instagram*) and the app can download the reels *your* account can see. The password is entered on Instagram, never touched by the app — only the resulting session cookie is kept, exactly as a browser does. Sign out anytime.
+- **Material 3 Expressive motion** — every screen transition is built from the theme's spring `MotionScheme` in one place (`ui/motion/ScreenTransitions.kt`): lateral fade-through with a directional slide between tabs, shared-axis rise for child screens; reduced motion collapses it to a cut.
+- **Compact bottom bar** — M3 Expressive `ShortNavigationBar` (64 dp instead of 80 dp), full-height items, filled icon on the active tab.
+- **About & support** — Settings → About shows version/build, links to celox.io, the source and the MIT licence, and a PayPal button.
 - **Title-based filenames** — files are named after the video title (`Wie man Android Apps entwickelt.mp4`) with illegal characters sanitised.
 - **Shows up everywhere** — saved via **MediaStore** into the public *Movies* folder; instantly visible in Gallery, Google Photos and file managers.
 - **True background downloads** — keep going while the screen is locked, the app is minimised, or the device is rotated (WorkManager + foreground service).

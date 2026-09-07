@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -36,14 +35,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import io.celox.flipperripper.BuildConfig
 import io.celox.flipperripper.R
 import io.celox.flipperripper.domain.model.ThemeMode
 import io.celox.flipperripper.ui.components.SegmentedToggle
 import io.celox.flipperripper.ui.components.springPressed
+import io.celox.flipperripper.ui.theme.FieldShape
+import io.celox.flipperripper.ui.theme.Sizes
+import io.celox.flipperripper.ui.theme.Spacing
 import io.celox.flipperripper.ui.util.ObserveAsEvents
 import kotlinx.coroutines.launch
 
@@ -59,6 +59,7 @@ fun SettingsScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val savedServerMsg = stringResource(R.string.settings_server_saved)
+    val openFailedMsg = stringResource(R.string.about_open_failed)
 
     // Re-read the Instagram login state whenever Settings is shown, so it reflects a just-completed
     // (or cleared) login when the login screen pops back here.
@@ -85,11 +86,11 @@ fun SettingsScreen(
                 .fillMaxSize()
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
-                .padding(20.dp),
+                .padding(Spacing.xl),
         ) {
             SettingsSection(stringResource(R.string.settings_appearance)) {
                 Text(stringResource(R.string.settings_theme), style = MaterialTheme.typography.titleSmall)
-                Spacer(Modifier.height(10.dp))
+                Spacer(Modifier.height(Spacing.sm))
                 SegmentedToggle(
                     options =
                     listOf(
@@ -100,7 +101,7 @@ fun SettingsScreen(
                     selected = prefs.themeMode,
                     onSelect = viewModel::setThemeMode,
                 )
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(Spacing.sm))
                 SwitchRow(
                     title = stringResource(R.string.settings_dynamic_color),
                     subtitle = stringResource(R.string.settings_dynamic_color_desc),
@@ -141,7 +142,7 @@ fun SettingsScreen(
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(Spacing.md))
                 val igInteraction = remember { MutableInteractionSource() }
                 if (instagramLoggedIn) {
                     Text(
@@ -149,17 +150,17 @@ fun SettingsScreen(
                         style = MaterialTheme.typography.titleSmall,
                         color = MaterialTheme.colorScheme.primary,
                     )
-                    Spacer(Modifier.height(8.dp))
+                    Spacer(Modifier.height(Spacing.sm))
                     FilledTonalButton(
                         onClick = viewModel::signOutInstagram,
                         interactionSource = igInteraction,
-                        modifier = Modifier.height(52.dp).springPressed(igInteraction),
+                        modifier = Modifier.height(Sizes.buttonHeight).springPressed(igInteraction),
                     ) { Text(stringResource(R.string.settings_instagram_sign_out)) }
                 } else {
                     FilledTonalButton(
                         onClick = onOpenInstagramLogin,
                         interactionSource = igInteraction,
-                        modifier = Modifier.height(52.dp).springPressed(igInteraction),
+                        modifier = Modifier.height(Sizes.buttonHeight).springPressed(igInteraction),
                     ) { Text(stringResource(R.string.settings_instagram_sign_in)) }
                 }
             }
@@ -170,23 +171,20 @@ fun SettingsScreen(
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(Spacing.md))
                 val interaction = remember { MutableInteractionSource() }
                 FilledTonalButton(
                     onClick = viewModel::updateEngineNow,
                     interactionSource = interaction,
-                    modifier = Modifier.height(52.dp).springPressed(interaction),
+                    modifier = Modifier.height(Sizes.buttonHeight).springPressed(interaction),
                 ) { Text(stringResource(R.string.settings_update_engine)) }
             }
 
             SettingsSection(stringResource(R.string.settings_about)) {
-                Text(
-                    "${stringResource(R.string.settings_version)}: ${BuildConfig.VERSION_NAME}",
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-                Spacer(Modifier.height(12.dp))
+                AboutSection(onOpenFailed = { scope.launch { snackbarHostState.showSnackbar(openFailedMsg) } })
+                Spacer(Modifier.height(Spacing.lg))
                 Text(stringResource(R.string.settings_legal), style = MaterialTheme.typography.titleSmall)
-                Spacer(Modifier.height(4.dp))
+                Spacer(Modifier.height(Spacing.xs))
                 Text(
                     stringResource(R.string.settings_legal_body),
                     style = MaterialTheme.typography.bodySmall,
@@ -203,16 +201,16 @@ private fun SettingsSection(title: String, content: @Composable () -> Unit) {
         title,
         style = MaterialTheme.typography.titleMediumEmphasized,
         color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(top = 20.dp, bottom = 12.dp),
+        modifier = Modifier.padding(top = Spacing.xl, bottom = Spacing.md),
     )
     Card(
-        shape = RoundedCornerShape(24.dp),
+        shape = MaterialTheme.shapes.extraLarge,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         modifier = Modifier.fillMaxWidth(),
     ) {
-        Column(Modifier.padding(18.dp)) { content() }
+        Column(Modifier.padding(Spacing.xl)) { content() }
     }
-    HorizontalDivider(color = MaterialTheme.colorScheme.surfaceContainerHighest, modifier = Modifier.padding(top = 4.dp))
+    HorizontalDivider(color = MaterialTheme.colorScheme.surfaceContainerHighest, modifier = Modifier.padding(top = Spacing.xs))
 }
 
 @Composable
@@ -226,7 +224,7 @@ private fun DownloadSourceSection(
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
-    Spacer(Modifier.height(12.dp))
+    Spacer(Modifier.height(Spacing.md))
     SegmentedToggle(
         options =
         listOf(
@@ -242,32 +240,32 @@ private fun DownloadSourceSection(
     if (config.source == io.celox.flipperripper.domain.model.DownloadSource.SERVER) {
         var url by rememberSaveable(config.url) { mutableStateOf(config.url) }
         var key by rememberSaveable(config.apiKey) { mutableStateOf(config.apiKey) }
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(Spacing.md))
         OutlinedTextField(
             value = url,
             onValueChange = { url = it },
             label = { Text(stringResource(R.string.settings_server_url)) },
             singleLine = true,
-            shape = RoundedCornerShape(16.dp),
+            shape = FieldShape,
             modifier = Modifier.fillMaxWidth(),
         )
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(Spacing.sm))
         OutlinedTextField(
             value = key,
             onValueChange = { key = it },
             label = { Text(stringResource(R.string.settings_server_key)) },
             singleLine = true,
             visualTransformation = PasswordVisualTransformation(),
-            shape = RoundedCornerShape(16.dp),
+            shape = FieldShape,
             modifier = Modifier.fillMaxWidth(),
         )
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(Spacing.md))
         val interaction = remember { MutableInteractionSource() }
         FilledTonalButton(
             onClick = { onSaveServer(url, key) },
             interactionSource = interaction,
             enabled = url.isNotBlank() && key.isNotBlank(),
-            modifier = Modifier.height(52.dp).springPressed(interaction),
+            modifier = Modifier.height(Sizes.buttonHeight).springPressed(interaction),
         ) { Text(stringResource(R.string.settings_server_save)) }
     }
 }
@@ -275,9 +273,9 @@ private fun DownloadSourceSection(
 @Composable
 private fun SwitchRow(title: String, subtitle: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp),
+        modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.sm),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        horizontalArrangement = Arrangement.spacedBy(Spacing.lg),
     ) {
         Column(Modifier.weight(1f)) {
             Text(title, style = MaterialTheme.typography.bodyLarge)

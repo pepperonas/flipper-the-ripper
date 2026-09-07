@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.DeleteSweep
 import androidx.compose.material3.Card
@@ -50,6 +49,8 @@ import io.celox.flipperripper.domain.model.DownloadRecord
 import io.celox.flipperripper.domain.model.DownloadStatus
 import io.celox.flipperripper.domain.model.isActive
 import io.celox.flipperripper.ui.components.MorphingMotif
+import io.celox.flipperripper.ui.theme.Sizes
+import io.celox.flipperripper.ui.theme.Spacing
 import io.celox.flipperripper.util.MediaIntents
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -92,8 +93,8 @@ fun HistoryScreen(viewModel: HistoryViewModel = hiltViewModel()) {
             LazyColumn(
                 state = listState,
                 modifier = Modifier.fillMaxSize().padding(padding),
-                contentPadding = PaddingValues(20.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp),
+                contentPadding = PaddingValues(Spacing.xl),
+                verticalArrangement = Arrangement.spacedBy(Spacing.md),
             ) {
                 itemsIndexed(records, key = { _, r -> r.id }) { _, record ->
                     DownloadCard(
@@ -114,17 +115,17 @@ fun HistoryScreen(viewModel: HistoryViewModel = hiltViewModel()) {
 @Composable
 private fun EmptyState(modifier: Modifier) {
     Column(
-        modifier = modifier.padding(32.dp),
+        modifier = modifier.padding(Spacing.xxxl),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        MorphingMotif(modifier = Modifier.size(72.dp), color = MaterialTheme.colorScheme.primary)
-        Spacer(Modifier.height(20.dp))
+        MorphingMotif(modifier = Modifier.size(Sizes.emptyMotif), color = MaterialTheme.colorScheme.primary)
+        Spacer(Modifier.height(Spacing.xl))
         Text(
             stringResource(R.string.history_empty),
             style = MaterialTheme.typography.titleMediumEmphasized,
         )
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(Spacing.sm))
         Text(
             stringResource(R.string.history_empty_hint),
             style = MaterialTheme.typography.bodyMedium,
@@ -142,11 +143,11 @@ private fun DownloadCard(
     onDelete: () -> Unit,
 ) {
     val context = LocalContext.current
-    Card(shape = RoundedCornerShape(24.dp), modifier = modifier.fillMaxWidth()) {
-        Column(Modifier.padding(18.dp)) {
+    Card(shape = MaterialTheme.shapes.extraLarge, modifier = modifier.fillMaxWidth()) {
+        Column(Modifier.padding(Spacing.xl)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Thumbnail(record)
-                Spacer(Modifier.width(14.dp))
+                Spacer(Modifier.width(Spacing.md))
                 Column(Modifier.weight(1f)) {
                     Text(
                         DownloadNaming.displayTitle(record.fileName, record.title),
@@ -154,7 +155,7 @@ private fun DownloadCard(
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                     )
-                    Spacer(Modifier.height(4.dp))
+                    Spacer(Modifier.height(Spacing.xs))
                     Text(
                         "${record.platform.displayName} · ${statusLabel(record)}",
                         style = MaterialTheme.typography.bodySmall,
@@ -167,17 +168,17 @@ private fun DownloadCard(
             }
 
             if (record.status.isActive) {
-                Spacer(Modifier.height(14.dp))
+                Spacer(Modifier.height(Spacing.md))
                 LinearWavyProgressIndicator(modifier = Modifier.fillMaxWidth())
             }
 
             record.errorMessage?.takeIf { record.status == DownloadStatus.FAILED }?.let {
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(Spacing.sm))
                 Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
             }
 
-            Spacer(Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            Spacer(Modifier.height(Spacing.sm))
+            Row(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
                 when (record.status) {
                     DownloadStatus.COMPLETED -> {
                         TextButton(
@@ -209,7 +210,7 @@ private fun DownloadCard(
 
 @Composable
 private fun Thumbnail(record: DownloadRecord) {
-    val shape = RoundedCornerShape(16.dp)
+    val shape = MaterialTheme.shapes.large
     // Prefer the platform's thumbnail; when there is none (Instagram routinely returns no thumbnail
     // URL), fall back to a frame decoded from the saved video itself, so the card is not just a
     // placeholder for a file that is sitting right there on the device.
@@ -221,14 +222,14 @@ private fun Thumbnail(record: DownloadRecord) {
             model = model,
             contentDescription = null,
             contentScale = ContentScale.Crop,
-            modifier = Modifier.size(width = 96.dp, height = 56.dp).clip(shape),
+            modifier = Modifier.size(width = Sizes.thumbnailWidth, height = Sizes.thumbnailHeight).clip(shape),
         )
     } else {
         Box(
-            modifier = Modifier.size(width = 96.dp, height = 56.dp).clip(shape),
+            modifier = Modifier.size(width = Sizes.thumbnailWidth, height = Sizes.thumbnailHeight).clip(shape),
             contentAlignment = Alignment.Center,
         ) {
-            MorphingMotif(modifier = Modifier.size(28.dp), color = MaterialTheme.colorScheme.primary)
+            MorphingMotif(modifier = Modifier.size(Spacing.xxl), color = MaterialTheme.colorScheme.primary)
         }
     }
 }
@@ -236,13 +237,14 @@ private fun Thumbnail(record: DownloadRecord) {
 @Composable
 private fun statusLabel(record: DownloadRecord): String =
     when (record.status) {
-        DownloadStatus.QUEUED -> "Queued"
-        DownloadStatus.RUNNING -> "Downloading…"
+        DownloadStatus.QUEUED -> stringResource(R.string.history_status_queued)
+        DownloadStatus.RUNNING -> stringResource(R.string.history_status_running)
         DownloadStatus.COMPLETED ->
-            "Saved" + (record.sizeBytes?.let { " · ${formatSize(it)}" } ?: "") +
-                if (record.mode == DownloadMode.AUDIO) " · audio" else ""
-        DownloadStatus.FAILED -> "Failed"
-        DownloadStatus.CANCELLED -> "Cancelled"
+            stringResource(R.string.history_status_saved) +
+                (record.sizeBytes?.let { " · ${formatSize(it)}" } ?: "") +
+                if (record.mode == DownloadMode.AUDIO) " · ${stringResource(R.string.history_status_audio)}" else ""
+        DownloadStatus.FAILED -> stringResource(R.string.history_status_failed)
+        DownloadStatus.CANCELLED -> stringResource(R.string.history_status_cancelled)
     }
 
 @Composable

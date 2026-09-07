@@ -23,12 +23,7 @@ fun FlipperTheme(
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit,
 ) {
-    val dark =
-        when (themeMode) {
-            ThemeMode.SYSTEM -> isSystemInDarkTheme()
-            ThemeMode.LIGHT -> false
-            ThemeMode.DARK -> true
-        }
+    val dark = isDarkTheme(themeMode)
     val context = LocalContext.current
     val colorScheme: ColorScheme =
         when {
@@ -41,6 +36,20 @@ fun FlipperTheme(
     MaterialExpressiveTheme(
         colorScheme = colorScheme,
         motionScheme = MotionScheme.expressive(),
+        shapes = FlipperShapes,
         content = content,
     )
 }
+
+/**
+ * Whether the app renders dark for [themeMode]. Shared by the theme and by the system-bar styling
+ * in `MainActivity`: the status-bar icons must follow the *app's* choice, not the OS — with the app
+ * forced to Light on a dark OS the clock and icons stayed white on a white surface.
+ */
+@Composable
+fun isDarkTheme(themeMode: ThemeMode): Boolean =
+    when (themeMode) {
+        ThemeMode.SYSTEM -> isSystemInDarkTheme()
+        ThemeMode.LIGHT -> false
+        ThemeMode.DARK -> true
+    }
