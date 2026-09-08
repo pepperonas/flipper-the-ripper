@@ -37,8 +37,8 @@ android {
         applicationId = "io.celox.flipperripper"
         minSdk = 24
         targetSdk = 35
-        versionCode = 26
-        versionName = "1.8.1"
+        versionCode = 27
+        versionName = "1.8.2"
 
         testInstrumentationRunner = "io.celox.flipperripper.HiltTestRunner"
         vectorDrawables { useSupportLibrary = true }
@@ -172,6 +172,7 @@ androidComponents {
 
 dependencies {
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.sharetarget)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)

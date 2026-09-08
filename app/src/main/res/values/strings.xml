@@ -116,6 +116,10 @@
     <string name="notif_failed">Download failed</string>
 
     <!-- Generic -->
+    <!-- Share sheet: how the app names itself as a direct share target. -->
+    <string name="share_target_short">Download</string>
+    <string name="share_target_long">Download this link</string>
+
     <string name="action_ok">OK</string>
     <string name="action_cancel">Cancel</string>
 </resources>

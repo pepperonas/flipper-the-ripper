@@ -119,6 +119,10 @@
     <string name="notif_failed">Download fehlgeschlagen</string>
 
     <!-- Generic -->
+    <!-- Teilen-Dialog -->
+    <string name="share_target_short">Laden</string>
+    <string name="share_target_long">Diesen Link herunterladen</string>
+
     <string name="action_ok">OK</string>
     <string name="action_cancel">Abbrechen</string>
 </resources>

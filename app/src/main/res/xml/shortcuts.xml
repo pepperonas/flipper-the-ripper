@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Declares the app as a *direct* share target. Without this the app only ever appears in the share
+  sheet's long, alphabetical app list, where it is easy to miss; with it, it can be offered in the
+  row of suggested targets at the top.
+
+  The category is our own name and simply has to match the one on the pushed shortcut — the system
+  pairs the two.
+-->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <share-target android:targetClass="io.celox.flipperripper.ui.MainActivity">
+        <data android:mimeType="text/plain" />
+        <category android:name="io.celox.flipperripper.category.SHARE_LINK" />
+    </share-target>
+</shortcuts>

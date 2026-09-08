@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.8.2] - 2026-09-08
+
+### Fixed
+- **The app is easier to find when sharing a link.** Reported as "Flipper the Ripper cannot be
+  selected when I tap share in TikTok". Measured first: the app *was* registered correctly and did
+  resolve for `ACTION_SEND` + `text/plain` on the device, so the registration was never the fault —
+  what was missing was placement and reach.
+  - The app is now a **direct share target**: `res/xml/shortcuts.xml` declares a `<share-target>`,
+    and a long-lived shortcut carrying the matching category is published at start-up. Android pairs
+    the two by name and can then offer the app in the row of suggested targets at the top of the
+    sheet, instead of only in the long alphabetical app list further down — where someone scanning
+    for it reasonably concludes it is not installed.
+  - The `ACTION_SEND` filter accepts `text/*` alongside `text/plain`. Senders do not all label shared
+    text as `text/plain`, and the app was invisible to every one that does not. Measured on the
+    emulator: for `text/html` the previous release does not resolve at all and this one does.
+  - **What this cannot fix:** an app that draws its *own* in-app share sheet decides for itself which
+    destinations it lists. TikTok does this; its sheet shows a fixed set plus a *More* entry, which
+    opens the Android sheet where Flipper the Ripper appears. No change on this side can add an entry
+    to another app's private sheet.
+
+### Verified
+- On the emulator: sharing a TikTok video link opens the system sheet with **Flipper the Ripper
+  first in the list**; `dumpsys shortcut` shows the published shortcut as long-lived and carrying the
+  share-target category. Not verified: placement in the suggested top row, which needs the chooser
+  rather than the resolver and cannot be triggered from a shell.
+
 ## [1.8.1] - 2026-09-08
 
 ### Fixed

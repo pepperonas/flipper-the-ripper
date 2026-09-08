@@ -47,6 +47,9 @@ detekt = "1.23.7"
 [libraries]
 # AndroidX core
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+# Makes direct-share targets work on Android 9 and below, where the platform has no shortcut-based
+# share API of its own.
+androidx-sharetarget = { group = "androidx.sharetarget", name = "sharetarget", version = "1.2.0" }
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycle" }
 androidx-lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "lifecycle" }
 androidx-lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "lifecycle" }

@@ -7,6 +7,7 @@ import coil.ImageLoader
 import coil.ImageLoaderFactory
 import coil.decode.VideoFrameDecoder
 import dagger.hilt.android.HiltAndroidApp
+import io.celox.flipperripper.data.share.ShareTargets
 import io.celox.flipperripper.data.update.UpdateCoordinator
 import io.celox.flipperripper.data.work.DownloadNotifier
 import javax.inject.Inject
@@ -41,6 +42,8 @@ class FlipperApplication :
     override fun onCreate() {
         super.onCreate()
         runCatching { notifier.ensureChannels() }
+        // Makes the app offerable in the suggested row of the share sheet (see ShareTargets).
+        ShareTargets.publish(this)
         // Warm up the engine off the main thread and keep yt-dlp + the app-release notice fresh
         // (see UpdateCoordinator — it is also re-triggered by every shared-in link, because a warm
         // process never runs onCreate again).

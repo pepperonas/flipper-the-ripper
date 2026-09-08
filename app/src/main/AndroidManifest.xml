@@ -40,12 +40,21 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <!-- Receive a shared link from YouTube / Instagram / TikTok / Facebook / X / Dailymotion. -->
+            <!-- Receive a shared link from YouTube / Instagram / TikTok / Facebook / X / Dailymotion.
+                 `text/*` sits alongside `text/plain` because not every app sends the exact subtype:
+                 a sender that labels its text differently would otherwise never see this app at all. -->
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="text/plain" />
+                <data android:mimeType="text/*" />
             </intent-filter>
+
+            <!-- Pairs with res/xml/shortcuts.xml so the app can be offered as a direct share target,
+                 in the suggested row at the top of the sheet rather than only in the app list. -->
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts" />
         </activity>
 
         <!-- Declare the data-sync foreground service type for WorkManager's foreground service. -->
