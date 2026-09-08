@@ -66,6 +66,7 @@ constructor(@ApplicationContext private val context: Context) {
                         object : WebChromeClient() {
                             override fun onConsoleMessage(m: ConsoleMessage): Boolean {
                                 val msg = m.message()
+                                if (msg.startsWith("FLIP-DIAG:")) Log.w(TAG, msg)
                                 if (msg.startsWith("FLIP:") && !scraped.isCompleted) {
                                     // Only complete on a real result, so it can race the interception path.
                                     parseScrapeResult(msg.removePrefix("FLIP:"))?.let { scraped.complete(it) }
@@ -86,6 +87,11 @@ constructor(@ApplicationContext private val context: Context) {
                                 }
                                 return null
                             }
+
+                            override fun shouldOverrideUrlLoading(
+                                view: WebView?,
+                                request: WebResourceRequest?,
+                            ): Boolean = !WebNavigation.isLoadablePage(request?.url?.scheme)
 
                             override fun onPageFinished(view: WebView?, finishedUrl: String?) {
                                 view?.evaluateJavascript(buildExtractJs(platform, mediaId), null)
@@ -118,7 +124,9 @@ constructor(@ApplicationContext private val context: Context) {
             val obj = JSONObject(json)
             val media = obj.optString("video_url").ifBlank { null } ?: return null
             ExtractedMedia(
-                mediaUrl = media,
+                // Whichever path produced this — structured JSON or the raw-HTML regex — it may still
+                // carry JSON escapes; the regex path certainly does.
+                mediaUrl = MediaUrl.decodeEscapes(media),
                 title = obj.optString("title").ifBlank { null },
                 thumbnailUrl = obj.optString("thumb").ifBlank { null },
             )
@@ -230,8 +238,11 @@ internal fun buildExtractJs(platform: Platform, mediaId: String?): String {
                 var t = tiktokBlob();
                 if (t) { report(t.url, t.title, t.thumb); return; }
               }
+              // Decode every \uXXXX, not a hand-picked few: missing \u002F is what once sent a
+              // TikTok URL to the downloader with its slashes escaped.
               var raw = document.documentElement.innerHTML
-                .replace(/\\u0026/g,'&').replace(/\\u0025/g,'%').replace(/\\\//g,'/').replace(/\\"/g,'"');
+                .replace(/\\u([0-9a-fA-F]{4})/g, function(_, h){ return String.fromCharCode(parseInt(h,16)); })
+                .replace(/\\\//g,'/').replace(/\\"/g,'"');
               var m = raw.match(/"browser_native_hd_url":"([^"]+)"/)
                    || raw.match(/"playable_url_quality_hd":"([^"]+)"/)
                    || raw.match(/"browser_native_sd_url":"([^"]+)"/)
@@ -247,11 +258,32 @@ internal fun buildExtractJs(platform: Platform, mediaId: String?): String {
               report(m[1], title, meta('og:image'));
             } catch (e) {}
           }
+          function diag(stage) {
+            // Says what the page looked like when extraction came up empty. Without this the only
+            // evidence of a failure is a timeout, which names no cause at all.
+            if (done) return;
+            var d = { stage: stage, url: location.href, title: document.title };
+            try {
+              var el = document.getElementById('__UNIVERSAL_DATA_FOR_REHYDRATION__');
+              d.rehydration = !!el;
+              if (el) {
+                var scope = JSON.parse(el.textContent).__DEFAULT_SCOPE__ || {};
+                var vd = scope['webapp.video-detail'];
+                d.statusCode = vd ? vd.statusCode : 'no-detail';
+                d.itemStruct = !!(vd && vd.itemInfo && vd.itemInfo.itemStruct);
+              }
+              d.html = document.documentElement.innerHTML.length;
+              d.playAddrInHtml = document.documentElement.innerHTML.indexOf('playAddr') >= 0;
+              d.video = !!document.querySelector('video');
+            } catch (e) { d.err = String(e); }
+            console.log('FLIP-DIAG:' + JSON.stringify(d));
+          }
           // Give the authoritative same-origin API a ~1s head start; the `done` guard means the
           // embed scrape only reports if the API didn't (signed out / public reel).
           apiGrab();
-          setTimeout(scrapeGrab, 1000);
-          setTimeout(function(){ apiGrab(); scrapeGrab(); }, 3000);
+          setTimeout(function(){ scrapeGrab(); diag('t1000'); }, 1000);
+          setTimeout(function(){ apiGrab(); scrapeGrab(); diag('t3000'); }, 3000);
+          setTimeout(function(){ scrapeGrab(); diag('t8000'); }, 8000);
         })();
     """.trimIndent()
 }

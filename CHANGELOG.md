@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.8.1] - 2026-09-08
+
+### Fixed
+- **TikTok downloads work again.** Two faults, one behind the other.
+  1. TikTok answers a mobile browser with a redirect to `snssdk1340://aweme/detail/…`, a deep link
+     meant to hand the visit over to the native app. The hidden extractor WebView followed it, could
+     not load that scheme, and landed on `chrome-error://chromewebdata` — the video page gone before
+     the extraction script ran. The only symptom was a timeout that named no cause, reported as
+     "Could not read this video". The WebView now refuses any navigation that is not http(s): it
+     exists to read one page, and must never hand the visit to another app.
+  2. With the page loading again, the scraped URL still failed to download: *Unable to resolve host
+     "u002f"*. Media URLs are scraped from JSON embedded in HTML and arrive escaped; the scraper
+     undid three escapes it had happened to meet (`&`, `%`, `\/`) and `/` was not among them, so the
+     slashes survived as `\u002F` and the host parsed as the literal text "u002f". Any `\uXXXX` is
+     decoded now, in the page script and again in Kotlin — hand-picking escapes was the bug, not the
+     missing one.
+  Verified end to end on the emulator: a public TikTok video downloads with its title, 497,598 bytes
+  into Movies/FlipperTheRipper.
+
+### Added
+- **The extractor says what it saw when it fails.** A failed extraction used to leave nothing behind
+  but a timeout. It now logs the page it ended up on, the title, whether the hydration blob was
+  present and what status it carried — which is exactly what identified the deep-link redirect here.
+
 ## [1.8.0] - 2026-09-08
 
 ### Added
@@ -551,7 +575,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Signed release builds, GitHub Actions CI (build, lint, detekt, unit tests, coverage) and an
   automated tag-driven release workflow.
 
-[Unreleased]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.8.0...HEAD
+[Unreleased]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.8.1...HEAD
+[1.8.1]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.8.0...v1.8.1
 [1.8.0]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.7.0...v1.8.0
 [1.7.0]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.6.0...v1.7.0
 [1.6.0]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.5.0...v1.6.0

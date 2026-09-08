@@ -53,7 +53,10 @@ class BuildExtractJsTest {
         assertThat(js).contains("browser_native_sd_url")
         assertThat(js).contains("playable_url")
         // Facebook escapes % and & in its embedded URLs.
-        assertThat(js).contains("\\\\u0025")
+        // Escapes are decoded generically now. Pinning the literal "u0025" pinned the old
+        // hand-picked list, whose missing "u002F" is precisely what broke TikTok downloads.
+        assertThat(js).contains("String.fromCharCode(parseInt(")
+        assertThat(js).contains("[0-9a-fA-F]{4}")
     }
 
     @Test
@@ -72,6 +75,9 @@ class BuildExtractJsTest {
     fun `gives the api a head start over the scrape`() {
         val js = buildExtractJs(Platform.INSTAGRAM, "123")
 
-        assertThat(js).contains("setTimeout(scrapeGrab, 1000)")
+        // The property, not the wording: apiGrab runs immediately and the scrape is deferred by 1s.
+        // Pinning the literal call broke the moment a diagnostic was added alongside it.
+        assertThat(js).containsMatch("apiGrab\\(\\);\\s*setTimeout\\(")
+        assertThat(js).containsMatch("scrapeGrab\\(\\)[\\s\\S]{0,40}\\}, 1000\\)")
     }
 }
