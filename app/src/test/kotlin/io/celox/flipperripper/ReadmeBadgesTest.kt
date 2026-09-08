@@ -52,6 +52,14 @@ class ReadmeBadgesTest {
     }
 
     @Test
+    fun `the SDK badges match the SDK levels the app is actually built for`() {
+        listOf("minSdk" to "min%20SDK", "targetSdk" to "target%20SDK").forEach { (gradleKey, label) ->
+            val actual = Regex("""$gradleKey = (\d+)""").find(buildFile)!!.groupValues[1]
+            assertThat(badgeValue(label)).isEqualTo(actual)
+        }
+    }
+
+    @Test
     fun `the donate badge points at the author's own account`() {
         assertThat(readme).contains("paypal.com/donate/?business=martin.pfeffer@celox.io")
         assertThat(readme).contains("currency_code=EUR")

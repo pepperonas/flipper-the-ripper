@@ -6,8 +6,8 @@
 
 **A modern, open-source Android app to download publicly accessible videos from YouTube, Instagram, TikTok, Facebook, X and Dailymotion.**
 
-[![version](https://img.shields.io/badge/version-1.6.0-7B4DFF?style=for-the-badge&logo=android&logoColor=white)](https://github.com/pepperonas/flipper-the-ripper/releases/latest)
-[![unit tests](https://img.shields.io/badge/unit%20tests-211-2E9E5B?style=for-the-badge&logo=junit5&logoColor=white)](app/src/test)
+[![version](https://img.shields.io/badge/version-1.7.0-7B4DFF?style=for-the-badge&logo=android&logoColor=white)](https://github.com/pepperonas/flipper-the-ripper/releases/latest)
+[![unit tests](https://img.shields.io/badge/unit%20tests-212-2E9E5B?style=for-the-badge&logo=junit5&logoColor=white)](app/src/test)
 [![lines of code](https://img.shields.io/badge/lines%20of%20code-6.5k-4B6BDF?style=for-the-badge&logo=kotlin&logoColor=white)](app/src/main/kotlin)
 
 [![CI](https://img.shields.io/github/actions/workflow/status/pepperonas/flipper-the-ripper/ci.yml?branch=main&label=build&logo=github)](https://github.com/pepperonas/flipper-the-ripper/actions/workflows/ci.yml)
@@ -18,7 +18,11 @@
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.0-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org)
 [![Compose](https://img.shields.io/badge/Jetpack%20Compose-1.11-3DDC84?logo=android&logoColor=white)](https://developer.android.com/jetpack/compose)
 [![Material 3 Expressive](https://img.shields.io/badge/Material%203-Expressive-6C4BE0?logo=materialdesign&logoColor=white)](https://m3.material.io/blog/m3-expressive-motion-theming)
-[![API](https://img.shields.io/badge/API-24%2B-blue?logo=android)](https://developer.android.com/tools/releases/platforms)
+[![min SDK](https://img.shields.io/badge/min%20SDK-24-blue?logo=android&logoColor=white)](app/build.gradle.kts)
+[![target SDK](https://img.shields.io/badge/target%20SDK-35-blue?logo=android&logoColor=white)](app/build.gradle.kts)
+[![code style](https://img.shields.io/badge/code%20style-ktlint%20%2B%20detekt-FF6F00?logo=kotlin&logoColor=white)](config/detekt/detekt.yml)
+[![last commit](https://img.shields.io/github/last-commit/pepperonas/flipper-the-ripper?logo=git&logoColor=white)](https://github.com/pepperonas/flipper-the-ripper/commits/main)
+[![repo size](https://img.shields.io/github/repo-size/pepperonas/flipper-the-ripper?logo=github)](https://github.com/pepperonas/flipper-the-ripper)
 [![Release](https://img.shields.io/github/v/release/pepperonas/flipper-the-ripper?logo=github)](https://github.com/pepperonas/flipper-the-ripper/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/pepperonas/flipper-the-ripper/total?logo=github)](https://github.com/pepperonas/flipper-the-ripper/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)

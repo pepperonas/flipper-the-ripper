@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-09-08
+
 ### Changed
 - **The engine update says what happened, in words.** Tapping *Update yt-dlp* used to answer with the
   library's enum name — "Engine updated: ALREADY_UP_TO_DATE" — which is a machine talking. The raw
@@ -536,7 +538,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Signed release builds, GitHub Actions CI (build, lint, detekt, unit tests, coverage) and an
   automated tag-driven release workflow.
 
-[Unreleased]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.6.0...HEAD
+[Unreleased]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.7.0...HEAD
+[1.7.0]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.6.0...v1.7.0
 [1.6.0]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.3.2...v1.4.0
