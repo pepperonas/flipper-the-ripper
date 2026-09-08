@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  German translation.
+
+  Two things deliberately stay English: the app name and the tagline "Rip it. Keep it.", which are
+  the product's mark and appear that way in the banner and the launcher, and "MIT License", which is
+  the licence's own name. Everything a person is asked to read or act on is translated.
+
+  Documentation (README, CHANGELOG, code comments) stays English by project convention.
+-->
+<resources>
+
+    <!-- Navigation -->
+    <string name="nav_home">Start</string>
+    <string name="nav_history">Verlauf</string>
+    <string name="nav_settings">Einstellungen</string>
+
+    <!-- Home -->
+    <string name="home_url_label">Video-Link</string>
+    <string name="home_url_hint">Link von YouTube, Instagram, TikTok, Facebook, X oder Dailymotion einfügen</string>
+    <string name="home_paste">Einfügen</string>
+    <string name="home_clear">Leeren</string>
+    <string name="home_fetch">Infos laden</string>
+    <string name="home_download">Herunterladen</string>
+    <string name="home_download_audio">Audio herunterladen</string>
+    <string name="home_resolving">Video-Infos werden geladen…</string>
+    <string name="home_clipboard_prompt">Link in der Zwischenablage gefunden</string>
+    <string name="home_clipboard_use">Übernehmen</string>
+    <string name="home_dismiss">Schließen</string>
+    <string name="home_engine_initializing">Download-Engine wird vorbereitet…</string>
+    <string name="home_update_available">Update %1$s ist verfügbar</string>
+    <string name="home_update_body">Auf GitHub liegt eine neuere Version — mit den aktuellsten Anpassungen an die Plattformen.</string>
+    <string name="home_update_get">Update holen</string>
+    <string name="home_unsupported">Dieser Link gehört zu keiner unterstützten Plattform.</string>
+    <string name="home_mode_video">Video</string>
+    <string name="home_mode_audio">Audio</string>
+
+    <!-- History -->
+    <string name="history_title">Downloads</string>
+    <string name="history_empty">Noch keine Downloads</string>
+    <string name="history_empty_hint">Teile einen Link mit Flipper the Ripper oder füge einen auf dem Startbildschirm ein.</string>
+    <string name="history_open">Öffnen</string>
+    <string name="history_share">Teilen</string>
+    <string name="history_retry">Erneut versuchen</string>
+    <string name="history_cancel">Abbrechen</string>
+    <string name="history_delete">Löschen</string>
+    <string name="history_clear_all">Alle löschen</string>
+    <string name="history_clear_title">Download-Verlauf löschen?</string>
+    <plurals name="history_clear_body">
+        <item quantity="one">Damit verschwindet der eine Eintrag aus der Liste. Das heruntergeladene Video bleibt auf dem Gerät.</item>
+        <item quantity="other">Damit verschwinden alle %1$d Einträge aus der Liste. Die heruntergeladenen Videos bleiben auf dem Gerät.</item>
+    </plurals>
+    <string name="history_clear_confirm">Verlauf löschen</string>
+    <string name="history_status_queued">In Warteschlange</string>
+    <string name="history_status_running">Wird geladen…</string>
+    <string name="history_status_saved">Gespeichert</string>
+    <string name="history_status_failed">Fehlgeschlagen</string>
+    <string name="history_status_cancelled">Abgebrochen</string>
+    <string name="history_status_audio">Audio</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Einstellungen</string>
+    <string name="settings_appearance">Darstellung</string>
+    <string name="settings_theme">Design</string>
+    <string name="settings_theme_system">Wie System</string>
+    <string name="settings_theme_light">Hell</string>
+    <string name="settings_theme_dark">Dunkel</string>
+    <string name="settings_dynamic_color">Dynamische Farben</string>
+    <string name="settings_dynamic_color_desc">Farben vom Hintergrundbild übernehmen (Android 12+)</string>
+    <string name="settings_behavior">Verhalten</string>
+    <string name="settings_auto_download">Beim Teilen sofort laden</string>
+    <string name="settings_auto_download_desc">Der Download startet, sobald ein Link geteilt wird</string>
+    <string name="settings_clipboard">Zwischenablage prüfen</string>
+    <string name="settings_clipboard_desc">Beim Start einen Link aus der Zwischenablage anbieten</string>
+    <string name="settings_source_title">Download-Quelle</string>
+    <string name="settings_source_ondevice">Auf dem Gerät</string>
+    <string name="settings_source_server">Server</string>
+    <string name="settings_source_desc">Auf dem Gerät läuft das mitgelieferte yt-dlp. Der Server hat die vollständige yt-dlp-Umgebung (JS-Laufzeit, TLS-Impersonation, ffmpeg) und kommt darum auch an Plattformen heran, die Downloads direkt vom Gerät blockieren — etwa YouTube und TikTok.</string>
+    <string name="settings_server_url">Server-URL</string>
+    <string name="settings_server_key">API-Schlüssel</string>
+    <string name="settings_server_save">Server speichern</string>
+    <string name="settings_server_saved">Server-Einstellungen gespeichert</string>
+
+    <string name="settings_instagram_title">Instagram</string>
+    <string name="settings_instagram_desc">Manche Reels sind nur angemeldet sichtbar. Melde dich mit deinem Instagram-Konto an, um auch diese zu laden — das Passwort gibst du auf Instagrams eigener Seite ein, die App speichert es nicht.</string>
+    <string name="settings_instagram_sign_in">Bei Instagram anmelden</string>
+    <string name="settings_instagram_sign_out">Von Instagram abmelden</string>
+    <string name="settings_instagram_signed_in">Angemeldet ✓</string>
+    <string name="login_title">Bei Instagram anmelden</string>
+    <string name="login_back">Zurück</string>
+
+    <string name="settings_engine">Download-Engine</string>
+    <string name="settings_update_engine">yt-dlp aktualisieren</string>
+    <string name="settings_update_engine_desc">Den neuesten Extractor holen, wenn Downloads scheitern</string>
+    <string name="settings_update_engine_running">Wird aktualisiert…</string>
+    <string name="settings_engine_updated">yt-dlp aktualisiert — Downloads sollten wieder funktionieren</string>
+    <string name="settings_engine_already_current">yt-dlp ist bereits aktuell</string>
+    <string name="settings_engine_update_unknown">Engine-Update mit unerwartetem Status beendet: %1$s</string>
+    <string name="settings_about">Über die App</string>
+    <string name="settings_version">Version</string>
+    <string name="about_version_format">Version %1$s (Build %2$d)</string>
+    <string name="about_made_by">Von %1$s</string>
+    <string name="about_tagline">Frei und quelloffen. Wenn sie dir einen Clip rettet, an dem dir liegt, hat sie ihren Zweck erfüllt.</string>
+    <string name="about_website">Website</string>
+    <string name="about_source">Quellcode</string>
+    <string name="about_license">%1$s</string>
+    <string name="about_license_hint">Quelloffen unter der %1$s</string>
+    <string name="about_donate">Per PayPal unterstützen</string>
+    <string name="about_donate_hint">Eine kleine Spende hält die Extractors aktuell.</string>
+    <string name="about_open_failed">Keine App kann diesen Link öffnen.</string>
+    <string name="settings_legal">Rechtlicher Hinweis</string>
+    <string name="settings_legal_body">Lade nur Inhalte herunter, die du speichern darfst. Beachte die Nutzungsbedingungen der jeweiligen Plattform und das geltende Urheberrecht. Flipper the Ripper umgeht weder DRM noch Zugriffsbeschränkungen.</string>
+
+    <!-- Notifications -->
+    <string name="channel_downloads_progress">Download-Fortschritt</string>
+    <string name="channel_downloads_status">Download-Status</string>
+    <string name="notif_downloading">Wird heruntergeladen…</string>
+    <string name="notif_completed">Download abgeschlossen</string>
+    <string name="notif_failed">Download fehlgeschlagen</string>
+
+    <!-- Generic -->
+    <string name="action_ok">OK</string>
+    <string name="action_cancel">Abbrechen</string>
+</resources>

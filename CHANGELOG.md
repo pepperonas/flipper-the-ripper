@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.8.0] - 2026-09-08
+
+### Added
+- **German translation.** The whole interface is translated (`values-de`), so a German phone shows
+  German and everything else stays English. Two things deliberately remain English: the app's name
+  and its tagline, which are the mark and appear that way in the banner and launcher, and "MIT
+  License", which is the licence's own name. Documentation stays English by project convention.
+- `TranslationTest` keeps the two string files in step. It catches the failures that are otherwise
+  silent: a new English string with no German counterpart (one English sentence in the middle of a
+  German screen), a dropped or renumbered format placeholder (a crash that only happens in German), a
+  leftover entry for a string that no longer exists, and an entry that was copied across but never
+  actually translated.
+
 ## [1.7.0] - 2026-09-08
 
 ### Changed
@@ -538,7 +551,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Signed release builds, GitHub Actions CI (build, lint, detekt, unit tests, coverage) and an
   automated tag-driven release workflow.
 
-[Unreleased]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.7.0...HEAD
+[Unreleased]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.8.0...HEAD
+[1.8.0]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.7.0...v1.8.0
 [1.7.0]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.6.0...v1.7.0
 [1.6.0]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/pepperonas/flipper-the-ripper/compare/v1.4.0...v1.5.0

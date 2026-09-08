@@ -6,8 +6,8 @@
 
 **A modern, open-source Android app to download publicly accessible videos from YouTube, Instagram, TikTok, Facebook, X and Dailymotion.**
 
-[![version](https://img.shields.io/badge/version-1.7.0-7B4DFF?style=for-the-badge&logo=android&logoColor=white)](https://github.com/pepperonas/flipper-the-ripper/releases/latest)
-[![unit tests](https://img.shields.io/badge/unit%20tests-212-2E9E5B?style=for-the-badge&logo=junit5&logoColor=white)](app/src/test)
+[![version](https://img.shields.io/badge/version-1.8.0-7B4DFF?style=for-the-badge&logo=android&logoColor=white)](https://github.com/pepperonas/flipper-the-ripper/releases/latest)
+[![unit tests](https://img.shields.io/badge/unit%20tests-217-2E9E5B?style=for-the-badge&logo=junit5&logoColor=white)](app/src/test)
 [![lines of code](https://img.shields.io/badge/lines%20of%20code-6.5k-4B6BDF?style=for-the-badge&logo=kotlin&logoColor=white)](app/src/main/kotlin)
 
 [![CI](https://img.shields.io/github/actions/workflow/status/pepperonas/flipper-the-ripper/ci.yml?branch=main&label=build&logo=github)](https://github.com/pepperonas/flipper-the-ripper/actions/workflows/ci.yml)
@@ -15,6 +15,7 @@
 [![instrumented](https://img.shields.io/badge/instrumented-10-2E9E5B?logo=android&logoColor=white)](app/src/androidTest)
 [![Coverage](https://img.shields.io/badge/coverage-%E2%89%A580%25-brightgreen?logo=kotlin)](https://github.com/pepperonas/flipper-the-ripper/actions/workflows/ci.yml)
 [![platforms](https://img.shields.io/badge/platforms-6-8A63FF?logo=youtube&logoColor=white)](#-features)
+[![languages](https://img.shields.io/badge/languages-EN%20%2B%20DE-0E7C86?logo=googletranslate&logoColor=white)](app/src/main/res/values-de/strings.xml)
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.0-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org)
 [![Compose](https://img.shields.io/badge/Jetpack%20Compose-1.11-3DDC84?logo=android&logoColor=white)](https://developer.android.com/jetpack/compose)
 [![Material 3 Expressive](https://img.shields.io/badge/Material%203-Expressive-6C4BE0?logo=materialdesign&logoColor=white)](https://m3.material.io/blog/m3-expressive-motion-theming)
@@ -41,7 +42,7 @@
 
 ## 📸 Screenshots
 
-<img src="docs/screenshots/mockups.png" alt="Home, the engine update status, the clear-history confirmation and the light theme" width="100%">
+<img src="docs/screenshots/mockups.png" alt="Home, About, the clear-history confirmation, the light theme and the German translation" width="100%">
 
 <sub>Material 3 **Expressive** throughout: spring-based screen transitions, one drawn mark, a compact 64 dp navigation bar, and dynamic color in dark and light.</sub>
 
@@ -54,6 +55,7 @@
 - **Material 3 Expressive motion** — every screen transition is built from the theme's spring `MotionScheme` in one place (`ui/motion/ScreenTransitions.kt`): lateral fade-through with a directional slide between tabs, shared-axis rise for child screens; reduced motion collapses it to a cut.
 - **One drawn mark** — the app icon and every in-app sign share one shape: a soft Material *sunny* disc with a sharp download glyph punched through it, so the same path works coloured, outlined, tinted and as the Android themed icon.
 - **Compact bottom bar** — M3 Expressive `ShortNavigationBar` (64 dp instead of 80 dp), full-height items, filled icon on the active tab.
+- **English and German** — the whole interface is translated; a German phone gets German, everything else English. A test keeps the two files in step, including format placeholders.
 - **About & support** — Settings → About shows version/build, links to celox.io, the source and the MIT licence, and a PayPal button.
 - **Title-based filenames** — files are named after the video title (`Wie man Android Apps entwickelt.mp4`) with illegal characters sanitised.
 - **Shows up everywhere** — saved via **MediaStore** into the public *Movies* folder; instantly visible in Gallery, Google Photos and file managers.
