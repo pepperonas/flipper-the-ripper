@@ -6,7 +6,7 @@
 
 **A modern, open-source Android app to download publicly accessible videos from YouTube, Instagram, TikTok, Facebook, X and Dailymotion.**
 
-[![version](https://img.shields.io/badge/version-1.9.0-7B4DFF?style=for-the-badge&logo=android&logoColor=white)](https://github.com/pepperonas/flipper-the-ripper/releases/latest)
+[![version](https://img.shields.io/badge/version-1.9.1-7B4DFF?style=for-the-badge&logo=android&logoColor=white)](https://github.com/pepperonas/flipper-the-ripper/releases/latest)
 [![unit tests](https://img.shields.io/badge/unit%20tests-275-2E9E5B?style=for-the-badge&logo=junit5&logoColor=white)](app/src/test)
 [![lines of code](https://img.shields.io/badge/lines%20of%20code-6.8k-4B6BDF?style=for-the-badge&logo=kotlin&logoColor=white)](app/src/main/kotlin)
 [![test code](https://img.shields.io/badge/test%20code-4.2k-2E9E5B?style=for-the-badge&logo=kotlin&logoColor=white)](app/src/test)
@@ -59,7 +59,7 @@
 
 ## ✨ Features
 
-- **Share integration** — tap *Share* in YouTube / Instagram / TikTok / Facebook / X / Dailymotion and pick **Flipper the Ripper**; the link is imported automatically and the app opens on Home, where the link went. With auto-download on, the download starts right away and a message says so. The app registers as a *direct* share target, so Android can offer it in the suggested row at the top of the sheet rather than only in the app list. Apps that draw their own in-app share sheet (TikTok among them) show a fixed set of destinations plus a *More* entry — the Android sheet, and the app, are one tap behind that.
+- **Share integration** — tap *Share* in YouTube / Instagram / TikTok / Facebook / X / Dailymotion and pick **Flipper the Ripper**; the link is imported automatically. With auto-download on (the default) the download starts at once and the app opens **History with the new download at the top of the list**, queued or running, progress wave and all — you always see that it is happening. With auto-download off the app opens Home with the link filled in and the details loading. The app registers as a *direct* share target, so Android can offer it in the suggested row at the top of the sheet rather than only in the app list. Apps that draw their own in-app share sheet (TikTok among them) show a fixed set of destinations plus a *More* entry — the Android sheet, and the app, are one tap behind that.
 - **Clipboard detection** — copied a link instead? On launch the app offers to download a supported URL found on the clipboard.
 - **One-tap flow** — analyse → detect platform → resolve metadata → download, with as few taps as possible (auto-download on share is configurable).
 - **Instagram sign-in (optional)** — some reels are only visible to a signed-in account. Sign in on **Instagram's own page** (*Settings → Instagram*) and the app can download the reels *your* account can see. The password is entered on Instagram, never touched by the app — only the resulting session cookie is kept, exactly as a browser does. Sign out anytime.
@@ -438,6 +438,7 @@ The full history is in [CHANGELOG.md](CHANGELOG.md) ([Keep a Changelog](https://
 format). The GitHub release page for each version shows that version's section verbatim — the
 file is the single source of the notes, not a second copy of them.
 
+- **1.9.1** — a shared link always shows its download: History, new card on top, running.
 - **1.9.0** — one 64-bit APK per release (32-bit dropped, with the numbers), release notes cut from
   the CHANGELOG, signing-certificate check in CI, no update nag on devices that cannot install; the
   documentation brought back in line with the app it describes.

@@ -2,7 +2,6 @@ package io.celox.flipperripper.ui.home
 
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
-import io.celox.flipperripper.R
 import io.celox.flipperripper.domain.model.DownloadError
 import io.celox.flipperripper.domain.model.DownloadMode
 import io.celox.flipperripper.domain.model.EngineResult
@@ -132,19 +131,18 @@ class HomeViewModelTest {
         }
 
     @Test
-    fun `shared link with auto-download enqueues immediately and shows Home`() =
+    fun `shared link with auto-download enqueues immediately and shows it on History`() =
         runTest {
-            // A share used to land on History: auto-download is on by default, and the download path
-            // jumped there. Sharing a link to download it therefore showed a list of PAST downloads
-            // instead of the screen the link was for.
+            // The download must be SEEN. 1.8.3 kept the share on Home with a snackbar, and the user
+            // saw an empty form: "I just see the start screen". The History card is the evidence.
             settings.state.value = UserPreferences(autoDownloadOnShare = true)
             val vm = createViewModel()
             advanceUntilIdle()
             navigator.events.test {
                 bus.post("Watch this https://www.instagram.com/reel/abc/")
                 advanceUntilIdle()
-                assertThat(awaitItem()).isEqualTo(AppNavTarget.HOME)
-                // And nowhere else afterwards — the download must not drag the user off Home.
+                assertThat(awaitItem()).isEqualTo(AppNavTarget.HISTORY)
+                // Exactly one navigation: no detour via Home that History then overrides.
                 expectNoEvents()
             }
             assertThat(downloadRepo.enqueued).hasSize(1)
@@ -152,22 +150,17 @@ class HomeViewModelTest {
         }
 
     @Test
-    fun `an auto-started download says so, since it no longer navigates`() =
+    fun `a share leaves no stale message behind for the next time Home opens`() =
         runTest {
-            // Staying on Home costs the user the sight of the download starting; the confirmation is
-            // what replaces it, so a silent success would be a worse bug than the navigation was.
+            // The 1.8.3 snackbar would now be buffered while History is showing and pop up minutes
+            // later on Home, about a download long finished. Nothing may be queued for Home.
             settings.state.value = UserPreferences(autoDownloadOnShare = true)
             val vm = createViewModel()
             advanceUntilIdle()
             vm.events.test {
                 bus.post("https://www.instagram.com/reel/abc/")
                 advanceUntilIdle()
-                val event = awaitItem()
-                assertThat(event).isInstanceOf(HomeEvent.ShowMessage::class.java)
-                // Carried as a resource id: a message built in the ViewModel would be English on
-                // every phone, including a German one.
-                assertThat((event as HomeEvent.ShowMessage).messageRes)
-                    .isEqualTo(R.string.home_download_started)
+                expectNoEvents()
             }
         }
 

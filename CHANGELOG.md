@@ -12,6 +12,27 @@ section for the version in `app/build.gradle.kts` exists before anything is tagg
 
 ## [Unreleased]
 
+## [1.9.1] - 2026-09-15
+
+### Fixed
+- **A shared link always shows its download.** Reported as "when I hand a download to the app via
+  share, it must always be visible that the file is now being downloaded — show the History list and
+  the animation at the top; at the moment I just see the start screen". That start screen was
+  1.8.3's doing: a share stayed on Home with a snackbar, and what the user actually saw was an empty
+  form (the state resets once the download is enqueued) and a message gone in four seconds. A
+  download you cannot see is a download that may or may not be happening.
+  A share with auto-download on now lands on **History**, where the new download is the top card,
+  *Queued* or *Downloading…* with its progress wave — the row is written before the worker starts,
+  the list is newest-first and scrolls to the top on a new entry, so the card is there the moment
+  the screen appears. With auto-download off the share still opens Home with the link filled in;
+  nothing is downloading yet, so the form is the right screen.
+  The 1.8.3 snackbar is gone with it: buffered while History shows, it would have surfaced minutes
+  later on Home about a download long finished.
+
+### Verified
+- On the emulator, from Home: share a link → History, new card on top, *Downloading…* with the
+  wave; the same from Settings. Tapping Download by hand is unchanged.
+
 ## [1.9.0] - 2026-09-15
 
 ### Changed
