@@ -102,6 +102,19 @@ class ShareTargetRegistrationTest {
     }
 
     @Test
+    fun `everything the manifest lets in, the app actually reads`() {
+        // The drift that bit in v1.8.2: the filter was widened, the handler was not, and the shares
+        // the widening was for were dropped after opening the app. One side changing alone is
+        // exactly what this catches.
+        mimeTypes(sendFilter()).forEach { declared ->
+            val sample = if (declared.endsWith("/*")) declared.dropLast(1) + "example" else declared
+            assertWithMessage("the activity reads a share of type $sample")
+                .that(SharedText.isShare(android.content.Intent.ACTION_SEND, sample))
+                .isTrue()
+        }
+    }
+
+    @Test
     fun `the shortcut id is stable`() {
         // Publishing under a fresh id every start would add shortcuts rather than update the one,
         // and the launcher caps how many an app may have.

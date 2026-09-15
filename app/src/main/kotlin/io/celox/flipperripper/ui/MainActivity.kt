@@ -14,6 +14,7 @@ import androidx.compose.runtime.getValue
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dagger.hilt.android.AndroidEntryPoint
+import io.celox.flipperripper.data.share.SharedText
 import io.celox.flipperripper.data.update.UpdateCoordinator
 import io.celox.flipperripper.domain.model.UserPreferences
 import io.celox.flipperripper.domain.repository.SettingsRepository
@@ -67,15 +68,11 @@ class MainActivity : ComponentActivity() {
 
     /** Forward a shared text link to the Home ViewModel via the bus. */
     private fun handleIntent(intent: Intent?) {
-        // Any text subtype, not just `text/plain` — the manifest filter accepts `text/*` so that
-        // senders which label shared text differently can reach the app at all. Insisting on the
-        // exact subtype here would let those shares start the app and then drop the link silently.
-        if (intent?.action == Intent.ACTION_SEND && intent.type?.startsWith("text/") == true) {
-            intent.getStringExtra(Intent.EXTRA_TEXT)?.let { incomingLinkBus.post(it) }
-            // A link is about to hit the extractor — the freshest moment to make sure yt-dlp and
-            // the app itself are current. Throttled + best-effort inside the coordinator.
-            updateCoordinator.runChecksAsync()
-        }
+        if (intent == null || !SharedText.isShare(intent.action, intent.type)) return
+        intent.getStringExtra(Intent.EXTRA_TEXT)?.let { incomingLinkBus.post(it) }
+        // A link is about to hit the extractor — the freshest moment to make sure yt-dlp and the app
+        // itself are current. Throttled + best-effort inside the coordinator.
+        updateCoordinator.runChecksAsync()
     }
 
     private fun requestNotificationPermissionIfNeeded() {
