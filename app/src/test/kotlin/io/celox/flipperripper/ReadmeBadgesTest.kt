@@ -18,9 +18,12 @@ class ReadmeBadgesTest {
 
     private fun badgeValue(label: String): String {
         // shields.io static badges: https://img.shields.io/badge/<label>-<value>-<colour>?…
-        val m = Regex("""img\.shields\.io/badge/$label-([^-]+)-""").find(readme)
+        // A literal dash inside the value is written as "--", so the parts are split on single
+        // dashes only; the last part is the colour.
+        val m = Regex("""img\.shields\.io/badge/$label-([^?)]+)""").find(readme)
         assertThat(m).isNotNull()
-        return m!!.groupValues[1]
+        val parts = m!!.groupValues[1].split(Regex("""(?<!-)-(?!-)"""))
+        return parts.dropLast(1).joinToString("-").replace("--", "-")
     }
 
     @Test
@@ -49,6 +52,47 @@ class ReadmeBadgesTest {
         // Badge reads like "6.5k"; allow 10% drift before it counts as a lie.
         val claimed = badgeValue("lines%20of%20code").removeSuffix("k").toDouble() * 1000
         assertThat(actual.toDouble()).isWithin(claimed * 0.10).of(claimed)
+    }
+
+    @Test
+    fun `the test-code badge is still roughly true`() {
+        val actual = listOf(File("src/test/kotlin"), File("src/androidTest/kotlin"))
+            .flatMap { it.walkTopDown().filter { f -> f.isFile && f.extension == "kt" }.toList() }
+            .sumOf { it.readLines().size }
+        val claimed = badgeValue("test%20code").removeSuffix("k").toDouble() * 1000
+        assertThat(actual.toDouble()).isWithin(claimed * 0.10).of(claimed)
+    }
+
+    @Test
+    fun `the APK-size badge is still roughly true`() {
+        // Measured against the locally built release APK; where none has been built (CI, a fresh
+        // clone) there is nothing honest to compare to, so the check is skipped rather than faked.
+        val apk = File("build/outputs/apk/release/app-arm64-v8a-release.apk")
+        org.junit.Assume.assumeTrue("needs a local release build", apk.exists())
+        val actualMb = apk.length() / 1024.0 / 1024.0
+        val claimedMb = badgeValue("APK").removeSuffix("%20MB").toDouble()
+        assertThat(actualMb).isWithin(claimedMb * 0.10).of(claimedMb)
+    }
+
+    @Test
+    fun `the ABI badge names the ABI the build produces`() {
+        val include = Regex("""include\(([^)]*)\)""").find(buildFile)!!.groupValues[1]
+        val built = Regex(""""([^"]+)"""").findAll(include).map { it.groupValues[1] }.toList()
+        val claimed = badgeValue("ABI").substringBefore("%20")
+        assertThat(built).containsExactly(claimed)
+    }
+
+    @Test
+    fun `the engine badge names the youtubedl-android version that is actually bundled`() {
+        val toml = File("../gradle/libs.versions.toml").readText()
+        val actual = Regex("""youtubedlAndroid = "([^"]+)"""").find(toml)!!.groupValues[1]
+        assertThat(badgeValue("engine")).endsWith("%20$actual")
+    }
+
+    @Test
+    fun `the JDK badge matches the toolchain the build targets`() {
+        val actual = Regex("""JavaVersion\.VERSION_(\d+)""").find(buildFile)!!.groupValues[1]
+        assertThat(badgeValue("JDK")).isEqualTo(actual)
     }
 
     @Test
