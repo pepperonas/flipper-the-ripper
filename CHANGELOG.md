@@ -5,7 +5,57 @@ All notable changes to **Flipper the Ripper** are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+**This file is the release notes.** The release workflow cuts the `## [x.y.z]` section for the tag
+being built out of this file and publishes it as the GitHub release text (`scripts/release-notes.sh`);
+a tag without a section here fails the workflow. A unit test (`ChangelogTest`) checks that the
+section for the version in `app/build.gradle.kts` exists before anything is tagged.
+
 ## [Unreleased]
+
+## [1.9.0] - 2026-09-15
+
+### Changed
+- **One APK per release — the 32-bit build is gone.** Every release since 1.1.1 shipped two files,
+  `arm64-v8a` and `armeabi-v7a`, and asked people to pick. Measured over all releases the 32-bit file
+  drew **30 of 177** downloads, and half of those are a crawler pattern (exactly one per file across
+  thirteen consecutive 1.2.x releases). A genuinely 32-bit phone on Android 7+ is a budget device
+  from 2014–2016. Meanwhile picking the wrong file failed in three directions, all ending in
+  *"App not installed"*: the 32-bit APK on a 64-bit phone with the app installed is a **downgrade**
+  (it carries the lower version code); the 32-bit APK on a 64-bit-only device (Pixel 7+, Android 15)
+  has no matching ABI; the 64-bit APK on a 32-bit phone has none either. One file removes the
+  choice. **1.8.3 remains the last release for 32-bit devices**, and the app no longer shows an
+  update notice on a device that cannot install a release (`UpdatePolicy`) — the alternative was a
+  permanent nag nobody could act on.
+- **Version codes keep the ×10 scheme** although only one ABI is built: every installed copy carries
+  a code from it (1.8.3 is 282), and a plain 29 for 1.9.0 would be refused as a downgrade.
+- **The GitHub release page shows the release notes.** Until now it showed a single "Full Changelog"
+  link while the notes sat unread in this file. The workflow now cuts the tag's section out of
+  `CHANGELOG.md` and publishes it, followed by an install block (one file, same key since 1.0.0,
+  where to look if it will not install) and a verify block.
+- **The release workflow verifies the signing certificate** of the built APK against the published
+  digest and refuses to publish on a mismatch. A `SHA256SUMS.txt` is published alongside the APK.
+
+### Fixed
+- **SECURITY.md said no authentication tokens are stored. That has been false since 1.2.11**, when
+  the optional Instagram sign-in began keeping the session cookie in the WebView cookie store — the
+  README described it correctly, the security policy contradicted it. The policy now says what is
+  kept, where, that it never leaves the device, and that *Sign out* expires it. The permission list
+  gained the missing `ACCESS_NETWORK_STATE`; X and Dailymotion were missing from the platform lists
+  in both `SECURITY.md` and `CONTRIBUTING.md`.
+- README: the architecture diagram had none of the parts added since it was drawn (motion,
+  share target, navigator, link bus, update coordinator; yt-dlp also serves X and Dailymotion).
+  Troubleshooting gained the *"App not installed"* row with its three causes. The roadmap now
+  shows what shipped. The signing certificate's SHA-256 is published — for a sideloaded app it is
+  the only thing that ties a file to the project, and it was written nowhere.
+
+### Added
+- README sections **Testing** (what the suite is, the drift guards, the mutation rule) and
+  **Changelog**; CONTRIBUTING describes the three test conventions the repo actually follows.
+- Drift guards for the release path and the documentation: `ReleaseArtifactsTest` (ABI split ↔
+  workflow ↔ README), `ChangelogTest` (a section for the version being built), `ReleaseNotesScriptTest`
+  (the script cuts the right section and fails on an unknown tag), `SecurityPolicyTest` (permissions
+  and platforms), `SigningDocsTest` (the published digest, checked against the keystore where it is
+  present), `UpdatePolicyTest`. All mutation-probed.
 
 ## [1.8.3] - 2026-09-15
 

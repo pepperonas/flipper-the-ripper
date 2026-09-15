@@ -6,8 +6,8 @@
 
 **A modern, open-source Android app to download publicly accessible videos from YouTube, Instagram, TikTok, Facebook, X and Dailymotion.**
 
-[![version](https://img.shields.io/badge/version-1.8.3-7B4DFF?style=for-the-badge&logo=android&logoColor=white)](https://github.com/pepperonas/flipper-the-ripper/releases/latest)
-[![unit tests](https://img.shields.io/badge/unit%20tests-244-2E9E5B?style=for-the-badge&logo=junit5&logoColor=white)](app/src/test)
+[![version](https://img.shields.io/badge/version-1.9.0-7B4DFF?style=for-the-badge&logo=android&logoColor=white)](https://github.com/pepperonas/flipper-the-ripper/releases/latest)
+[![unit tests](https://img.shields.io/badge/unit%20tests-270-2E9E5B?style=for-the-badge&logo=junit5&logoColor=white)](app/src/test)
 [![lines of code](https://img.shields.io/badge/lines%20of%20code-6.5k-4B6BDF?style=for-the-badge&logo=kotlin&logoColor=white)](app/src/main/kotlin)
 
 [![CI](https://img.shields.io/github/actions/workflow/status/pepperonas/flipper-the-ripper/ci.yml?branch=main&label=build&logo=github)](https://github.com/pepperonas/flipper-the-ripper/actions/workflows/ci.yml)
@@ -71,15 +71,11 @@
 
 ## 📥 Download
 
-Grab the latest signed APK from the [**Releases**](https://github.com/pepperonas/flipper-the-ripper/releases/latest) page and sideload it. Pick the APK for your CPU:
+Grab **`flipper-the-ripper-<version>.apk`** from the [**Releases**](https://github.com/pepperonas/flipper-the-ripper/releases/latest) page and sideload it. There is one file per release — 64-bit ARM, which is every Android phone sold since about 2016 — so there is nothing to pick. Install it over the existing app to update; every release since 1.0.0 is signed with the same key, and the Home screen tells you when a newer release exists.
 
-| APK | For |
-|-----|-----|
-| `flipper-the-ripper-<version>-arm64-v8a.apk` | **Virtually all modern phones** (64-bit ARM) — pick this if unsure |
-| `flipper-the-ripper-<version>-armeabi-v7a.apk` | Older 32-bit ARM devices |
+Want to check what you downloaded? See [Releases & verification](#-releases--verification).
 
-> Each build ships as a **per-ABI APK** (~50 MB) instead of one fat ~100 MB APK — you only download
-> the native engine (yt-dlp + ffmpeg + QuickJS) for your architecture. Both architectures stay fully supported.
+> **32-bit devices:** [1.8.3](https://github.com/pepperonas/flipper-the-ripper/releases/tag/v1.8.3) is the last release with an `armeabi-v7a` build. Since 1.9.0 the app ships 64-bit only — the 32-bit file drew under a tenth of all downloads, and offering two files mainly meant people installed the wrong one and got *"App not installed"*. The app does not show update notices on a 32-bit device.
 >
 > Not on Google Play by design — the Play Store prohibits video-downloader apps and runtime binary
 > updates. Distribution is via GitHub Releases / F-Droid-style sideloading (like NewPipe and Seal).
@@ -131,24 +127,29 @@ has **zero** Android dependencies and is 100%-unit-testable).
 ```mermaid
 flowchart TD
     subgraph UI["ui · Jetpack Compose + ViewModels"]
+        APP["FlipperApp · NavHost\n(ui/motion · one MotionScheme for every transition)"]
         Home[HomeScreen] --> HVM[HomeViewModel]
         Hist[HistoryScreen] --> HiVM[HistoryViewModel]
         Set[SettingsScreen] --> SVM[SettingsViewModel]
+        NAV[AppNavigator] -. app-level navigation .-> APP
+        BUS[IncomingLinkBus] -. shared link .-> HVM
     end
+    ACT["MainActivity · ACTION_SEND\n(data/share · direct share target)"] --> BUS
     subgraph DOMAIN["domain · pure Kotlin"]
         UC[Use cases] --> RIF[Repository interfaces]
         MODELS[Models · EngineResult · DownloadError]
     end
     subgraph DATA["data"]
         REPO[Repository impls]
-        ENGINE["engine · RoutingYtDlpEngine\n(per-platform + ErrorClassifier · FilenameSanitizer)"]
+        UPD["update · UpdateCoordinator\n(yt-dlp refresh · release check · UpdatePolicy)"]
+        ENGINE["engine · RoutingYtDlpEngine\n(EngineRouting per platform · ErrorClassifier · FilenameSanitizer)"]
         WORK["work · DownloadWorker\n(foreground service)"]
         ROOM[(Room · history)]
         DS[(DataStore · settings)]
         MEDIA[MediaStoreWriter]
     end
-    YTDLP[["youtubedl-android\n(yt-dlp + ffmpeg) · YouTube"]]
-    WEBVIEW[["WebView extractor\n(Chromium) · Instagram/TikTok/Facebook"]]
+    YTDLP[["youtubedl-android\n(yt-dlp + ffmpeg + QuickJS) · YouTube/X/Dailymotion"]]
+    WEBVIEW[["WebView extractor\n(Chromium · WebNavigation fence · MediaUrl) · Instagram/TikTok/Facebook"]]
     SERVER[["optional server\n(curl_cffi + deno + ffmpeg) · fallback"]]
 
     HVM --> UC
@@ -165,6 +166,9 @@ flowchart TD
     ENGINE --> WEBVIEW
     ENGINE -. fallback .-> SERVER
     REPO --> DS
+    HVM -. download started .-> NAV
+    UPD --> YTDLP
+    UPD --> DS
 ```
 
 **Why WorkManager + a foreground service?** Downloads can take minutes and must survive process
@@ -198,7 +202,7 @@ cd flipper-the-ripper
 ```
 
 > The emulator must use an **ARM system image** — the bundled yt-dlp native libraries ship for
-> `arm64-v8a` / `armeabi-v7a` only (no x86/x86_64).
+> `arm64-v8a` only (no x86/x86_64).
 
 ### Signed release builds
 
@@ -219,22 +223,59 @@ Signing secrets are **never** committed (`*.jks`, `keystore.properties` are git-
   secret and reads `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`. The build's signing config
   falls back to these environment variables when `keystore.properties` is absent.
 
-## 🚀 Releases
+Every release since 1.0.0 carries the same certificate:
 
-Releases are automated. Pushing a `v*` tag triggers the
-[release workflow](.github/workflows/release.yml), which builds a signed APK and publishes a
-GitHub Release with notes.
-
-```bash
-# bump versionCode/versionName in app/build.gradle.kts, commit, then:
-git tag v1.0.1 && git push origin v1.0.1
+```
+SHA-256  1fc3904fd80eb8135b25ee15fe62ec3b74545eba360298c152f712646fd910cb
 ```
 
-Versioning follows [Semantic Versioning](https://semver.org/).
+The release workflow checks the built APK against this digest before publishing, so a build signed
+with any other key — which would refuse to install over the existing app for every user — never
+reaches the Releases page.
+
+## 🚀 Releases & verification
+
+**Cutting a release** is three edits and a tag; everything after the tag is automated by the
+[release workflow](.github/workflows/release.yml).
+
+```bash
+# 1. app/build.gradle.kts — bump versionCode and versionName
+# 2. CHANGELOG.md        — add the "## [x.y.z] - YYYY-MM-DD" section (it becomes the release notes)
+# 3. README.md           — the version and test-count badges (a unit test fails if they drift)
+git commit -am "chore(release): vX.Y.Z" && git tag vX.Y.Z && git push origin main vX.Y.Z
+```
+
+The workflow then:
+
+1. **Cuts the release notes out of `CHANGELOG.md`** (`scripts/release-notes.sh`) — the tag's section,
+   verbatim, followed by an install and a verify block. A tag **without** a CHANGELOG section fails
+   the workflow before anything is built; a release without notes is a mistake, not a page.
+2. Builds the signed APK and names it `flipper-the-ripper-vX.Y.Z.apk` — one file, no architecture in the name.
+3. **Verifies the signing certificate** against the digest in [Signing](#-signing) and refuses to publish on a mismatch.
+4. Publishes the APK and a `SHA256SUMS.txt` to the GitHub Release.
+
+**Verifying a download.** The digest of the certificate is the one thing that ties an APK to this
+project, whatever site it came from:
+
+```bash
+apksigner verify --print-certs flipper-the-ripper-vX.Y.Z.apk | grep SHA-256
+#   … 1fc3904fd80eb8135b25ee15fe62ec3b74545eba360298c152f712646fd910cb
+sha256sum -c SHA256SUMS.txt        # the file itself, against the checksum shipped with the release
+```
+
+**Version codes.** The code Android sees is `versionCode × 10 + 2`. The scheme dates from the
+two-ABI era (32-bit +1, 64-bit +2, so a newer build always out-ranked an older one) and stays
+because every installed copy carries a code from it: 1.8.3 is 282, and a plain 29 for 1.9.0 would be
+refused as a downgrade. Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## 🗺️ Roadmap
 
 - [x] Instagram sign-in for login-only reels (in-app WebView login → session reused by the extractor) — shipped in 1.2.11
+- [x] X and Dailymotion — shipped in 1.4.0
+- [x] Material 3 Expressive motion, one drawn mark, compact bottom bar — shipped in 1.5.0
+- [x] German translation, guarded against drift — shipped in 1.8.0
+- [x] Direct share target (suggested row of the share sheet) — shipped in 1.8.2
+- [x] Release notes from the CHANGELOG, signature check in CI, single 64-bit APK — shipped in 1.9.0
 - [ ] User-supplied cookie file for other login-gated platforms
 - [ ] Playlist / multi-item downloads
 - [ ] Quality / format picker before download
@@ -248,7 +289,9 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 **Is this on Google Play?** No — Play policy prohibits these apps. Sideload the signed APK from Releases.
 
-**Why is the APK ~50 MB?** Each build is a **per-ABI APK** carrying only your architecture's copy of the real yt-dlp + ffmpeg + QuickJS native libraries (a single fat APK would be ~100 MB), so extraction works fully offline of any server.
+**Why is the APK ~50 MB?** It carries the real yt-dlp + ffmpeg + QuickJS native libraries for 64-bit ARM, so extraction runs on the phone without any server. (A build for every architecture would be roughly twice the size — which is why there is only the one.)
+
+**I have a 32-bit phone.** Stay on [1.8.3](https://github.com/pepperonas/flipper-the-ripper/releases/tag/v1.8.3), the last release with an `armeabi-v7a` build. The app will not offer you newer versions.
 
 **A download fails with "rate-limited or out of date".** The extractor changed upstream. Open **Settings → Update yt-dlp** to fetch the latest engine, then retry.
 
@@ -268,6 +311,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 | Symptom | Fix |
 |---------|-----|
+| **"App not installed"** when sideloading | Three causes, in order of likelihood. **(1)** The file is an older release, or a 32-bit build from before 1.9.0, and the installed app has a higher version code — Android refuses downgrades; install the latest release from the Releases page. **(2)** A 32-bit-only phone: releases since 1.9.0 are 64-bit only, stay on 1.8.3. **(3)** The APK was signed with a different key than the installed copy — it did not come from this project's release workflow; verify it (see [Releases & verification](#-releases--verification)) and uninstall the foreign copy first if you trust the new one. |
 | "The download engine is still initialising" | First launch unpacks the native payload; wait a few seconds and retry. |
 | Downloads don't start in the background | Allow notifications and disable battery optimisation for the app. |
 | Repeated failures on one platform | **Settings → Update yt-dlp**. |
@@ -331,11 +375,69 @@ with the on-device engine as fallback).
 Deploy the backend (systemd + nginx + TLS, `X-API-Key` auth) — see **[backend/README.md](backend/README.md)** —
 then set the server URL + key in Settings (or bake them into a git-ignored `backend.properties`).
 
+## 🧪 Testing
+
+The suite has two halves, and the split is the point.
+
+**Tests of behaviour** — `app/src/test`, plain JVM, no device. The `domain` layer has no Android
+dependency at all; ViewModels run against fakes (`testing/Fake*Repository`); and every rule that
+has ever gone wrong in production lives in a small pure object with its own test — `WebNavigation`
+(which navigations the hidden WebView may follow), `MediaUrl` (decoding escaped media URLs),
+`SharedText` (what counts as a shared link), `EngineRouting`, `ErrorClassifier`, `AppVersions`,
+`UpdatePolicy`. When a bug is fixed, the rule that was wrong is extracted first and pinned second;
+the test's KDoc names the incident it guards against.
+
+**Drift guards** — tests that read a *file* and hold it to a *fact*, because the failure they catch
+is silent: nothing crashes, nothing logs, the wrong thing just ships.
+
+| Guard | Holds | Would have caught |
+|---|---|---|
+| `ReadmeBadgesTest` | the version, test-count and SDK badges against `build.gradle.kts` and the real test count | a stale badge (it has fired several times — that is its job) |
+| `TranslationTest` | every English string has a German one, placeholders match, no orphans, nothing merely copied | one English sentence on a German phone |
+| `ShareTargetRegistrationTest` | manifest filter ↔ `shortcuts.xml` ↔ `SharedText` — what the sheet offers, the app accepts, the activity reads | the share filter widened on one side only (v1.8.2) |
+| `ReleaseArtifactsTest` | the ABI the build produces == the file the release workflow publishes == the file the README tells people to download | dropping or adding an ABI in one place |
+| `ChangelogTest` | a section exists for the version being built, dates are valid, versions descend | a tag with no release notes |
+| `ReleaseNotesScriptTest` | `scripts/release-notes.sh` cuts exactly the tagged section out of the real `CHANGELOG.md`, and fails on an unknown tag | the release page showing the wrong version's notes |
+| `SecurityPolicyTest` | permissions in `SECURITY.md` == `uses-permission` in the manifest; platform lists cover the `Platform` enum | the security policy omitting a permission or a platform |
+| `SigningDocsTest` | the fingerprint in the docs is a well-formed SHA-256 and, where the keystore is present locally, the keystore's | a typo in the one string people verify against |
+| `ProguardRulesTest`, `VectorDrawableTest`, `DesignTokensTest` | keep rules, icon geometry (a real path parser — the safe zone is measured, not eyeballed), spacing/size tokens | release-only R8 breakage; an icon outside the adaptive-icon safe zone |
+
+**Instrumented tests** — `app/src/androidTest`, run on an ARM emulator in CI: the bottom bar's
+measured height, the screen-transition timing (with a paused test clock, since `screenrecord`
+cannot see a 300 ms spring), the clear-history dialog, MediaStore writes.
+
+**The house rule: every new pin is mutated once.** A test that has never been seen red is not an
+assurance — it may be checking its own fixture, a comment, or nothing. So each new test gets the
+bug it guards against put back (the file's checksum is compared to prove the mutation actually
+applied), the suite must go red, and only then is the pin kept. Eight of eight fired in 1.8.3, ten
+of ten in 1.9.0; the ones that stayed green along the way were rewritten, and two of those turned
+out to be real gaps.
+
+```bash
+./gradlew testDebugUnitTest                  # the JVM suite
+./gradlew connectedDebugAndroidTest          # instrumented (ARM emulator or device)
+./gradlew koverVerifyDebug                   # ≥ 80 % line coverage, enforced in CI
+```
+
+## 📝 Changelog
+
+The full history is in [CHANGELOG.md](CHANGELOG.md) ([Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
+format). The GitHub release page for each version shows that version's section verbatim — the
+file is the single source of the notes, not a second copy of them.
+
+- **1.9.0** — one 64-bit APK per release (32-bit dropped, with the numbers), release notes cut from
+  the CHANGELOG, signing-certificate check in CI, no update nag on devices that cannot install; the
+  documentation brought back in line with the app it describes.
+- **1.8.3** — a shared link opens Home, not History; shares labelled as any text type are read.
+- **1.8.2** — the app is a direct share target; the SEND filter accepts every text type.
+
 ## 🤝 Contributing
 
 Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) and the
 [Code of Conduct](CODE_OF_CONDUCT.md). All CI checks (build, lint, detekt, unit tests, ≥ 80% coverage)
-must pass. Security issues: see [SECURITY.md](SECURITY.md).
+must pass — including the [drift guards](#-testing), which means a change to the manifest, the
+strings, the ABI split or the documentation may need its counterpart updated in the same PR.
+Security issues: see [SECURITY.md](SECURITY.md).
 
 ## ⚖️ Legal & responsible use
 

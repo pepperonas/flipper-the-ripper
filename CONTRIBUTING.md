@@ -1,6 +1,6 @@
 # Contributing to Flipper the Ripper
 
-Thanks for your interest in improving **Flipper the Ripper** — an open-source Android app (Kotlin, Jetpack Compose, Material 3) that downloads publicly accessible videos from Instagram, YouTube, TikTok and Facebook (a bundled yt-dlp engine for YouTube, an on-device WebView extractor for the browser-gated platforms).
+Thanks for your interest in improving **Flipper the Ripper** — an open-source Android app (Kotlin, Jetpack Compose, Material 3 Expressive) that downloads publicly accessible videos from YouTube, Instagram, TikTok, Facebook, X and Dailymotion (a bundled yt-dlp engine for YouTube, X and Dailymotion; an on-device WebView extractor for the browser-gated platforms Instagram, TikTok and Facebook).
 
 This document describes how to set up your environment, the conventions we follow, and what your pull request needs to pass before it can be merged. Please read it fully before opening a PR.
 
@@ -116,12 +116,17 @@ A convenient way to run the full gate in one go:
 
 ## Tests
 
-New features and bug fixes **should include tests**. Add or extend unit tests under the appropriate source set so that:
+New features and bug fixes **must include tests**. Add or extend unit tests under `app/src/test` so that the new behaviour is covered and the project stays at or above the **80% line-coverage gate** (`koverVerifyDebug`). If a change is genuinely untestable (pure UI glue), say so in the PR description.
 
-- the new behavior is covered, and
-- the overall project stays at or above the **80% line-coverage gate** (`koverVerifyDebug`).
+Three conventions make the tests here worth more than their count — please keep to them:
 
-If a change is genuinely untestable (e.g. pure UI glue), say so in the PR description.
+**Pin the property, not the wording.** A test that asserts a literal (`setTimeout(scrapeGrab, 1000)`, an exact error sentence) breaks on every harmless rewording and passes on many real bugs. Assert what must be *true* — the escape is decoded, the timeout is at least N, the filter accepts the type — and let the wording move.
+
+**Extract the rule, then test it.** When a bug is fixed, the decision that was wrong is moved into a small pure object (`WebNavigation`, `MediaUrl`, `SharedText`, `UpdatePolicy` are all such extractions) and tested there, with a KDoc naming the incident. The Activity or ViewModel then only calls the rule. This is what makes a `text/*`-vs-`text/plain` mismatch a unit test rather than a field report.
+
+**Mutate every new pin once.** Before a new test counts, put the bug back (or break the thing it guards), confirm the file actually changed, run the test and watch it go **red**. Then restore. A pin that stays green under its own mutation is checking the wrong thing — it happens more often than you would expect, usually because the test matched a comment, a fixture or a neighbouring line. Commit before a mutation run, and restore with `git checkout -- <file>`, never from a hand-made backup.
+
+**Drift guards.** Some tests read a file and hold it to a fact: badges against the build, the German strings against the English ones, the manifest against `shortcuts.xml` and `SharedText`, the ABI split against the release workflow and the README, `SECURITY.md` against the manifest's permissions, `CHANGELOG.md` against the version being built. If your PR touches any of those files, expect a guard to ask for the counterpart in the same PR — that is the guard doing its job, not an obstacle.
 
 ## Pull Request Process
 
