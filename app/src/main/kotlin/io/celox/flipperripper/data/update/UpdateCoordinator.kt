@@ -1,9 +1,11 @@
 package io.celox.flipperripper.data.update
 
+import android.os.Build
 import io.celox.flipperripper.data.engine.YtDlpEngine
 import io.celox.flipperripper.di.ApplicationScope
 import io.celox.flipperripper.domain.model.EngineResult
 import io.celox.flipperripper.domain.repository.SettingsRepository
+import io.celox.flipperripper.domain.util.UpdatePolicy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -65,6 +67,9 @@ constructor(
     }
 
     private suspend fun maybeCheckAppRelease() {
+        // A device that cannot install the releases (32-bit only, since 1.9.0 ships 64-bit ARM
+        // alone) is not told about them: the notice would be permanent and never actionable.
+        if (!UpdatePolicy.releasesInstallOn(Build.SUPPORTED_ABIS.toList())) return
         val last = settingsRepository.lastAppUpdateCheckMs.first()
         val now = System.currentTimeMillis()
         if (now - last < APP_CHECK_INTERVAL_MS) return

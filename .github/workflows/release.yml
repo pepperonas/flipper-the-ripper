@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Release tag (e.g. v1.0.1)'
+        description: 'Release tag (e.g. v1.9.0)'
         required: true
 
 permissions:
@@ -36,6 +36,35 @@ jobs:
         with:
           ref: ${{ steps.meta.outputs.tag }}
 
+      # First, before any build: a release without notes must fail here, not publish an empty page.
+      # The notes are the CHANGELOG section for this tag — the file that is actually maintained.
+      - name: Release notes from CHANGELOG
+        env:
+          TAG: ${{ steps.meta.outputs.tag }}
+        run: |
+          set -e
+          {
+            echo "## What's new"
+            echo
+            scripts/release-notes.sh "$TAG"
+            echo
+            echo "## Install"
+            echo
+            echo "One file: **flipper-the-ripper-${TAG}.apk** (64-bit ARM — every phone since about 2016)."
+            echo "Install it over the existing app; every release since 1.0.0 is signed with the same key."
+            echo "Getting *\"App not installed\"*? See the README's"
+            echo "[Troubleshooting](https://github.com/pepperonas/flipper-the-ripper#-troubleshooting) table."
+            echo
+            echo "## Verify"
+            echo
+            echo 'Signing certificate SHA-256 (`apksigner verify --print-certs`):'
+            echo
+            echo '`1fc3904fd80eb8135b25ee15fe62ec3b74545eba360298c152f712646fd910cb`'
+            echo
+            echo "File checksum: \`SHA256SUMS.txt\` below."
+          } > RELEASE_NOTES.md
+          cat RELEASE_NOTES.md
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -61,28 +90,44 @@ jobs:
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: ./gradlew assembleRelease --no-daemon
 
-      - name: Rename per-ABI APKs
+      # One APK, no architecture in the name: there is nothing to choose. The 32-bit build was
+      # dropped in 1.9.0 (see app/build.gradle.kts, `splits`).
+      - name: Name the APK and write its checksum
         env:
           TAG: ${{ steps.meta.outputs.tag }}
         run: |
           set -e
-          OUT=app/build/outputs/apk/release
-          for abi in arm64-v8a armeabi-v7a; do
-            SRC="$OUT/app-$abi-release.apk"
-            [ -f "$SRC" ] || { echo "Missing $SRC" >&2; exit 1; }
-            cp "$SRC" "flipper-the-ripper-${TAG}-${abi}.apk"
-          done
-          ls -lh flipper-the-ripper-*.apk
+          SRC=app/build/outputs/apk/release/app-arm64-v8a-release.apk
+          [ -f "$SRC" ] || { echo "Missing $SRC" >&2; exit 1; }
+          APK="flipper-the-ripper-${TAG}.apk"
+          cp "$SRC" "$APK"
+          sha256sum "$APK" > SHA256SUMS.txt
+          ls -lh "$APK"; cat SHA256SUMS.txt
+
+      # The published APK must carry the key every earlier release carried — a differently signed
+      # build would refuse to install over the existing app for every user.
+      - name: Verify the signing certificate
+        env:
+          TAG: ${{ steps.meta.outputs.tag }}
+        run: |
+          set -e
+          APKSIGNER=$(ls -d "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
+          ACTUAL=$("$APKSIGNER" verify --print-certs "flipper-the-ripper-${TAG}.apk" | grep -i 'SHA-256' | awk '{print $NF}')
+          EXPECTED=1fc3904fd80eb8135b25ee15fe62ec3b74545eba360298c152f712646fd910cb
+          [ "$ACTUAL" = "$EXPECTED" ] || { echo "Signing certificate mismatch: $ACTUAL" >&2; exit 1; }
+          echo "certificate ok: $ACTUAL"
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.meta.outputs.tag }}
           name: Flipper the Ripper ${{ steps.meta.outputs.tag }}
+          body_path: RELEASE_NOTES.md
+          # Appends the auto-generated "Full Changelog" link under the written notes.
           generate_release_notes: true
           files: |
-            flipper-the-ripper-*-arm64-v8a.apk
-            flipper-the-ripper-*-armeabi-v7a.apk
+            flipper-the-ripper-*.apk
+            SHA256SUMS.txt
 
       - name: Clean up keystore
         if: always()

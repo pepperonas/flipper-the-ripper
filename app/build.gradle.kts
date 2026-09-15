@@ -37,13 +37,13 @@ android {
         applicationId = "io.celox.flipperripper"
         minSdk = 24
         targetSdk = 35
-        versionCode = 28
-        versionName = "1.8.3"
+        versionCode = 29
+        versionName = "1.9.0"
 
         testInstrumentationRunner = "io.celox.flipperripper.HiltTestRunner"
         vectorDrawables { useSupportLibrary = true }
-        // ABIs are governed by the `splits.abi` block below (arm64-v8a + armeabi-v7a only). yt-dlp
-        // native libs ship for ARM only — x86/x86_64 emulators are unsupported.
+        // ABIs are governed by the `splits.abi` block below (arm64-v8a only). yt-dlp native libs
+        // ship for ARM only — x86/x86_64 emulators are unsupported.
 
         buildConfigField("String", "DEFAULT_BACKEND_URL", "\"$defaultBackendUrl\"")
         buildConfigField("String", "DEFAULT_BACKEND_KEY", "\"$defaultBackendKey\"")
@@ -83,15 +83,18 @@ android {
         }
     }
 
-    // Ship one APK per ABI instead of a single fat APK carrying both architectures' native libs
-    // (yt-dlp/ffmpeg/Python). Each user downloads only their architecture — roughly halves the size —
-    // and BOTH architectures stay supported. No universal APK: arm64-v8a covers virtually all modern
-    // devices, armeabi-v7a covers older 32-bit ones.
+    // One APK, 64-bit ARM only. The 32-bit armeabi-v7a build was dropped in 1.9.0: across every
+    // release it drew under a tenth of the downloads, a genuinely 32-bit phone on Android 7+ is a
+    // budget device from 2014–2016, and offering two files meant people picked the wrong one — the
+    // 32-bit APK carries the lower versionCode, so on a 64-bit phone with the app already installed
+    // it fails as a downgrade ("App not installed"). One file removes the choice. 1.8.3 remains the
+    // last release for 32-bit devices, and the in-app update notice stays quiet there (UpdatePolicy).
+    // Still a split rather than a plain build so the native payload is the one architecture's only.
     splits {
         abi {
             isEnable = true
             reset()
-            include("armeabi-v7a", "arm64-v8a")
+            include("arm64-v8a")
             isUniversalApk = false
         }
     }
@@ -156,8 +159,11 @@ android {
     }
 }
 
-// Give each per-ABI APK a distinct, ordered versionCode so an install always sees a higher code for a
-// newer build (arm64 > armeabi within a release), the convention for split distribution.
+// The versionCode Android sees is `versionCode * 10 + 2`, and that scheme MUST stay even though only
+// one ABI is built now. It dates from the two-ABI era (armeabi +1, arm64 +2, so a newer build always
+// out-ranked an older one), and every installed copy carries a code from it — 1.8.3 is 282. Dropping
+// the multiplier would make 1.9.0 report 29, which Android treats as a downgrade and refuses to
+// install over 282. Keeping the scheme costs nothing; removing it strands every existing user.
 androidComponents {
     val abiOffsets = mapOf("armeabi-v7a" to 1, "arm64-v8a" to 2)
     onVariants { variant ->
