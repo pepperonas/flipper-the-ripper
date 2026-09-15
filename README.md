@@ -409,9 +409,11 @@ cannot see a 300 ms spring), the clear-history dialog, MediaStore writes.
 **The house rule: every new pin is mutated once.** A test that has never been seen red is not an
 assurance — it may be checking its own fixture, a comment, or nothing. So each new test gets the
 bug it guards against put back (the file's checksum is compared to prove the mutation actually
-applied), the suite must go red, and only then is the pin kept. Eight of eight fired in 1.8.3, ten
-of ten in 1.9.0; the ones that stayed green along the way were rewritten, and two of those turned
-out to be real gaps.
+applied), the suite must go red, and only then is the pin kept. Eight of eight fired in 1.8.3;
+thirteen of thirteen in 1.9.0 — but six of those first came back *green*, and the reason was the
+probe, not the pins: the guards read files Gradle did not know as test inputs, so it had skipped
+the task as up-to-date. That is now fixed in the build, and it is why a "blind" result is treated
+as a suspicion against the probe before it is treated as a verdict on the test.
 
 ```bash
 ./gradlew testDebugUnitTest                  # the JVM suite
