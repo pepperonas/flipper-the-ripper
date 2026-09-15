@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.8.3] - 2026-09-15
+
+### Fixed
+- **Sharing a link now opens Home, not History.** Reported as "when I share a link from another app
+  to download it, History is shown — it should be Home". Reproduced on the emulator before changing
+  anything: share a link, land on the list of past downloads.
+  Auto-download on share is **on by default**, and that path ran straight into the ordinary download
+  routine, which jumps to History to show the download running. Correct for the Download button — the
+  user asked to see it by tapping — but wrong for a share: the share is what put the user in front of
+  the app, and the screen a link belongs to is the one that takes links.
+  A share now goes to Home first, always, whether or not it auto-downloads. The download still starts
+  immediately; a message confirms it and says where it went, so staying on Home costs no feedback.
+  History remains one tap away in the bar.
+- **A share labelled as any other text type no longer goes missing.** v1.8.2 widened the intent filter
+  to `text/*` so senders that do not label shared text as `text/plain` can reach the app — but the
+  activity still checked for the exact subtype and dropped everything else. Such a share opened the
+  app and then did nothing at all. Any `text/` subtype is accepted now.
+
+### Changed
+- Snackbar messages from Home carry a string resource instead of finished text. A message built in
+  the ViewModel is English on every phone, German ones included.
+
+### Verified
+- On the emulator: with the app sitting on History, sharing a link lands on **Home** with the
+  confirmation visible, in English and in German (`Start` / "Download gestartet — zu finden im
+  Verlauf"), and the download runs. Tapping Download by hand still jumps to History.
+
 ## [1.8.2] - 2026-09-08
 
 ### Fixed

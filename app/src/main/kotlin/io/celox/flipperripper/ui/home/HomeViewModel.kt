@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.celox.flipperripper.BuildConfig
+import io.celox.flipperripper.R
 import io.celox.flipperripper.domain.model.DownloadMode
 import io.celox.flipperripper.domain.model.DownloadRequest
 import io.celox.flipperripper.domain.model.EngineResult
@@ -143,7 +144,16 @@ constructor(
         }
     }
 
-    fun download(mode: DownloadMode) {
+    /**
+     * Enqueues the download for [mode].
+     *
+     * [fromShare] decides where the user ends up. A download the user starts here, by tapping the
+     * button, jumps to History to show it running. A download that started because a link was
+     * *shared* into the app stays on Home: the share is what put the user in front of this screen,
+     * and throwing them onto another tab is disorienting — the snackbar says where the download
+     * went, and History is one tap away in the bar.
+     */
+    fun download(mode: DownloadMode, fromShare: Boolean = false) {
         val state = _state.value
         val platform = state.detectedPlatform ?: return
         viewModelScope.launch {
@@ -158,9 +168,13 @@ constructor(
             when (val result = startDownload(request)) {
                 is EngineResult.Success -> {
                     _state.update { HomeUiState(engineReady = it.engineReady, defaultMode = it.defaultMode) }
-                    // Through the app-level navigator, not a Home-screen event: a download started by
-                    // a shared link must jump to History even when Home is not composed at all.
-                    appNavigator.navigateTo(AppNavTarget.HISTORY)
+                    if (fromShare) {
+                        _events.send(HomeEvent.ShowMessage(R.string.home_download_started))
+                    } else {
+                        // Through the app-level navigator, not a Home-screen event: this must work
+                        // even when Home is not the composed screen.
+                        appNavigator.navigateTo(AppNavTarget.HISTORY)
+                    }
                 }
                 is EngineResult.Failure ->
                     _state.update { it.copy(errorMessage = result.error.message) }
@@ -172,13 +186,15 @@ constructor(
         val parsed = resolveUrl(text) ?: return
         onUrlChange(parsed.url)
         viewModelScope.launch {
+            // Home first, always. A share arrives with the app wherever the user last left it, and
+            // what they expect to see is the screen that takes a link. Auto-download used to skip
+            // this and jump straight to History instead, so sharing a link landed on a list of past
+            // downloads rather than on the screen the link was meant for.
+            appNavigator.navigateTo(AppNavTarget.HOME)
             val prefs = settingsRepository.preferences.first()
             if (prefs.autoDownloadOnShare) {
-                download(prefs.defaultMode)
+                download(prefs.defaultMode, fromShare = true)
             } else {
-                // Bring the user to the prefilled form — a share that lands while another tab is
-                // open would otherwise resolve invisibly.
-                appNavigator.navigateTo(AppNavTarget.HOME)
                 resolve()
             }
         }

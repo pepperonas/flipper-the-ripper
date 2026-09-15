@@ -76,7 +76,7 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
 
     ObserveAsEvents(viewModel.events) { event ->
         when (event) {
-            is HomeEvent.ShowMessage -> snackbarHostState.showSnackbar(event.message)
+            is HomeEvent.ShowMessage -> snackbarHostState.showSnackbar(context.getString(event.messageRes))
         }
     }
 

@@ -1,5 +1,6 @@
 package io.celox.flipperripper.ui.home
 
+import androidx.annotation.StringRes
 import io.celox.flipperripper.domain.model.AppUpdate
 import io.celox.flipperripper.domain.model.DownloadMode
 import io.celox.flipperripper.domain.model.Platform
@@ -31,5 +32,9 @@ data class HomeUiState(
  * are only collected while the Home screen is composed.
  */
 sealed interface HomeEvent {
-    data class ShowMessage(val message: String) : HomeEvent
+    /**
+     * A message to show as a snackbar, carried as a resource id rather than text: the ViewModel has
+     * no Context, and a message built there would be English on every phone.
+     */
+    data class ShowMessage(@param:StringRes val messageRes: Int) : HomeEvent
 }

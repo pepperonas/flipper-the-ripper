@@ -67,7 +67,10 @@ class MainActivity : ComponentActivity() {
 
     /** Forward a shared text link to the Home ViewModel via the bus. */
     private fun handleIntent(intent: Intent?) {
-        if (intent?.action == Intent.ACTION_SEND && intent.type == "text/plain") {
+        // Any text subtype, not just `text/plain` — the manifest filter accepts `text/*` so that
+        // senders which label shared text differently can reach the app at all. Insisting on the
+        // exact subtype here would let those shares start the app and then drop the link silently.
+        if (intent?.action == Intent.ACTION_SEND && intent.type?.startsWith("text/") == true) {
             intent.getStringExtra(Intent.EXTRA_TEXT)?.let { incomingLinkBus.post(it) }
             // A link is about to hit the extractor — the freshest moment to make sure yt-dlp and
             // the app itself are current. Throttled + best-effort inside the coordinator.

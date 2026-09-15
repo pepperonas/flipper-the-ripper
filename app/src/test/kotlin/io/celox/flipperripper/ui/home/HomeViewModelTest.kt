@@ -2,6 +2,7 @@ package io.celox.flipperripper.ui.home
 
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
+import io.celox.flipperripper.R
 import io.celox.flipperripper.domain.model.DownloadError
 import io.celox.flipperripper.domain.model.DownloadMode
 import io.celox.flipperripper.domain.model.EngineResult
@@ -131,18 +132,57 @@ class HomeViewModelTest {
         }
 
     @Test
-    fun `shared link with auto-download enqueues immediately and shows History`() =
+    fun `shared link with auto-download enqueues immediately and shows Home`() =
         runTest {
+            // A share used to land on History: auto-download is on by default, and the download path
+            // jumped there. Sharing a link to download it therefore showed a list of PAST downloads
+            // instead of the screen the link was for.
             settings.state.value = UserPreferences(autoDownloadOnShare = true)
             val vm = createViewModel()
             advanceUntilIdle()
             navigator.events.test {
                 bus.post("Watch this https://www.instagram.com/reel/abc/")
                 advanceUntilIdle()
-                assertThat(awaitItem()).isEqualTo(AppNavTarget.HISTORY)
+                assertThat(awaitItem()).isEqualTo(AppNavTarget.HOME)
+                // And nowhere else afterwards — the download must not drag the user off Home.
+                expectNoEvents()
             }
             assertThat(downloadRepo.enqueued).hasSize(1)
             assertThat(downloadRepo.enqueued.first().platform).isEqualTo(Platform.INSTAGRAM)
+        }
+
+    @Test
+    fun `an auto-started download says so, since it no longer navigates`() =
+        runTest {
+            // Staying on Home costs the user the sight of the download starting; the confirmation is
+            // what replaces it, so a silent success would be a worse bug than the navigation was.
+            settings.state.value = UserPreferences(autoDownloadOnShare = true)
+            val vm = createViewModel()
+            advanceUntilIdle()
+            vm.events.test {
+                bus.post("https://www.instagram.com/reel/abc/")
+                advanceUntilIdle()
+                val event = awaitItem()
+                assertThat(event).isInstanceOf(HomeEvent.ShowMessage::class.java)
+                // Carried as a resource id: a message built in the ViewModel would be English on
+                // every phone, including a German one.
+                assertThat((event as HomeEvent.ShowMessage).messageRes)
+                    .isEqualTo(R.string.home_download_started)
+            }
+        }
+
+    @Test
+    fun `a download the user starts here still jumps to History`() =
+        runTest {
+            // The share path changed, the button did not: tapping Download is a deliberate act, and
+            // showing it running is what the user asked for by tapping.
+            val vm = createViewModel()
+            vm.onUrlChange("https://youtu.be/abc")
+            navigator.events.test {
+                vm.download(DownloadMode.VIDEO)
+                advanceUntilIdle()
+                assertThat(awaitItem()).isEqualTo(AppNavTarget.HISTORY)
+            }
         }
 
     @Test
