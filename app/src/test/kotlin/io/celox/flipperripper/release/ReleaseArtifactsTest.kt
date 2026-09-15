@@ -49,11 +49,16 @@ class ReleaseArtifactsTest {
         assertThat(referenced).isEqualTo(builtAbis())
     }
 
+    /** The line that names the published file — the one place the name is decided. */
+    private fun publishedName(): String =
+        Regex("""APK="([^"]+)"""").find(workflow)?.groupValues?.get(1)
+            ?: error("release.yml no longer assigns APK=")
+
     @Test
     fun `the published file carries no architecture in its name`() {
-        // With one file the ABI suffix is noise that invites the old question ("which one?").
-        assertThat(workflow).contains("flipper-the-ripper-\${TAG}.apk")
-        assertThat(workflow).doesNotContain("flipper-the-ripper-\${TAG}-\${abi}.apk")
+        // With one file the ABI suffix is noise that invites the old question ("which one?"). Pinned
+        // on the assignment, not on the whole file — the name is also quoted in the notes text.
+        assertThat(publishedName()).isEqualTo("flipper-the-ripper-\${TAG}.apk")
     }
 
     @Test
@@ -74,8 +79,12 @@ class ReleaseArtifactsTest {
     }
 
     @Test
-    fun `a checksum file is published alongside the APK`() {
-        assertThat(workflow).contains("sha256sum")
-        assertThat(workflow).contains("SHA256SUMS.txt")
+    fun `a checksum file is produced and published alongside the APK`() {
+        // Produced: the line that writes it. Mentioning the file in the notes is not producing it.
+        val produces = workflow.lines().any { it.trim() == "sha256sum \"\$APK\" > SHA256SUMS.txt" }
+        assertThat(produces).isTrue()
+        // Published: listed among the release files.
+        val files = workflow.substringAfter("files: |").substringBefore("- name:")
+        assertThat(files).contains("SHA256SUMS.txt")
     }
 }

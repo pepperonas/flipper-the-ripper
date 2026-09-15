@@ -176,6 +176,21 @@ androidComponents {
     }
 }
 
+// The drift guards in src/test read these files straight from disk. Gradle does not know that, so
+// without this an edit to the README or the release workflow left the test task "up to date" and
+// the guard never ran — found when a mutation probe reported six pins blind that were not.
+tasks.withType<Test>().configureEach {
+    inputs.files(
+        rootProject.file("README.md"),
+        rootProject.file("CHANGELOG.md"),
+        rootProject.file("SECURITY.md"),
+        rootProject.file("CONTRIBUTING.md"),
+        rootProject.file(".github/workflows/release.yml"),
+        rootProject.file("scripts/release-notes.sh"),
+        file("src/main/res/xml/shortcuts.xml")
+    ).withPathSensitivity(PathSensitivity.RELATIVE)
+}
+
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.sharetarget)
