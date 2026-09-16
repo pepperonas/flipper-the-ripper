@@ -288,10 +288,10 @@ refused as a downgrade. Versioning follows [Semantic Versioning](https://semver.
 - [x] Direct share target (suggested row of the share sheet) — shipped in 1.8.2
 - [x] Release notes from the CHANGELOG, signature check in CI, single 64-bit APK — shipped in 1.9.0
 - [ ] User-supplied cookie file for other login-gated platforms
-- [ ] Playlist / multi-item downloads
-- [ ] Quality / format picker before download
-- [ ] Subtitle download
-- [ ] Download queue management (pause/resume, reorder)
+- [ ] Download queue management (pause/resume, reorder) — **planned for 1.10.0**, design in [docs/specs](docs/specs/2026-09-16-queue-formats-subtitles-playlists-design.md)
+- [ ] Quality / format picker before download — planned for 1.10.0 (same design)
+- [ ] Subtitle download — planned for 1.10.0 (same design)
+- [ ] Playlist / multi-item downloads — planned for 1.10.0 (same design)
 - [ ] F-Droid distribution
 - [ ] Additional platforms supported by yt-dlp (opt-in)
 - [ ] Bundle a JS runtime + PO-token provider + `curl_cffi` impersonation to fully cover YouTube/TikTok (see Known limitations)
