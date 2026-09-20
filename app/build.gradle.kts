@@ -143,10 +143,15 @@ android {
     }
 
     lint {
-        // AGP 8.7's bundled lint crashes (IncompatibleClassChangeError in NonNullableMutableLiveData
-        // detector) when analysing the newer Compose 1.11 metadata — a tool bug, not a project issue.
-        // Skip the crashing release-vital pass; static analysis is still enforced by detekt + Spotless,
-        // and `./gradlew lint` (debug) runs in CI.
+        // AGP 8.7's bundled lint crashes with IncompatibleClassChangeError when analysing the newer
+        // Compose 1.11 metadata — a tool bug, not a project issue. Disabling the detector below fixed
+        // one such crash; `ComposableFlowOperatorDetector` still brings `./gradlew lintDebug` down,
+        // and disabling a detector does not help there because the driver itself dies.
+        //
+        // So: lint does NOT run in CI (ci.yml runs spotlessCheck, detekt, testDebugUnitTest,
+        // koverVerifyDebug, assembleDebug and the connected tests). Static analysis is carried by
+        // detekt + Spotless. Verified 2026-09-20 that the crash predates the 1.9.2 work — the same
+        // detector brings the pre-1.9.2 tree down too.
         disable += "NonNullableMutableLiveData"
         checkReleaseBuilds = false
         abortOnError = false
