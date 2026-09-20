@@ -12,6 +12,73 @@ section for the version in `app/build.gradle.kts` exists before anything is tagg
 
 ## [Unreleased]
 
+## [1.10.0] - 2026-09-21
+
+Downloads now run **one at a time, in the order you see**, and you can say what quality you want.
+Both were measured on a device before and after; the numbers are below rather than adjectives.
+
+### Added
+- **A queue that is real.** Until now every download was its own background job and Android ran
+  several at once, so "queued" was a label with nothing behind it — what started next was whatever
+  the scheduler picked, and the order in the list was decoration. One runner now drains the queue in
+  order. Measured: never more than **1** download active across 80 samples over 160 s, where two
+  used to run in parallel.
+- **Pause and resume.** Pausing keeps what has already been fetched and resuming continues from that
+  byte. Measured: paused at 52,345,281 bytes, resumed at 59,932,610 and carried on — not a restart.
+  A paused download keeps its place in the queue.
+- **Reorder by dragging.** Waiting downloads carry a handle; the running one deliberately does not,
+  because moving it would mean stopping it. The new order is what actually runs next — verified end
+  to end on the device.
+- **Swipe a finished download away** to clear it from the list. Only finished ones: swiping away
+  something still downloading would be an accident waiting to happen, and the card carries Cancel.
+- **One notification for the batch** — "Downloading… · 2 of 5" — instead of one per download.
+- **Quality picker.** The Download button gained a chevron that opens an options sheet:
+  **Best · 1080p · 720p · 480p · Audio only**, with a line under the button saying which one will
+  happen. After *Load info*, a tier the video does not reach is greyed out and the sheet names the
+  actual maximum. Measured on one video: **480p → 38.8 MB, 720p → 161.2 MB.**
+- **A remembered default quality** (Settings → Behaviour), used for shared links. The one-tap path
+  stays one tap — the picker is an offer beside it, never a question in front of it.
+
+### Changed
+- **The Video/Audio toggle is gone.** "Audio only" is a quality tier in the same list, because that
+  is the one decision being made. An existing Audio default is read forward, so nobody silently gets
+  video back.
+- The History list has two sections — what is in the queue, and what is finished.
+- The card names the quality that was asked for, so several downloads of the same video are not a
+  row of identical entries.
+
+### Fixed
+- **⚠️ The database would have deleted your download history.** It was built with a destructive
+  fallback, meaning the *first* schema change — this one — would have wiped every entry without a
+  word. There is a real migration now, and a test that writes a genuine old database and checks the
+  rows survive.
+- **A pause could be erased a moment after you tapped it.** Resolving a video's metadata takes
+  3–11 s with the Pause button visible for all of it, and the phase written at the end of that
+  overwrote the pause — the download carried on and, on the way out, deleted the partial file the
+  pause existed to keep.
+- **Resume started from zero.** Every engine opens a run by clearing its working directory, which
+  deleted exactly that partial file. Measured before the fix: paused at 62,436,533 bytes, resumed
+  at 0.
+- **A download that was only waiting looked like one that was running** — spinner, moving progress
+  bar and all. Defensible when a download started the instant you asked for it; untrue once there
+  is a queue.
+- Every YouTube link showed the word "watch" on its card until the title resolved.
+- The server backend silently ignored the chosen quality and always returned best.
+
+### Verified
+- On the emulator with real downloads: queue order followed end to end including after a drag;
+  pause/resume with the partial file measured at every step; the migration run against a database
+  written by the previous version; the quality cap checked against yt-dlp's own format selection.
+- 386 unit tests, 20 instrumented, every new pin mutation-probed.
+
+### Not in this release
+- Subtitles and playlist downloads were designed for 1.10.0 and **dropped before implementation**;
+  nothing was built for either. The design notes are kept in `docs/specs`.
+- **Known limitation:** if the ffmpeg merge fails, the existing self-heal retries with a single
+  pre-muxed stream, and those top out well below 720p on YouTube. The download then succeeds at a
+  lower resolution than the card says was requested. Observed once during verification.
+
+
 ## [1.9.2] - 2026-09-20
 
 A shared link now always turns into a download you can see. Six defects behind that, all measured

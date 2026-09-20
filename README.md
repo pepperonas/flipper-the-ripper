@@ -6,7 +6,7 @@
 
 **A modern, open-source Android app to download publicly accessible videos from YouTube, Instagram, TikTok, Facebook, X and Dailymotion.**
 
-[![version](https://img.shields.io/badge/version-1.9.2-7B4DFF?style=for-the-badge&logo=android&logoColor=white)](https://github.com/pepperonas/flipper-the-ripper/releases/latest)
+[![version](https://img.shields.io/badge/version-1.10.0-7B4DFF?style=for-the-badge&logo=android&logoColor=white)](https://github.com/pepperonas/flipper-the-ripper/releases/latest)
 [![unit tests](https://img.shields.io/badge/unit%20tests-386-2E9E5B?style=for-the-badge&logo=junit5&logoColor=white)](app/src/test)
 [![lines of code](https://img.shields.io/badge/lines%20of%20code-8.5k-4B6BDF?style=for-the-badge&logo=kotlin&logoColor=white)](app/src/main/kotlin)
 [![test code](https://img.shields.io/badge/test%20code-6.3k-2E9E5B?style=for-the-badge&logo=kotlin&logoColor=white)](app/src/test)
@@ -15,7 +15,7 @@
 [![Release workflow](https://img.shields.io/github/actions/workflow/status/pepperonas/flipper-the-ripper/release.yml?label=release&logo=githubactions)](https://github.com/pepperonas/flipper-the-ripper/actions/workflows/release.yml)
 [![instrumented](https://img.shields.io/badge/instrumented-20-2E9E5B?logo=android&logoColor=white)](app/src/androidTest)
 [![Coverage](https://img.shields.io/badge/coverage-%E2%89%A580%25-brightgreen?logo=kotlin)](https://github.com/pepperonas/flipper-the-ripper/actions/workflows/ci.yml)
-[![APK size](https://img.shields.io/badge/APK-53.5%20MB-4B6BDF?logo=android&logoColor=white)](#-download)
+[![APK size](https://img.shields.io/badge/APK-53.6%20MB-4B6BDF?logo=android&logoColor=white)](#-download)
 [![ABI](https://img.shields.io/badge/ABI-arm64--v8a%20only-4B6BDF?logo=arm&logoColor=white)](#-download)
 [![engine](https://img.shields.io/badge/engine-yt--dlp%20via%20youtubedl--android%200.18.1-C00?logo=youtube&logoColor=white)](#-the-download-engine--and-why)
 [![JDK](https://img.shields.io/badge/JDK-17-ED8B00?logo=openjdk&logoColor=white)](#%EF%B8%8F-build)
@@ -53,9 +53,9 @@
 
 ## 📸 Screenshots
 
-<img src="docs/screenshots/mockups.png" alt="Home, About, the clear-history confirmation, the light theme and the German translation" width="100%">
+<img src="docs/screenshots/mockups.png" alt="The quality sheet on Home, the download queue with a paused entry, the batch notification, and the German settings" width="100%">
 
-<sub>Material 3 **Expressive** throughout: spring-based screen transitions, one drawn mark, a compact 64 dp navigation bar, and dynamic color in dark and light.</sub>
+<sub>Material 3 **Expressive** throughout: spring-based screen transitions, one drawn mark, a compact 64 dp navigation bar, and dynamic color in dark and light. Regenerate the strip from raw captures with `python3 tools/mockups.py docs/screenshots/mockups.png shot.png:"Caption" …`.</sub>
 
 ## ✨ Features
 
@@ -71,9 +71,10 @@
 - **Title-based filenames** — files are named after the video title (`Wie man Android Apps entwickelt.mp4`) with illegal characters sanitised.
 - **Shows up everywhere** — saved via **MediaStore** into the public *Movies* folder; instantly visible in Gallery, Google Photos and file managers.
 - **True background downloads** — keep going while the screen is locked, the app is minimised, or the device is rotated (WorkManager + foreground service).
-- **Audio-only mode** for YouTube (`.m4a`).
+- **A download queue you can actually manage** — downloads run **one at a time, in the order shown**, not several at once as before. The running one can be **paused** (the partly fetched file is kept, and resuming continues from that byte rather than starting over) and the waiting ones **dragged** into a different order. Finished entries swipe away. One notification for the batch ("Downloading… · 2 of 5"), not one per download.
+- **Quality picker** — the Download button has a chevron that opens the options: **Best · 1080p · 720p · 480p · Audio only**, with a line under the button saying which one will happen. After *Load info* a tier the video does not reach is greyed out and the sheet says what the maximum is. A remembered default applies to shared links, so the one-tap path stays one tap.
 - **Robust error messages** — private video, login required, region blocked, rate-limited, network error, invalid link, cancelled.
-- **Material 3 Expressive** — spring-based motion physics (`MotionScheme.expressive()`), the expressive `LoadingIndicator`, emphasized typography, a spring-sliding segmented toggle, staggered list entrances, and expressive screen transitions. Dynamic color + light/dark, all guarded by `prefers-reduced-motion`.
+- **Material 3 Expressive** — spring-based motion physics (`MotionScheme.expressive()`), the expressive `LoadingIndicator`, emphasized typography, a spring-sliding segmented toggle, a split button with an options sheet, staggered list entrances, and expressive screen transitions. Dynamic color + light/dark, all guarded by `prefers-reduced-motion`.
 - **Self-updating extractor** — yt-dlp is refreshed automatically (throttled, on app start *and*
   whenever a link is shared in), because platforms like YouTube break old extractors within months.
   A manual **Update yt-dlp** button remains in Settings.
@@ -288,10 +289,10 @@ refused as a downgrade. Versioning follows [Semantic Versioning](https://semver.
 - [x] Direct share target (suggested row of the share sheet) — shipped in 1.8.2
 - [x] Release notes from the CHANGELOG, signature check in CI, single 64-bit APK — shipped in 1.9.0
 - [ ] User-supplied cookie file for other login-gated platforms
-- [ ] Download queue management (pause/resume, reorder) — **planned for 1.10.0**, design in [docs/specs](docs/specs/2026-09-16-queue-formats-subtitles-playlists-design.md)
-- [ ] Quality / format picker before download — planned for 1.10.0 (same design)
-- [ ] Subtitle download — planned for 1.10.0 (same design)
-- [ ] Playlist / multi-item downloads — planned for 1.10.0 (same design)
+- [x] Download queue management (pause/resume, reorder) — shipped in 1.10.0, design in [docs/specs](docs/specs/2026-09-16-queue-formats-subtitles-playlists-design.md)
+- [x] Quality / format picker before download — shipped in 1.10.0 (same design)
+- [ ] ~~Subtitle download~~ — dropped, not wanted
+- [ ] ~~Playlist / multi-item downloads~~ — dropped, not wanted
 - [ ] F-Droid distribution
 - [ ] Additional platforms supported by yt-dlp (opt-in)
 - [ ] Bundle a JS runtime + PO-token provider + `curl_cffi` impersonation to fully cover YouTube/TikTok (see Known limitations)

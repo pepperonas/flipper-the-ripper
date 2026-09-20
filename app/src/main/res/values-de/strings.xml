@@ -32,8 +32,6 @@
     <string name="home_update_body">Auf GitHub liegt eine neuere Version — mit den aktuellsten Anpassungen an die Plattformen.</string>
     <string name="home_update_get">Update holen</string>
     <string name="home_unsupported">Dieser Link gehört zu keiner unterstützten Plattform.</string>
-    <string name="home_mode_video">Video</string>
-    <string name="home_mode_audio">Audio</string>
 
     <!-- History -->
     <string name="history_title">Downloads</string>
