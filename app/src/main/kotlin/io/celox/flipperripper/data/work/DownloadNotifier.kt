@@ -3,12 +3,14 @@ package io.celox.flipperripper.data.work
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationCompat
 import androidx.core.content.getSystemService
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.celox.flipperripper.R
+import io.celox.flipperripper.domain.model.DownloadStatus
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -42,19 +44,31 @@ constructor(@ApplicationContext private val context: Context) {
         manager?.createNotificationChannel(status)
     }
 
-    fun buildProgress(title: String, percent: Float?): Notification {
+    /**
+     * The ongoing notification, built from the same record phase the History card reads — the two
+     * can no longer disagree about what is happening or how far along it is.
+     *
+     * A percentage is shown only while bytes are actually moving. Preparing and post-processing have
+     * no measurable total, so they stay indeterminate rather than parking a bar at 0 % or 100 %.
+     */
+    fun buildProgress(phase: DownloadStatus, title: String, percent: Float?): Notification {
         val builder =
             NotificationCompat.Builder(context, PROGRESS_CHANNEL_ID)
-                .setContentTitle(context.getString(R.string.notif_downloading))
+                .setContentTitle(context.getString(phaseTitleRes(phase)))
                 .setContentText(title)
                 .setSmallIcon(R.drawable.ic_download)
                 .setOngoing(true)
                 .setOnlyAlertOnce(true)
                 .setCategory(NotificationCompat.CATEGORY_PROGRESS)
-        if (percent == null) {
-            builder.setProgress(0, 0, true)
+        openAppIntent()?.let(builder::setContentIntent)
+
+        val measurable = phase == DownloadStatus.RUNNING && percent != null
+        if (measurable) {
+            val whole = percent!!.toInt().coerceIn(0, 100)
+            builder.setProgress(100, whole, false)
+            builder.setSubText(context.getString(R.string.notif_percent, whole))
         } else {
-            builder.setProgress(100, percent.toInt().coerceIn(0, 100), false)
+            builder.setProgress(0, 0, true)
         }
         return builder.build()
     }
@@ -67,16 +81,8 @@ constructor(@ApplicationContext private val context: Context) {
                 .setContentText(title)
                 .setSmallIcon(R.drawable.ic_done)
                 .setAutoCancel(true)
-        if (openIntent != null) {
-            val pending =
-                android.app.PendingIntent.getActivity(
-                    context,
-                    id,
-                    openIntent,
-                    android.app.PendingIntent.FLAG_IMMUTABLE or android.app.PendingIntent.FLAG_UPDATE_CURRENT,
-                )
-            builder.setContentIntent(pending)
-        }
+        val target = openIntent?.let { pendingActivity(id, it) } ?: openAppIntent()
+        target?.let(builder::setContentIntent)
         manager?.notify(id, builder.build())
     }
 
@@ -89,8 +95,34 @@ constructor(@ApplicationContext private val context: Context) {
                 .setStyle(NotificationCompat.BigTextStyle().bigText("$title\n$reason"))
                 .setSmallIcon(R.drawable.ic_error)
                 .setAutoCancel(true)
+        openAppIntent()?.let(builder::setContentIntent)
         manager?.notify(id, builder.build())
     }
+
+    private fun phaseTitleRes(phase: DownloadStatus): Int =
+        when (phase) {
+            DownloadStatus.QUEUED, DownloadStatus.PREPARING -> R.string.notif_preparing
+            DownloadStatus.PROCESSING -> R.string.notif_processing
+            else -> R.string.notif_downloading
+        }
+
+    /**
+     * Brings the app forward when the notification is tapped. Resolved through the package manager
+     * rather than naming the Activity class, so the data layer keeps no reference to the UI; the
+     * activity is `singleTask`, so this returns to the running task instead of starting a second one.
+     */
+    private fun openAppIntent(): PendingIntent? {
+        val launch = context.packageManager.getLaunchIntentForPackage(context.packageName) ?: return null
+        return pendingActivity(0, launch)
+    }
+
+    private fun pendingActivity(requestCode: Int, intent: Intent): PendingIntent =
+        PendingIntent.getActivity(
+            context,
+            requestCode,
+            intent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+        )
 
     private fun areNotificationsPermitted(): Boolean =
         androidx.core.app.NotificationManagerCompat.from(context).areNotificationsEnabled()
