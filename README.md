@@ -7,7 +7,7 @@
 **A modern, open-source Android app to download publicly accessible videos from YouTube, Instagram, TikTok, Facebook, X and Dailymotion.**
 
 [![version](https://img.shields.io/badge/version-1.9.2-7B4DFF?style=for-the-badge&logo=android&logoColor=white)](https://github.com/pepperonas/flipper-the-ripper/releases/latest)
-[![unit tests](https://img.shields.io/badge/unit%20tests-351-2E9E5B?style=for-the-badge&logo=junit5&logoColor=white)](app/src/test)
+[![unit tests](https://img.shields.io/badge/unit%20tests-356-2E9E5B?style=for-the-badge&logo=junit5&logoColor=white)](app/src/test)
 [![lines of code](https://img.shields.io/badge/lines%20of%20code-8.0k-4B6BDF?style=for-the-badge&logo=kotlin&logoColor=white)](app/src/main/kotlin)
 [![test code](https://img.shields.io/badge/test%20code-5.7k-2E9E5B?style=for-the-badge&logo=kotlin&logoColor=white)](app/src/test)
 

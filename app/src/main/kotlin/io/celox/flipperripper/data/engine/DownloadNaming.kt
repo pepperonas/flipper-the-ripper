@@ -50,12 +50,23 @@ object DownloadNaming {
         if (!trimmed.startsWith("http://", true) && !trimmed.startsWith("https://", true)) return trimmed
         val afterScheme = trimmed.substringAfter("://")
         val host = afterScheme.substringBefore('/').substringBefore('?')
-        val segments =
-            afterScheme.substringAfter('/', "")
-                .substringBefore('?')
-                .substringBefore('#')
-                .split('/')
-                .filter { it.isNotBlank() }
+        val path = afterScheme.substringAfter('/', "").substringBefore('?').substringBefore('#')
+        val segments = path.split('/').filter { it.isNotBlank() }
+        // A single generic segment says nothing: `youtube.com/watch?v=YE7VzlLtp-4` rendered as
+        // "watch", which is what every YouTube link looks like. The identity is in the query there.
+        // Only for a one-segment path — a Reel or a Short carries its id in the path itself, and a
+        // tracking parameter must not displace it.
+        if (segments.size == 1) {
+            longestQueryValue(afterScheme)?.let { return it }
+        }
         return if (segments.isEmpty()) host else segments.takeLast(2).joinToString("/")
     }
+
+    /** The longest `key=value` value in the query, which is as close to "the id" as guessing gets. */
+    private fun longestQueryValue(afterScheme: String): String? =
+        afterScheme.substringAfter('?', "")
+            .substringBefore('#')
+            .split('&')
+            .mapNotNull { it.substringAfter('=', "").takeIf { v -> v.isNotBlank() } }
+            .maxByOrNull { it.length }
 }

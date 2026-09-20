@@ -90,6 +90,26 @@ class DownloadNamingTest {
     }
 
     @Test
+    fun `a youtube watch link shows the video, not the word watch`() {
+        // Every YouTube link has the same one-segment path, so the card read "watch" for all of
+        // them. Visible for seconds before 1.10, visible for as long as the queue is busy after it.
+        assertThat(DownloadNaming.displayTitle(null, "https://www.youtube.com/watch?v=YE7VzlLtp-4"))
+            .isEqualTo("YE7VzlLtp-4")
+    }
+
+    @Test
+    fun `a tracking parameter never displaces an id that is in the path`() {
+        // The query is only consulted when the path says nothing; a Reel carries its id itself.
+        assertThat(DownloadNaming.displayTitle(null, "https://www.instagram.com/reel/DbDBPYJnUMW/?igsh=MW5vNDdwbGZ4bGJ4"))
+            .isEqualTo("reel/DbDBPYJnUMW")
+    }
+
+    @Test
+    fun `a one-segment path without a query keeps the segment`() {
+        assertThat(DownloadNaming.displayTitle(null, "https://youtu.be/jNQXAC9IVRw")).isEqualTo("jNQXAC9IVRw")
+    }
+
+    @Test
     fun `display title leaves a real title untouched`() {
         assertThat(DownloadNaming.displayTitle(null, "Me at the zoo")).isEqualTo("Me at the zoo")
     }

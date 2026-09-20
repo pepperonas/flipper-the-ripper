@@ -15,11 +15,25 @@ class DownloadActivityTest {
     @Test
     fun `every in-flight phase counts as active`() {
         listOf(
-            DownloadStatus.QUEUED,
             DownloadStatus.PREPARING,
             DownloadStatus.RUNNING,
             DownloadStatus.PROCESSING,
         ).forEach { assertThat(it.isActive).isTrue() }
+    }
+
+    @Test
+    fun `a download waiting its turn is not drawn as working`() {
+        // It was, until the queue existed — and with one runner that wait is minutes, so a moving
+        // progress bar over a download nobody has started is a lie the UI tells.
+        assertThat(DownloadStatus.QUEUED.isActive).isFalse()
+        assertThat(DownloadStatus.QUEUED.isWaiting).isTrue()
+        assertThat(DownloadStatus.QUEUED.isPending).isTrue()
+    }
+
+    @Test
+    fun `nothing finished is waiting`() {
+        listOf(DownloadStatus.COMPLETED, DownloadStatus.FAILED, DownloadStatus.CANCELLED, DownloadStatus.PAUSED)
+            .forEach { assertThat(it.isWaiting).isFalse() }
     }
 
     @Test

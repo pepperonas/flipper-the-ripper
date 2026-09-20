@@ -13,6 +13,7 @@ import io.celox.flipperripper.data.local.DownloadDao
 import io.celox.flipperripper.domain.model.DownloadStatus
 import io.celox.flipperripper.domain.model.QueueOrdering
 import io.celox.flipperripper.domain.model.isActive
+import io.celox.flipperripper.domain.model.isWaiting
 
 /**
  * The one worker that runs downloads — the whole queue, one at a time, in [queue order].
@@ -64,7 +65,7 @@ constructor(
             } else {
                 // The batch size counts what is still waiting plus what this run already did, so the
                 // notification reads "2 of 5" rather than counting down to "1 of 1".
-                val total = completed + pending.count { it.status.isActive }
+                val total = completed + pending.count { it.status.isActive || it.status.isWaiting }
                 val outcome = runner.run(next.id) { update -> publish(update, completed + 1, total) }
                 if (outcome == RunOutcome.RETRYABLE) {
                     retryable = true
