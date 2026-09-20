@@ -14,7 +14,7 @@ section for the version in `app/build.gradle.kts` exists before anything is tagg
 
 ## [1.9.2] - 2026-09-20
 
-A shared link now always turns into a download you can see. Four defects behind that, all measured
+A shared link now always turns into a download you can see. Six defects behind that, all measured
 on a device before anything was changed, all of them silent — nothing crashed and nothing logged.
 
 ### Fixed
@@ -63,7 +63,7 @@ on a device before anything was changed, all of them silent — nothing crashed 
 
 ### Added
 - **Real phases: Preparing → Downloading → Finishing → Saved.** `RUNNING` used to cover four
-  different things, including an 3–11 s metadata resolve where nothing downloads and an ffmpeg merge
+  different things, including a 3–11 s metadata resolve where nothing downloads and an ffmpeg merge
   after the bar already read 100 %. Post-processing is detected from the engine's own status line
   (`DownloadPhases`), so a merge no longer reads as a finished download that is stuck. The loading
   indicator is shown for every in-flight phase, not only one of them.
@@ -78,9 +78,19 @@ on a device before anything was changed, all of them silent — nothing crashed 
 - Cancelling covers every in-flight phase, via the domain rule rather than a hand-written list.
 
 ### Verified
-- On the emulator, with real downloads: share from a cold start, from a running app, and after the
-  system killed the process while parked on each tab; leaving the app mid-download; a failing
-  download; the notification through all phases; rotation.
+- On the emulator, with real downloads: share from a cold start (8 of 8, first database row after
+  1.2–2.4 s), from a running app, and after the system killed the process while parked on Home,
+  History and Settings; the in-app Download button; an Instagram share (platform detected, typed
+  `LoginRequired` — the media itself needs a logged-in session this emulator does not have).
+- The full phase sequence on one file: QUEUED → PREPARING → RUNNING with rising measured percentages
+  → PROCESSING → COMPLETED, with the notification following it (`Preparing…` indeterminate,
+  `Downloading…` determinate with the video title and `0 %`…`100 %`, `Finishing…`, then
+  `Download complete`, which now survives the worker ending).
+- Leaving the app and killing its process mid-download: progress kept rising (4 % → 46 %) with the
+  notification live throughout, and the card showed the same percentage on return.
+- A failing link: QUEUED → PREPARING → FAILED with the engine's own message in the notification.
+- Two downloads at once: independent progress, one notification each.
+- Rotation, repeatedly and with a share intent still in the activity: no duplicate download.
 
 ## [1.9.1] - 2026-09-15
 
