@@ -17,13 +17,12 @@ import io.celox.flipperripper.domain.util.AppVersions
 import io.celox.flipperripper.domain.util.UrlParser
 import io.celox.flipperripper.ui.AppNavTarget
 import io.celox.flipperripper.ui.AppNavigator
-import io.celox.flipperripper.ui.IncomingLinkBus
+import io.celox.flipperripper.ui.ShareLinkHandler
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -39,7 +38,7 @@ constructor(
     private val peekClipboardUrl: PeekClipboardUrlUseCase,
     observeEngineReady: ObserveEngineReadyUseCase,
     private val settingsRepository: SettingsRepository,
-    private val incomingLinkBus: IncomingLinkBus,
+    private val shareLinkHandler: ShareLinkHandler,
     private val appNavigator: AppNavigator,
 ) : ViewModel() {
     private val _state = MutableStateFlow(HomeUiState())
@@ -63,7 +62,16 @@ constructor(
             }
         }
         viewModelScope.launch {
-            incomingLinkBus.links.collect { handleIncomingText(it) }
+            // Only the *prefill* case reaches Home: a share that auto-downloads is handled by
+            // ShareLinkHandler on the application scope, because this ViewModel does not exist
+            // unless Home happens to be composed (see ShareLinkHandler for what that cost).
+            shareLinkHandler.prefilledLink.collect { link ->
+                if (link != null) {
+                    shareLinkHandler.consumePrefilledLink()
+                    onUrlChange(link)
+                    resolve()
+                }
+            }
         }
         viewModelScope.launch {
             combine(
@@ -174,24 +182,6 @@ constructor(
                 }
                 is EngineResult.Failure ->
                     _state.update { it.copy(errorMessage = result.error.message) }
-            }
-        }
-    }
-
-    private fun handleIncomingText(text: String) {
-        val parsed = resolveUrl(text) ?: return
-        onUrlChange(parsed.url)
-        viewModelScope.launch {
-            val prefs = settingsRepository.preferences.first()
-            if (prefs.autoDownloadOnShare) {
-                // Straight into the download, which ends on History with the new card on top.
-                download(prefs.defaultMode)
-            } else {
-                // Nothing is downloading yet, so the prefilled form is the right screen — and it
-                // must be brought forward, or a share that lands while another tab is open
-                // resolves invisibly.
-                appNavigator.navigateTo(AppNavTarget.HOME)
-                resolve()
             }
         }
     }

@@ -22,9 +22,15 @@ import io.celox.flipperripper.testing.MainDispatcherRule
 import io.celox.flipperripper.ui.AppNavTarget
 import io.celox.flipperripper.ui.AppNavigator
 import io.celox.flipperripper.ui.IncomingLinkBus
+import io.celox.flipperripper.ui.ShareLinkHandler
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import org.junit.After
 import org.junit.Rule
 import org.junit.Test
 
@@ -40,8 +46,28 @@ class HomeViewModelTest {
     private val settings = FakeSettingsRepository()
     private val bus = IncomingLinkBus()
     private val navigator = AppNavigator()
+    private var handler: ShareLinkHandler? = null
 
-    private fun createViewModel() =
+    private val handlerScopes = mutableListOf<CoroutineScope>()
+
+    @After
+    fun tearDown() = handlerScopes.forEach { it.cancel() }
+
+    /**
+     * One handler per test, on a scope the scheduler drives — `backgroundScope` would leave its
+     * collectors un-advanced by `advanceUntilIdle()` (see ShareLinkHandlerTest).
+     */
+    private fun TestScope.shareHandler(): ShareLinkHandler =
+        handler ?: ShareLinkHandler(
+            incomingLinkBus = bus,
+            settingsRepository = settings,
+            appNavigator = navigator,
+            startDownload = StartDownloadUseCase(downloadRepo),
+            resolveUrl = ResolveUrlUseCase(),
+            scope = CoroutineScope(StandardTestDispatcher(testScheduler)).also { handlerScopes += it },
+        ).also { handler = it }
+
+    private fun TestScope.createViewModel() =
         HomeViewModel(
             resolveUrl = ResolveUrlUseCase(),
             resolveVideoInfo = ResolveVideoInfoUseCase(engineRepo, videoRepo),
@@ -49,7 +75,7 @@ class HomeViewModelTest {
             peekClipboardUrl = PeekClipboardUrlUseCase(clipboardRepo),
             observeEngineReady = ObserveEngineReadyUseCase(engineRepo),
             settingsRepository = settings,
-            incomingLinkBus = bus,
+            shareLinkHandler = shareHandler(),
             appNavigator = navigator,
         )
 
@@ -131,40 +157,6 @@ class HomeViewModelTest {
         }
 
     @Test
-    fun `shared link with auto-download enqueues immediately and shows it on History`() =
-        runTest {
-            // The download must be SEEN. 1.8.3 kept the share on Home with a snackbar, and the user
-            // saw an empty form: "I just see the start screen". The History card is the evidence.
-            settings.state.value = UserPreferences(autoDownloadOnShare = true)
-            val vm = createViewModel()
-            advanceUntilIdle()
-            navigator.events.test {
-                bus.post("Watch this https://www.instagram.com/reel/abc/")
-                advanceUntilIdle()
-                assertThat(awaitItem()).isEqualTo(AppNavTarget.HISTORY)
-                // Exactly one navigation: no detour via Home that History then overrides.
-                expectNoEvents()
-            }
-            assertThat(downloadRepo.enqueued).hasSize(1)
-            assertThat(downloadRepo.enqueued.first().platform).isEqualTo(Platform.INSTAGRAM)
-        }
-
-    @Test
-    fun `a share leaves no stale message behind for the next time Home opens`() =
-        runTest {
-            // The 1.8.3 snackbar would now be buffered while History is showing and pop up minutes
-            // later on Home, about a download long finished. Nothing may be queued for Home.
-            settings.state.value = UserPreferences(autoDownloadOnShare = true)
-            val vm = createViewModel()
-            advanceUntilIdle()
-            vm.events.test {
-                bus.post("https://www.instagram.com/reel/abc/")
-                advanceUntilIdle()
-                expectNoEvents()
-            }
-        }
-
-    @Test
     fun `a download the user starts here still jumps to History`() =
         runTest {
             // The share path changed, the button did not: tapping Download is a deliberate act, and
@@ -179,49 +171,17 @@ class HomeViewModelTest {
         }
 
     @Test
-    fun `shared link without auto-download resolves and shows Home`() =
+    fun `a link shared with auto-download off arrives in the form and resolves`() =
         runTest {
             settings.state.value = UserPreferences(autoDownloadOnShare = false)
             val vm = createViewModel()
             advanceUntilIdle()
-            navigator.events.test {
-                bus.post("https://www.instagram.com/reel/abc/")
-                advanceUntilIdle()
-                assertThat(awaitItem()).isEqualTo(AppNavTarget.HOME)
-            }
-            assertThat(downloadRepo.enqueued).isEmpty()
+            bus.post("https://www.instagram.com/reel/abc/")
+            advanceUntilIdle()
+            assertThat(vm.state.value.urlInput).isEqualTo("https://www.instagram.com/reel/abc/")
             assertThat(vm.state.value.videoInfo).isNotNull()
-        }
-
-    @Test
-    fun `a consumed shared link is not re-delivered to a recreated ViewModel`() =
-        runTest {
-            // Regression: the bus used to replay the last link to every new collector — recreating
-            // the Activity/ViewModel enqueued the same shared download a second time.
-            settings.state.value = UserPreferences(autoDownloadOnShare = true)
-            val first = createViewModel()
-            advanceUntilIdle()
-            bus.post("https://www.instagram.com/reel/abc/")
-            advanceUntilIdle()
-            assertThat(first.state.value.urlInput).isNotNull()
-            assertThat(downloadRepo.enqueued).hasSize(1)
-
-            val second = createViewModel()
-            advanceUntilIdle()
-            // The recreated collector must find the bus empty — no second enqueue, no stale prefill.
-            assertThat(second.state.value.urlInput).isEmpty()
-            assertThat(downloadRepo.enqueued).hasSize(1)
-        }
-
-    @Test
-    fun `a link shared before any collector exists is still delivered once`() =
-        runTest {
-            // Cold start: the Activity posts the share before the Home ViewModel collects.
-            settings.state.value = UserPreferences(autoDownloadOnShare = true)
-            bus.post("https://www.instagram.com/reel/abc/")
-            val vm = createViewModel()
-            advanceUntilIdle()
-            assertThat(downloadRepo.enqueued).hasSize(1)
+            // Consumed, so reopening Home later does not re-fill a link the user has moved on from.
+            assertThat(handler!!.prefilledLink.value).isNull()
         }
 
     @Test
