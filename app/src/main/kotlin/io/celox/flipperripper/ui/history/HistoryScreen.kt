@@ -121,10 +121,33 @@ fun HistoryScreen(viewModel: HistoryViewModel = hiltViewModel()) {
             // here told anyone who had just shared a link that nothing had been downloaded.
             loaded == null -> LoadingState(Modifier.fillMaxSize().padding(padding))
             loaded.isEmpty() -> EmptyState(Modifier.fillMaxSize().padding(padding))
-            else -> DownloadList(loaded, Modifier.fillMaxSize().padding(padding), viewModel)
+            else ->
+                DownloadQueueList(
+                    records = loaded,
+                    modifier = Modifier.fillMaxSize().padding(padding),
+                    actions =
+                    DownloadActions(
+                        onCancel = viewModel::cancel,
+                        onRetry = viewModel::retry,
+                        onDelete = viewModel::delete,
+                        onPause = viewModel::pause,
+                        onResume = viewModel::resume,
+                        onReorder = viewModel::reorder,
+                    ),
+                )
         }
     }
 }
+
+/** What a card can ask for. Bundled so the list can be composed without a ViewModel, and tested. */
+data class DownloadActions(
+    val onCancel: (String) -> Unit,
+    val onRetry: (String) -> Unit,
+    val onDelete: (String) -> Unit,
+    val onPause: (String) -> Unit,
+    val onResume: (String) -> Unit,
+    val onReorder: (List<String>) -> Unit,
+)
 
 /**
  * The queue on top, the finished downloads below.
@@ -133,7 +156,7 @@ fun HistoryScreen(viewModel: HistoryViewModel = hiltViewModel()) {
  * with the queue, because it is going to run.
  */
 @Composable
-private fun DownloadList(records: List<DownloadRecord>, modifier: Modifier, viewModel: HistoryViewModel) {
+fun DownloadQueueList(records: List<DownloadRecord>, modifier: Modifier, actions: DownloadActions) {
     val queue = records.filter { it.status.isPending }.sortedWith(compareBy({ it.queueOrder }, { it.id }))
     val finished = records.filter { !it.status.isPending }
 
@@ -179,11 +202,11 @@ private fun DownloadList(records: List<DownloadRecord>, modifier: Modifier, view
                 ReorderableItem(reorderState, key = record.id) { _ ->
                     DownloadCard(
                         record = record,
-                        onCancel = { viewModel.cancel(record.id) },
-                        onRetry = { viewModel.retry(record.id) },
-                        onDelete = { viewModel.delete(record.id) },
-                        onPause = { viewModel.pause(record.id) },
-                        onResume = { viewModel.resume(record.id) },
+                        onCancel = { actions.onCancel(record.id) },
+                        onRetry = { actions.onRetry(record.id) },
+                        onDelete = { actions.onDelete(record.id) },
+                        onPause = { actions.onPause(record.id) },
+                        onResume = { actions.onResume(record.id) },
                         dragHandle =
                         if (record.status.isReorderable) {
                             {
@@ -193,7 +216,7 @@ private fun DownloadList(records: List<DownloadRecord>, modifier: Modifier, view
                                     Modifier
                                         .size(Sizes.touchTarget)
                                         .draggableHandle(
-                                            onDragStopped = { draft?.let(viewModel::reorder) },
+                                            onDragStopped = { draft?.let(actions.onReorder) },
                                         )
                                         .semantics { contentDescription = description },
                                     contentAlignment = Alignment.Center,
@@ -224,7 +247,7 @@ private fun DownloadList(records: List<DownloadRecord>, modifier: Modifier, view
                 // row is gone, so there is no state to reset.
                 LaunchedEffect(dismissState.currentValue) {
                     if (dismissState.currentValue != SwipeToDismissBoxValue.Settled) {
-                        viewModel.delete(record.id)
+                        actions.onDelete(record.id)
                     }
                 }
                 SwipeToDismissBox(
@@ -234,11 +257,11 @@ private fun DownloadList(records: List<DownloadRecord>, modifier: Modifier, view
                 ) {
                     DownloadCard(
                         record = record,
-                        onCancel = { viewModel.cancel(record.id) },
-                        onRetry = { viewModel.retry(record.id) },
-                        onDelete = { viewModel.delete(record.id) },
-                        onPause = { viewModel.pause(record.id) },
-                        onResume = { viewModel.resume(record.id) },
+                        onCancel = { actions.onCancel(record.id) },
+                        onRetry = { actions.onRetry(record.id) },
+                        onDelete = { actions.onDelete(record.id) },
+                        onPause = { actions.onPause(record.id) },
+                        onResume = { actions.onResume(record.id) },
                         dragHandle = null,
                     )
                 }
