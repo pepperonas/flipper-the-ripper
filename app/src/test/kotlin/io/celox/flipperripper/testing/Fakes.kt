@@ -219,6 +219,7 @@ class FakeYtDlpEngine(
 fun sampleRecord(
     id: String = "record-1",
     status: DownloadStatus = DownloadStatus.COMPLETED,
+    progressPercent: Float? = null,
 ): DownloadRecord =
     DownloadRecord(
         id = id,
@@ -228,6 +229,7 @@ fun sampleRecord(
         mode = DownloadMode.VIDEO,
         thumbnailUrl = null,
         status = status,
+        progressPercent = progressPercent,
         mediaUri = "content://media/external/video/media/1",
         fileName = "Sample title.mp4",
         sizeBytes = 2_500_000,

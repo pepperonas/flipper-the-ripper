@@ -34,6 +34,45 @@ class DownloadDaoTest {
     fun tearDown() = db.close()
 
     @Test
+    fun `updating the title leaves the phase and the progress alone`() =
+        runTest {
+            // The worker used to refresh the title by writing a whole row back, from a copy it had
+            // read while the record still said QUEUED. Every such write reset a running download to
+            // QUEUED / 0 % — twice per download, once after metadata resolution and once at 100 %
+            // right before saving. Measured: RUNNING/99.4 -> QUEUED/0.0.
+            dao.upsert(DownloadEntity.fromDomain(sampleRecord(id = "m", status = DownloadStatus.QUEUED)))
+            dao.updateProgress("m", DownloadStatus.RUNNING.name, 99.4f, 500)
+
+            dao.updateMetadata("m", "Resolved title", "https://img/thumb.jpg", 600)
+
+            val row = dao.getById("m")!!
+            assertThat(row.title).isEqualTo("Resolved title")
+            assertThat(row.thumbnailUrl).isEqualTo("https://img/thumb.jpg")
+            assertThat(row.status).isEqualTo(DownloadStatus.RUNNING.name)
+            assertThat(row.progressPercent).isEqualTo(99.4f)
+        }
+
+    @Test
+    fun `updating the title without a thumbnail keeps the one already stored`() =
+        runTest {
+            dao.upsert(
+                DownloadEntity.fromDomain(sampleRecord(id = "t")).copy(thumbnailUrl = "https://img/old.jpg"),
+            )
+            dao.updateMetadata("t", "New title", null, 700)
+            assertThat(dao.getById("t")!!.thumbnailUrl).isEqualTo("https://img/old.jpg")
+        }
+
+    @Test
+    fun `updating the phase leaves the title alone`() =
+        runTest {
+            dao.upsert(DownloadEntity.fromDomain(sampleRecord(id = "s")).copy(title = "Keep me"))
+            dao.updateProgress("s", DownloadStatus.PROCESSING.name, 100f, 800)
+            val row = dao.getById("s")!!
+            assertThat(row.status).isEqualTo(DownloadStatus.PROCESSING.name)
+            assertThat(row.title).isEqualTo("Keep me")
+        }
+
+    @Test
     fun `upsert then observe returns entity`() =
         runTest {
             dao.upsert(DownloadEntity.fromDomain(sampleRecord(id = "a", status = DownloadStatus.QUEUED)))

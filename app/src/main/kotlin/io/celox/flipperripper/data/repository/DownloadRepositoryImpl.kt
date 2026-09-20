@@ -14,6 +14,7 @@ import io.celox.flipperripper.data.work.DownloadWorker
 import io.celox.flipperripper.domain.model.DownloadRecord
 import io.celox.flipperripper.domain.model.DownloadRequest
 import io.celox.flipperripper.domain.model.DownloadStatus
+import io.celox.flipperripper.domain.model.isActive
 import io.celox.flipperripper.domain.repository.DownloadRepository
 import io.celox.flipperripper.util.IdGenerator
 import kotlinx.coroutines.flow.Flow
@@ -46,7 +47,8 @@ constructor(
                 mediaUri = null,
                 fileName = null,
                 sizeBytes = null,
-                progressPercent = 0f,
+                // Nothing has been measured yet; a stored 0 would be a claim, not a measurement.
+                progressPercent = null,
                 errorKind = null,
                 errorMessage = null,
                 createdAtEpochMs = now,
@@ -86,7 +88,10 @@ constructor(
         workManager.cancelUniqueWork(DownloadWorker.WORK_NAME_PREFIX + id)
         engine.cancel(id)
         val record = dao.getById(id) ?: return
-        if (record.status == DownloadStatus.QUEUED.name || record.status == DownloadStatus.RUNNING.name) {
+        // Every in-flight phase, via the domain rule — listing phases by hand here is how PREPARING
+        // and PROCESSING would quietly become uncancellable the moment they were added.
+        val status = runCatching { DownloadStatus.valueOf(record.status) }.getOrNull()
+        if (status?.isActive == true) {
             dao.markFailed(
                 id = id,
                 status = DownloadStatus.CANCELLED.name,

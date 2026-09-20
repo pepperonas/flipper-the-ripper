@@ -34,6 +34,10 @@ data class DownloadEntity(
             mode = runCatching { DownloadMode.valueOf(mode) }.getOrDefault(DownloadMode.VIDEO),
             thumbnailUrl = thumbnailUrl,
             status = runCatching { DownloadStatus.valueOf(status) }.getOrDefault(DownloadStatus.QUEUED),
+            // Carried through, not dropped: the column was written on every progress step and the
+            // domain record left it behind, so the UI could only ever draw an indeterminate bar
+            // while the notification counted to 100 %.
+            progressPercent = progressPercent,
             mediaUri = mediaUri,
             fileName = fileName,
             sizeBytes = sizeBytes,
@@ -44,7 +48,7 @@ data class DownloadEntity(
         )
 
     companion object {
-        fun fromDomain(record: DownloadRecord, progressPercent: Float? = null): DownloadEntity =
+        fun fromDomain(record: DownloadRecord, progressPercent: Float? = record.progressPercent): DownloadEntity =
             DownloadEntity(
                 id = record.id,
                 sourceUrl = record.sourceUrl,

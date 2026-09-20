@@ -14,6 +14,23 @@ class DownloadEntityMappingTest {
     }
 
     @Test
+    fun `the measured progress survives the mapping`() {
+        // It did not. The column was written on every progress step and `toDomain` left it behind,
+        // so the History card could only ever draw an indeterminate bar while the notification —
+        // which reads the engine directly — counted to 100 %.
+        val record = sampleRecord(id = "p", status = DownloadStatus.RUNNING, progressPercent = 42f)
+        assertThat(DownloadEntity.fromDomain(record).toDomain().progressPercent).isEqualTo(42f)
+    }
+
+    @Test
+    fun `a row that has never reported progress maps to no progress, not to zero`() {
+        // Zero is a measurement; "not measured yet" is not. The UI picks its indeterminate bar off
+        // exactly this difference.
+        val entity = DownloadEntity.fromDomain(sampleRecord()).copy(progressPercent = null)
+        assertThat(entity.toDomain().progressPercent).isNull()
+    }
+
+    @Test
     fun `unknown enum strings fall back to safe defaults`() {
         val entity =
             DownloadEntity.fromDomain(sampleRecord()).copy(
