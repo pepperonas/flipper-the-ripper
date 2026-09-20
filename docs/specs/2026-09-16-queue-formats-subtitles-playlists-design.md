@@ -3,9 +3,9 @@
 **Status:** planned, not started. Work begins the weekend of **2026-09-19/20**.
 **Ships as:** **one release, 1.10.0** (owner's decision — the four features were proposed as four
 releases; they are built and verified in the order below but tagged once).
-**Decisions taken (2026-09-16):** reorder via the `reorderable` library · subtitles embedded in the
-MP4 (a spike decides feasibility first) · a shared playlist opens the playlist sheet instead of
-auto-downloading · one release.
+**Decisions taken (2026-09-16):** reorder via the `reorderable` library · ~~subtitles embedded in
+the MP4~~ · a shared playlist opens the playlist sheet instead of auto-downloading · one release.
+**2026-09-21:** subtitles dropped on the owner's decision. The release is A + B + D.
 
 ---
 
@@ -33,7 +33,7 @@ auto-downloading · one release.
 |---|---|---|
 | A | Queue: pause / resume / reorder | foundation — playlists need an order that actually *runs*; pause needs the runner |
 | B | Quality / format picker | brings the options sheet and the formats data model |
-| C | Subtitles | a section in the same sheet, from the same JSON |
+| ~~C~~ | ~~Subtitles~~ | **dropped 2026-09-21 — not wanted** |
 | D | Playlists | uses the queue and the remembered defaults; the release ends with new mockups |
 
 Each step is verified on the emulator with real downloads before the next begins, and each step's
@@ -95,7 +95,11 @@ YouTube, X, Dailymotion; unknown ⇒ Best); ViewModel remembers the choice; shar
 Instrumented: chevron opens the sheet, the choice shows in the summary line, the leading half
 downloads without a sheet.
 
-## 5. C · Subtitles
+## 5. ~~C · Subtitles~~ — DROPPED 2026-09-21
+
+> Not wanted; kept below only so the reasoning is not lost if it is ever revisited.
+
+### (original design)
 
 **User-facing.** In the same sheet, section "Subtitles": **Off · Deutsch · English · English
 (auto)** — languages come from the video, automatic tracks are marked. Default Off; a chosen
@@ -140,15 +144,15 @@ none / partial, cap); enqueue order; the share behaviour. Instrumented: sheet + 
 
 ## 7. Cross-cutting
 
-- **Strings EN + DE** from the start (`TranslationTest` holds it); settings for default quality
-  and subtitle language.
+- **Strings EN + DE** from the start (`TranslationTest` holds it); a setting for default quality.
+  (The subtitle-language setting is gone with C.)
 - **Docs, once, at the end:** README features / FAQ / roadmap ticks, CHANGELOG 1.10.0 section
   (= the release notes), new mockups showing the sheet, the queue and the playlist.
 - **As always:** every new pin mutated once; every feature measured with real downloads on the
   emulator; release through the workflow, certificate check included.
 - **New dependency:** only `reorderable` (A). Nothing else.
-- **Later, not now:** parallel downloads (2/3), multi-language subtitles, playlist grouping in
-  History, cookie file for other login-gated platforms.
+- **Later, not now:** parallel downloads (2/3), subtitles at all (dropped, see §5), playlist
+  grouping in History, cookie file for other login-gated platforms.
 
 ## 8. TODO — the checklist for the weekend
 
@@ -216,13 +220,11 @@ pre-muxed stream, and YouTube's progressive formats top out well below 720p. The
 succeeds at a lower resolution than the card says was asked for. Observed once. Showing the
 *delivered* height (from MediaStore) rather than the requested one would fix it and is not built.
 
-**C · Subtitles**
-- [ ] **Spike:** `--embed-subs` with the bundled ffmpeg on the emulator — record the outcome here
-- [ ] `InfoJson` parser (formats, subtitles, automatic captions, entries) + fixture tests
-- [ ] `SubtitleSelection` pure rule + tests; settings "Subtitle language"
-- [ ] Sheet section "Subtitles"; CC badge on the card
-- [ ] Instrumented: embedded track counted via `MediaExtractor`
-- [ ] Mutation probe
+**C · Subtitles — DROPPED 2026-09-21 (owner's decision: "die untertitel brauchen wir nicht")**
+
+Nothing was built. ⚠️ One thing moves rather than disappearing: the `InfoJson` parser was to be
+introduced here and *reused* by D for playlist entries, so **D now introduces it itself**. The
+mapper does not expose `entries`, so D still needs its own parse of `-J --flat-playlist`.
 
 **D · Playlists**
 - [ ] `UrlParser` playlist detection + tests (YouTube `list=`, video-in-playlist, Dailymotion)
