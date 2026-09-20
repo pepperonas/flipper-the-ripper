@@ -154,16 +154,33 @@ none / partial, cap); enqueue order; the share behaviour. Instrumented: sheet + 
 
 Tick in order. Nothing below is started.
 
-**A · Queue**
-- [ ] Add `reorderable` to `libs.versions.toml`; pin the version
-- [ ] DB v2 migration: `queueOrder`, `PAUSED`; migration test (v1 fixture → v2)
-- [ ] `QueueOrdering` pure rule + tests (next / reorder / resume position / clamping)
-- [ ] `DownloadQueueWorker` (single unique work, sequential drain, one notification)
-- [ ] Repository: `pause`, `resume`, `reorder(ids)`; upgrade path (cancel old per-item work, RUNNING → QUEUED) + test
-- [ ] WebView fetch: `Range` resume from existing bytes
-- [ ] History: two sections, drag handle, `animateItem()`, swipe-to-delete on finished
-- [ ] Instrumented: drag reorder; pause/resume of a real download with `.part` bytes measured
-- [ ] Mutation probe of every new pin
+**A · Queue — DONE 2026-09-20**
+- [x] Add `reorderable` to `libs.versions.toml`; pin the version (3.1.0)
+- [x] DB v2 migration: `queueOrder`, `PAUSED`; migration test (v1 fixture → v2)
+- [x] `QueueOrdering` pure rule + tests (next / reorder / resume position / clamping)
+- [x] `DownloadQueueWorker` (single unique work, sequential drain, one notification)
+- [x] Repository: `pause`, `resume`, `reorder(ids)`; upgrade path + test
+- [x] WebView fetch: `Range` resume from existing bytes
+- [x] History: two sections, drag handle, `animateItem()`, swipe-to-delete on finished
+- [x] Instrumented: drag reorder; pause/resume of a real download with `.part` bytes measured
+- [x] Mutation probe of every new pin (14 caught; one blind pin sharpened, one invalid mutation
+      corrected — `QueueOrdering.next` sorts for itself, so the SQL order was not the defect)
+
+Found along the way, all measured on the device and fixed here:
+- ⚠️ The database was built with `fallbackToDestructiveMigration()`. The first schema change would
+  have deleted every user's history without a word.
+- ⚠️ A pause could be erased by the phase write that followed it. The runner opens a download with
+  an unconditional PREPARING write, and resolving metadata takes 3–11 s with the Pause button
+  visible for all of it. The guard is now in the WHERE clause.
+- ⚠️ Resume restarted from zero: every engine opens a run with `dir.deleteRecursively()`, which
+  deletes the `.part` file the pause exists to keep. Measured: paused at 62,436,533 bytes, resumed
+  at 0. Now `DownloadSpec.resume`, verified at 52,345,281 → 59,932,610 → 134,557,823.
+- ⚠️ Waiting downloads were drawn with a spinner and a moving progress bar. Defensible before the
+  queue (QUEUED was a blink), untrue after it.
+- The card showed "watch" for every YouTube link until metadata resolved.
+
+Measured after: never more than 1 download active across 80 samples over 160 s (it was 2 in
+parallel before); queue order followed end to end, including after a drag.
 
 **B · Quality**
 - [ ] `FormatSelection` pure rule + tests with YouTube/X/Dailymotion format fixtures
