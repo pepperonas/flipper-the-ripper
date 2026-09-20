@@ -5,7 +5,7 @@
 releases; they are built and verified in the order below but tagged once).
 **Decisions taken (2026-09-16):** reorder via the `reorderable` library · ~~subtitles embedded in
 the MP4~~ · a shared playlist opens the playlist sheet instead of auto-downloading · one release.
-**2026-09-21:** subtitles dropped on the owner's decision. The release is A + B + D.
+**2026-09-21:** subtitles **and** playlists dropped on the owner's decision. The release is A + B.
 
 ---
 
@@ -34,7 +34,7 @@ the MP4~~ · a shared playlist opens the playlist sheet instead of auto-download
 | A | Queue: pause / resume / reorder | foundation — playlists need an order that actually *runs*; pause needs the runner |
 | B | Quality / format picker | brings the options sheet and the formats data model |
 | ~~C~~ | ~~Subtitles~~ | **dropped 2026-09-21 — not wanted** |
-| D | Playlists | uses the queue and the remembered defaults; the release ends with new mockups |
+| ~~D~~ | ~~Playlists~~ | **dropped 2026-09-21 — not wanted** |
 
 Each step is verified on the emulator with real downloads before the next begins, and each step's
 pins are mutation-probed as it lands. The version bump, CHANGELOG section and tag happen once, after D.
@@ -122,7 +122,11 @@ the card. Both outcomes are named here so neither is a surprise.
 off); JSON parser against fixtures; ViewModel. Instrumented: CC badge; a real download on the
 emulator with an embedded track, checked by counting tracks with `MediaExtractor`.
 
-## 6. D · Playlists
+## 6. ~~D · Playlists~~ — DROPPED 2026-09-21
+
+> Not wanted; kept below only so the reasoning is not lost if it is ever revisited.
+
+### (original design)
 
 **User-facing.** A playlist link (`list=`; on a video URL a chip "This video is in a playlist —
 the whole playlist?", not a dialog) leads, after *Load info*, to the **playlist sheet** instead of
@@ -147,12 +151,13 @@ none / partial, cap); enqueue order; the share behaviour. Instrumented: sheet + 
 - **Strings EN + DE** from the start (`TranslationTest` holds it); a setting for default quality.
   (The subtitle-language setting is gone with C.)
 - **Docs, once, at the end:** README features / FAQ / roadmap ticks, CHANGELOG 1.10.0 section
-  (= the release notes), new mockups showing the sheet, the queue and the playlist.
+  (= the release notes), new mockups showing the queue and the options sheet.
 - **As always:** every new pin mutated once; every feature measured with real downloads on the
   emulator; release through the workflow, certificate check included.
 - **New dependency:** only `reorderable` (A). Nothing else.
 - **Later, not now:** parallel downloads (2/3), subtitles at all (dropped, see §5), playlist
-  grouping in History, cookie file for other login-gated platforms.
+  grouping in History (playlists themselves are dropped, see §6), cookie file for other
+  login-gated platforms.
 
 ## 8. TODO — the checklist for the weekend
 
@@ -226,16 +231,15 @@ Nothing was built. ⚠️ One thing moves rather than disappearing: the `InfoJso
 introduced here and *reused* by D for playlist entries, so **D now introduces it itself**. The
 mapper does not expose `entries`, so D still needs its own parse of `-J --flat-playlist`.
 
-**D · Playlists**
-- [ ] `UrlParser` playlist detection + tests (YouTube `list=`, video-in-playlist, Dailymotion)
-- [ ] `PlaylistInfo` via `-J --flat-playlist`; DB v4 playlist columns
-- [ ] Playlist sheet (checklist, select all, cap 100, "Download N"); playlist chip on cards
-- [ ] Share of a playlist with auto-download → sheet, not download
-- [ ] Instrumented: sheet + "Download N" enqueues in order
-- [ ] Mutation probe
+**D · Playlists — DROPPED 2026-09-21 (owner's decision: "playlists kannst du auch streichen")**
+
+Nothing was built. The queue that A delivered was the prerequisite for it and stands on its own:
+each playlist entry was to become an ordinary single download, which is exactly what the queue
+already runs. If playlists are ever revisited, the design in §6 still holds — only the `InfoJson`
+parser for `-J --flat-playlist` is missing, and DB v4 would be additive.
 
 **Release 1.10.0**
 - [ ] Strings EN + DE complete; `TranslationTest` green
-- [ ] README (features, FAQ, roadmap ticks), CHANGELOG 1.10.0, new mockups
+- [ ] README (features, FAQ, roadmap ticks), CHANGELOG 1.10.0, new mockups (queue + options sheet)
 - [ ] Badges (tests, LoC, test code, APK size)
 - [ ] Full gate, tag `v1.10.0`, verify the release page and the published file, install on the S24
