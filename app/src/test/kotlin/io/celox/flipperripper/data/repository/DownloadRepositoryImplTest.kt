@@ -111,6 +111,88 @@ class DownloadRepositoryImplTest {
         }
 
     @Test
+    fun `pause keeps the record in the queue and stops the engine`() =
+        runTest {
+            val id = repository.enqueue(DownloadRequest("https://youtu.be/x", Platform.YOUTUBE))
+            val before = repository.observeRecord(id).first()!!.queueOrder
+            repository.pause(id)
+
+            val record = repository.observeRecord(id).first()!!
+            assertThat(record.status).isEqualTo(DownloadStatus.PAUSED)
+            // Pausing must not cost the download its place.
+            assertThat(record.queueOrder).isEqualTo(before)
+            assertThat(engine.cancelled).contains(id)
+        }
+
+    @Test
+    fun `resume puts it back at the position it held`() =
+        runTest {
+            val first = repository.enqueue(DownloadRequest("https://youtu.be/1", Platform.YOUTUBE))
+            val second = repository.enqueue(DownloadRequest("https://youtu.be/2", Platform.YOUTUBE))
+            repository.pause(first)
+            repository.resume(first)
+
+            val records = repository.observeHistory().first().associateBy { it.id }
+            assertThat(records.getValue(first).status).isEqualTo(DownloadStatus.QUEUED)
+            assertThat(records.getValue(first).queueOrder).isLessThan(records.getValue(second).queueOrder)
+        }
+
+    @Test
+    fun `a finished download cannot be paused`() =
+        runTest {
+            val id = repository.enqueue(DownloadRequest("https://youtu.be/x", Platform.YOUTUBE))
+            db.downloadDao().markCompleted(id, DownloadStatus.COMPLETED.name, "content://x", "x.mp4", 1, 1)
+            repository.pause(id)
+            assertThat(repository.observeRecord(id).first()!!.status).isEqualTo(DownloadStatus.COMPLETED)
+        }
+
+    @Test
+    fun `reorder swaps the positions of two waiting downloads`() =
+        runTest {
+            val first = repository.enqueue(DownloadRequest("https://youtu.be/1", Platform.YOUTUBE))
+            val second = repository.enqueue(DownloadRequest("https://youtu.be/2", Platform.YOUTUBE))
+            repository.reorder(listOf(second, first))
+
+            val records = repository.observeHistory().first().associateBy { it.id }
+            assertThat(records.getValue(second).queueOrder).isLessThan(records.getValue(first).queueOrder)
+        }
+
+    @Test
+    fun `reorder leaves a running download where it is`() =
+        runTest {
+            val running = repository.enqueue(DownloadRequest("https://youtu.be/1", Platform.YOUTUBE))
+            val waiting = repository.enqueue(DownloadRequest("https://youtu.be/2", Platform.YOUTUBE))
+            db.downloadDao().updateStatus(running, DownloadStatus.RUNNING.name, 5)
+            val before = repository.observeRecord(running).first()!!.queueOrder
+
+            // The UI cannot drag a running card, but a stale list could still name it.
+            repository.reorder(listOf(waiting, running))
+
+            assertThat(repository.observeRecord(running).first()!!.queueOrder).isEqualTo(before)
+        }
+
+    @Test
+    fun `each new download joins the back of the queue`() =
+        runTest {
+            val first = repository.enqueue(DownloadRequest("https://youtu.be/1", Platform.YOUTUBE))
+            val second = repository.enqueue(DownloadRequest("https://youtu.be/2", Platform.YOUTUBE))
+            val records = repository.observeHistory().first().associateBy { it.id }
+            assertThat(records.getValue(first).queueOrder).isLessThan(records.getValue(second).queueOrder)
+        }
+
+    @Test
+    fun `a retry goes behind downloads that have been waiting`() =
+        runTest {
+            val failed = repository.enqueue(DownloadRequest("https://youtu.be/1", Platform.YOUTUBE))
+            val waiting = repository.enqueue(DownloadRequest("https://youtu.be/2", Platform.YOUTUBE))
+            db.downloadDao().markFailed(failed, DownloadStatus.FAILED.name, "Network", "offline", 1)
+            repository.retry(failed)
+
+            val records = repository.observeHistory().first().associateBy { it.id }
+            assertThat(records.getValue(waiting).queueOrder).isLessThan(records.getValue(failed).queueOrder)
+        }
+
+    @Test
     fun `retry re-queues a failed record`() =
         runTest {
             val id = repository.enqueue(DownloadRequest("https://youtu.be/x", Platform.YOUTUBE))

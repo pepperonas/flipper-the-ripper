@@ -82,7 +82,10 @@ constructor(
 
         // Resolving metadata is not downloading — it can take seconds and moves no bytes, so it gets
         // its own phase and no percentage rather than a bar frozen at 0 %.
-        applyPhase(id, state, DownloadStatus.PREPARING, null, onPhase)
+        //
+        // A refusal here means the row is already paused, and starting anyway would both discard
+        // the user's decision and, on the way out, delete the partial file they kept.
+        if (!applyPhase(id, state, DownloadStatus.PREPARING, null, onPhase)) return RunOutcome.STOPPED
 
         val info = engine.fetchInfo(record.sourceUrl, enumMode(record.mode)).getOrNull()
         if (info != null) {
@@ -141,7 +144,14 @@ constructor(
     ): EngineResult<DownloadedFile> =
         coroutineScope {
             val ticks = Channel<Phase>(Channel.CONFLATED)
-            launch { for (phase in ticks) applyPhase(id, state, phase.status, phase.percent, onPhase) }
+            launch {
+                for (phase in ticks) {
+                    // A refused write means the user paused mid-transfer. Stopping the engine here
+                    // turns that into a Cancelled result, which the caller recognises as a pause and
+                    // leaves the `.part` file alone.
+                    if (!applyPhase(id, state, phase.status, phase.percent, onPhase)) engine.cancel(id)
+                }
+            }
 
             // A retry starts a fresh transfer, so the previous run's numbers must not leak into it.
             state.measuredPercent = null
@@ -178,16 +188,22 @@ constructor(
             }
         }
 
-    /** The one place a phase reaches both surfaces, so they cannot drift apart. */
+    /**
+     * The one place a phase reaches both surfaces, so they cannot drift apart.
+     *
+     * Returns false when the row is paused — the write is refused in SQL, and the caller uses that
+     * to stop rather than carry on downloading something the user has already stopped.
+     */
     private suspend fun applyPhase(
         id: String,
         state: RunState,
         status: DownloadStatus,
         percent: Float?,
         onPhase: suspend (PhaseUpdate) -> Unit,
-    ) {
-        dao.updateProgress(id, status.name, percent, now())
-        onPhase(PhaseUpdate(id, status, state.title, percent))
+    ): Boolean {
+        val applied = dao.updateProgressUnlessPaused(id, status.name, percent, now()) > 0
+        if (applied) onPhase(PhaseUpdate(id, status, state.title, percent))
+        return applied
     }
 
     private suspend fun saveAndFinish(

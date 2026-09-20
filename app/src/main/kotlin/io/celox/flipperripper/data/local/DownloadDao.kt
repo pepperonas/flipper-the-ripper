@@ -79,6 +79,24 @@ interface DownloadDao {
     @Query("SELECT * FROM downloads WHERE status IN (:statuses) ORDER BY queueOrder ASC, id ASC")
     suspend fun getByStatus(statuses: List<String>): List<DownloadEntity>
 
+    /**
+     * A phase write from the runner — refused once the user has paused.
+     *
+     * The guard is in the WHERE clause rather than in a read-then-write, because the two racers are
+     * a background worker and a button: the runner spends seconds in PREPARING while metadata
+     * resolves, and the card offers Pause for all of it. Without the guard, the next phase write
+     * simply erased the pause and the download carried on. Returns the number of rows changed, so
+     * the runner can tell that it has been paused out from under itself.
+     */
+    @Query(
+        """
+        UPDATE downloads
+        SET status = :status, progressPercent = :percent, updatedAtEpochMs = :updatedAt
+        WHERE id = :id AND status != 'PAUSED'
+        """,
+    )
+    suspend fun updateProgressUnlessPaused(id: String, status: String, percent: Float?, updatedAt: Long): Int
+
     /** Status only. Used for pause/resume, which must not touch progress or the queue position. */
     @Query("UPDATE downloads SET status = :status, updatedAtEpochMs = :updatedAt WHERE id = :id")
     suspend fun updateStatus(id: String, status: String, updatedAt: Long)

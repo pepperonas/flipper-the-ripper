@@ -45,12 +45,12 @@ class FakeEngineRepository(
         _isReady.value = value
     }
 
-    override suspend fun ensureInitialized(): EngineResult<Unit> {
+    open override suspend fun ensureInitialized(): EngineResult<Unit> {
         ensureCalls++
         return initResult
     }
 
-    override suspend fun updateEngine(): EngineResult<String> = updateResult
+    open override suspend fun updateEngine(): EngineResult<String> = updateResult
 }
 
 class FakeVideoRepository(
@@ -95,7 +95,7 @@ class FakeDownloadRepository : DownloadRepository {
     override fun observeRecord(id: String): Flow<DownloadRecord?> =
         history.map { list -> list.firstOrNull { it.id == id } }
 
-    override suspend fun cancel(id: String) {
+    open override suspend fun cancel(id: String) {
         cancelled += id
     }
 
@@ -202,7 +202,29 @@ class FakeBackendConfigRepository(
 }
 
 /** A fake engine (data-layer seam) for repository/worker-style tests. */
-class FakeYtDlpEngine(
+class FakeMediaStoreWriter(
+    var result: EngineResult<io.celox.flipperripper.data.media.SavedMedia> =
+        EngineResult.Success(
+            io.celox.flipperripper.data.media.SavedMedia(
+                uri = "content://media/external/video/media/1",
+                displayName = "Sample.mp4",
+                sizeBytes = 1_234,
+            ),
+        ),
+) : io.celox.flipperripper.data.media.MediaStoreWriter {
+    val saved = mutableListOf<String>()
+
+    override suspend fun save(
+        source: java.io.File,
+        displayName: String,
+        mode: DownloadMode,
+    ): EngineResult<io.celox.flipperripper.data.media.SavedMedia> {
+        saved += displayName
+        return result
+    }
+}
+
+open class FakeYtDlpEngine(
     ready: Boolean = true,
     var infoResult: EngineResult<VideoInfo> = EngineResult.Failure(DownloadError.Unknown("no info")),
     var downloadResult: EngineResult<DownloadedFile> = EngineResult.Failure(DownloadError.Unknown("no file")),
@@ -214,9 +236,9 @@ class FakeYtDlpEngine(
 
     override suspend fun ensureInitialized(): EngineResult<Unit> = EngineResult.Success(Unit)
 
-    override suspend fun fetchInfo(url: String, mode: DownloadMode): EngineResult<VideoInfo> = infoResult
+    open override suspend fun fetchInfo(url: String, mode: DownloadMode): EngineResult<VideoInfo> = infoResult
 
-    override suspend fun download(
+    open override suspend fun download(
         spec: DownloadSpec,
         onProgress: (DownloadProgress) -> Unit,
     ): EngineResult<DownloadedFile> {
