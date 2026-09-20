@@ -5,6 +5,7 @@ import com.google.common.truth.Truth.assertThat
 import io.celox.flipperripper.domain.model.DownloadMode
 import io.celox.flipperripper.domain.model.Platform
 import io.celox.flipperripper.domain.model.UserPreferences
+import io.celox.flipperripper.domain.repository.SettingsRepository
 import io.celox.flipperripper.domain.usecase.ResolveUrlUseCase
 import io.celox.flipperripper.domain.usecase.StartDownloadUseCase
 import io.celox.flipperripper.testing.FakeDownloadRepository
@@ -13,8 +14,12 @@ import io.celox.flipperripper.testing.MainDispatcherRule
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -111,16 +116,40 @@ class ShareLinkHandlerTest {
         }
 
     @Test
-    fun `the stored preference decides, not the placeholder default`() =
+    fun `a share that beats the stored preferences waits for them instead of guessing`() =
         runTest {
-            // Preferences load asynchronously and the *default* is auto-download ON. Handing that
-            // default out before the stored value arrives would download for someone who switched
-            // it off — so the handler waits for the real value.
-            settings.state.value = UserPreferences(autoDownloadOnShare = false)
-            handler()
+            // The trap: preferences load asynchronously and the placeholder default says
+            // auto-download is ON. A share arriving first must not be answered from that default,
+            // or someone who switched auto-download off gets a download anyway.
+            //
+            // The earlier version of this test set the value up front, so the preference was always
+            // already there and the race it claimed to guard never happened — it passed just as
+            // happily with the bug reinstated. The settings here emit late on purpose.
+            val slowSettings =
+                object : SettingsRepository by settings {
+                    override val preferences: Flow<UserPreferences> =
+                        flow {
+                            delay(SLOW_LOAD_MS)
+                            emit(UserPreferences(autoDownloadOnShare = false))
+                        }
+                }
+            val scope = CoroutineScope(StandardTestDispatcher(testScheduler))
+            scopes += scope
+            ShareLinkHandler(
+                incomingLinkBus = bus,
+                settingsRepository = slowSettings,
+                appNavigator = navigator,
+                startDownload = StartDownloadUseCase(downloads),
+                resolveUrl = ResolveUrlUseCase(),
+                scope = scope,
+            )
+
             bus.post("https://www.instagram.com/reel/abc/")
+            advanceTimeBy(SLOW_LOAD_MS / 2)
+            assertThat(downloads.enqueued).isEmpty() // still waiting, not guessing
+
             advanceUntilIdle()
-            assertThat(downloads.enqueued).isEmpty()
+            assertThat(downloads.enqueued).isEmpty() // and the stored "off" is honoured
         }
 
     @Test
@@ -174,5 +203,10 @@ class ShareLinkHandlerTest {
         val handlerSource = File(main, "ui/ShareLinkHandler.kt").readText()
         assertThat(handlerSource).contains("@Singleton")
         assertThat(handlerSource).doesNotContain(": ViewModel")
+    }
+
+    private companion object {
+        /** Long enough that a share can plausibly land before the stored preferences do. */
+        const val SLOW_LOAD_MS = 500L
     }
 }
