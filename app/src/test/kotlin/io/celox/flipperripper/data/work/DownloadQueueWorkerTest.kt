@@ -88,6 +88,8 @@ class DownloadQueueWorkerTest {
 
             worker().doWork()
 
+            // The rows were inserted c, a, b and *created* in the reverse of their queue order, so
+            // only a queue that reads `queueOrder` can produce this.
             assertThat(engine.order).containsExactly("a", "b", "c").inOrder()
         }
 
@@ -146,7 +148,21 @@ class DownloadQueueWorkerTest {
     private suspend fun statusOf(id: String): DownloadStatus? =
         db.downloadDao().getById(id)?.let { DownloadStatus.valueOf(it.status) }
 
-    private suspend fun given(id: String, order: Long, status: DownloadStatus = DownloadStatus.QUEUED) {
+    private companion object {
+        /** High enough that `CREATED_BASE - order` stays positive for every order used here. */
+        const val CREATED_BASE = 1_000L
+    }
+
+    /**
+     * [created] defaults to the *opposite* of [order] on purpose: if the two agreed, a queue that
+     * sorted by creation time would pass this test, and the whole point is that it must not.
+     */
+    private suspend fun given(
+        id: String,
+        order: Long,
+        status: DownloadStatus = DownloadStatus.QUEUED,
+        created: Long = CREATED_BASE - order,
+    ) {
         db.downloadDao().upsert(
             DownloadEntity(
                 id = id,
@@ -163,8 +179,8 @@ class DownloadQueueWorkerTest {
                 errorKind = null,
                 errorMessage = null,
                 queueOrder = order,
-                createdAtEpochMs = order,
-                updatedAtEpochMs = order,
+                createdAtEpochMs = created,
+                updatedAtEpochMs = created,
             ),
         )
     }
