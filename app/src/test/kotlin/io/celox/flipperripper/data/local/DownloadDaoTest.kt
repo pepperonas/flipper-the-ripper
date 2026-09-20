@@ -124,6 +124,44 @@ class DownloadDaoTest {
         }
 
     @Test
+    fun `getByStatus hands rows back in the order they will run`() =
+        runTest {
+            // The query promises "in the order the runner will take them". Nothing downstream leans
+            // on it — `QueueOrdering` sorts for itself — but a promise nobody checks is how a
+            // caller later comes to rely on an order that quietly stopped being true.
+            dao.upsert(entityWith(id = "late", queueOrder = 30, created = 1))
+            dao.upsert(entityWith(id = "early", queueOrder = 10, created = 3))
+            dao.upsert(entityWith(id = "middle", queueOrder = 20, created = 2))
+
+            val ids = dao.getByStatus(listOf(DownloadStatus.QUEUED.name)).map { it.id }
+
+            assertThat(ids).containsExactly("early", "middle", "late").inOrder()
+        }
+
+    @Test
+    fun `a phase write is refused once the row is paused`() =
+        runTest {
+            dao.upsert(entityWith(id = "p", queueOrder = 1, created = 1))
+            dao.updateStatus("p", DownloadStatus.PAUSED.name, 2)
+
+            val changed = dao.updateProgressUnlessPaused("p", DownloadStatus.RUNNING.name, 42f, 3)
+
+            assertThat(changed).isEqualTo(0)
+            assertThat(dao.getById("p")!!.status).isEqualTo("PAUSED")
+        }
+
+    @Test
+    fun `a phase write goes through while the row is not paused`() =
+        runTest {
+            dao.upsert(entityWith(id = "r", queueOrder = 1, created = 1))
+
+            val changed = dao.updateProgressUnlessPaused("r", DownloadStatus.RUNNING.name, 42f, 3)
+
+            assertThat(changed).isEqualTo(1)
+            assertThat(dao.getById("r")!!.progressPercent).isEqualTo(42f)
+        }
+
+    @Test
     fun `delete and clear remove rows`() =
         runTest {
             dao.upsert(DownloadEntity.fromDomain(sampleRecord(id = "1")))
@@ -133,4 +171,11 @@ class DownloadDaoTest {
             dao.clear()
             assertThat(dao.observeAll().first()).isEmpty()
         }
+
+    /** Creation time deliberately contradicts the queue order, so the two cannot be confused. */
+    private fun entityWith(id: String, queueOrder: Long, created: Long) =
+        DownloadEntity.fromDomain(
+            sampleRecord(id = id, status = DownloadStatus.QUEUED, queueOrder = queueOrder)
+                .copy(createdAtEpochMs = created),
+        )
 }
