@@ -21,7 +21,11 @@ object DataModule {
         @ApplicationContext context: Context,
     ): FlipperDatabase =
         Room.databaseBuilder(context, FlipperDatabase::class.java, FlipperDatabase.NAME)
-            .fallbackToDestructiveMigration()
+            // Real migrations, deliberately without a destructive fallback: this database is the
+            // user's download history, and the previous `fallbackToDestructiveMigration()` would
+            // have thrown all of it away at the first schema change. A missing migration should
+            // fail loudly in a test, not delete data on a stranger's phone.
+            .apply { FlipperDatabase.MIGRATIONS.forEach { migration -> addMigrations(migration) } }
             .build()
 
     @Provides

@@ -62,4 +62,17 @@ object Sizes {
 
     /** Preview image height on Home. */
     val previewImageHeight: Dp = 200.dp
+
+    /**
+     * The minimum a finger may be asked to hit. The drag handle is drawn much smaller than this —
+     * the touch area around it is what makes it usable, the same trick the sortable lists in the
+     * smart-home apps needed.
+     */
+    val touchTarget: Dp = 44.dp
+
+    /** The visible 2x3 dot grid of the reorder handle. */
+    val dragHandle: Dp = 22.dp
+
+    /** Height of the reveal behind a card being swiped away. */
+    val swipeBackground: Dp = 96.dp
 }

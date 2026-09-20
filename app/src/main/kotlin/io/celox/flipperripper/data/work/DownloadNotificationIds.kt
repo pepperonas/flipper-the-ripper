@@ -19,8 +19,13 @@ object DownloadNotificationIds {
      */
     private const val TERMINAL_MASK = 0x5445524D // "TERM"
 
-    /** The ongoing notification, owned by WorkManager's foreground service. */
-    fun progress(recordId: String): Int = recordId.hashCode()
+    /**
+     * The single ongoing notification of the download queue.
+     *
+     * One id for the whole queue, not one per download: the queue runs them one at a time, so a
+     * notification each would mean a shade full of entries for downloads that are not happening yet.
+     */
+    const val QUEUE_PROGRESS = 0x464C5150 // "FLQP"
 
     /** The completed / failed notification, which must outlive the worker. */
     fun terminal(recordId: String): Int = recordId.hashCode() xor TERMINAL_MASK

@@ -26,6 +26,27 @@ constructor(private val repository: DownloadRepository) {
     suspend operator fun invoke(id: String) = repository.cancel(id)
 }
 
+/** Stop an in-flight download but keep what it has already fetched. */
+class PauseDownloadUseCase
+@Inject
+constructor(private val repository: DownloadRepository) {
+    suspend operator fun invoke(id: String) = repository.pause(id)
+}
+
+/** Put a paused download back into the queue, at the position it held. */
+class ResumeDownloadUseCase
+@Inject
+constructor(private val repository: DownloadRepository) {
+    suspend operator fun invoke(id: String) = repository.resume(id)
+}
+
+/** Rearrange the waiting downloads. */
+class ReorderQueueUseCase
+@Inject
+constructor(private val repository: DownloadRepository) {
+    suspend operator fun invoke(ids: List<String>) = repository.reorder(ids)
+}
+
 /** Retry a failed/cancelled download. */
 class RetryDownloadUseCase
 @Inject

@@ -36,6 +36,9 @@ espresso = "3.6.1"
 androidxTestCore = "1.6.1"
 androidxTestRunner = "1.6.2"
 robolectric = "4.14.1"
+# Drag-to-reorder for LazyColumn. Hand-rolled pointer dragging with edge auto-scroll is a bug
+# this house has already paid for twice; the library is the cheaper correctness.
+reorderable = "3.1.0"
 coroutinesTest = "1.9.0"
 
 # quality
@@ -107,6 +110,7 @@ turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine
 truth = { group = "com.google.truth", name = "truth", version.ref = "truth" }
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutinesTest" }
 robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
+reorderable = { group = "sh.calvin.reorderable", name = "reorderable", version.ref = "reorderable" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidxJunit" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espresso" }
 androidx-test-core = { group = "androidx.test", name = "core", version.ref = "androidxTestCore" }

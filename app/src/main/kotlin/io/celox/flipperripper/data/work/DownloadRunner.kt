@@ -1,14 +1,7 @@
 package io.celox.flipperripper.data.work
 
 import android.content.Context
-import android.content.pm.ServiceInfo
-import android.os.Build
-import androidx.hilt.work.HiltWorker
-import androidx.work.CoroutineWorker
-import androidx.work.ForegroundInfo
-import androidx.work.WorkerParameters
-import dagger.assisted.Assisted
-import dagger.assisted.AssistedInject
+import dagger.hilt.android.qualifiers.ApplicationContext
 import io.celox.flipperripper.data.engine.DownloadNaming
 import io.celox.flipperripper.data.engine.DownloadSpec
 import io.celox.flipperripper.data.engine.DownloadedFile
@@ -27,73 +20,79 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import java.io.File
+import javax.inject.Inject
+import javax.inject.Singleton
+
+/** What one download did, as far as the queue runner cares. */
+enum class RunOutcome {
+    COMPLETED,
+
+    /** Terminal for this attempt; the queue moves on. */
+    FAILED,
+
+    /** Cancelled or paused by the user — the queue moves on, the record keeps whatever it was set to. */
+    STOPPED,
+
+    /** A network failure worth another attempt later; the queue should back off rather than spin. */
+    RETRYABLE,
+}
 
 /**
- * Runs one download in the background as a foreground service (via WorkManager), so it survives
- * screen-lock, app-minimise and rotation, and the OS keeps the process alive.
+ * Runs exactly one download: metadata, transfer, post-processing, save.
+ *
+ * This used to be the body of `DownloadWorker`, one WorkManager job per download, all of them
+ * running at once. It is a plain class now so that a single [DownloadQueueWorker] can drive it one
+ * record at a time — which is what makes the queue position mean anything.
  *
  * The record in the database is the only place the state lives: the History card and the
- * notification both read it, which is why every phase change here goes through [applyPhase] — it
- * writes the record *and* refreshes the notification from the same values, in that order.
- *
- * Phases: PREPARING (metadata, nothing transferring) → RUNNING (bytes, real percentage) →
- * PROCESSING (ffmpeg merge, then the MediaStore copy) → COMPLETED / FAILED.
+ * notification both read it, which is why every phase change goes through [applyPhase] — it writes
+ * the record and hands the same values to [onPhase], in that order.
  */
-@HiltWorker
-class DownloadWorker
-@AssistedInject
+@Singleton
+class DownloadRunner
+@Inject
 constructor(
-    @Assisted appContext: Context,
-    @Assisted params: WorkerParameters,
+    @ApplicationContext private val context: Context,
     private val dao: DownloadDao,
     private val engine: YtDlpEngine,
     private val mediaWriter: MediaStoreWriter,
     private val notifier: DownloadNotifier,
-) : CoroutineWorker(appContext, params) {
-    companion object {
-        const val KEY_RECORD_ID = "record_id"
-        const val WORK_NAME_PREFIX = "download_"
-        private const val PROGRESS_STEP = 1f
-        private const val MAX_NETWORK_RETRIES = 3
-    }
-
-    private val recordId: String? get() = inputData.getString(KEY_RECORD_ID)
-
-    /** Read by the progress pump, which runs on a different thread than the writer. */
-    @Volatile private var currentTitle: String = ""
-
-    /**
-     * The last percentage the engine actually reported, kept so the post-processing phase can carry
-     * it instead of blanking it: "every byte arrived, and there is still work to do" is the true
-     * statement, and throwing the number away would make it look like the download restarted.
-     */
-    @Volatile private var measuredPercent: Float? = null
-
+) {
     /** One phase change on its way to the record and the notification. */
     private data class Phase(val status: DownloadStatus, val percent: Float?)
 
-    override suspend fun getForegroundInfo(): ForegroundInfo =
-        foregroundInfo(DownloadStatus.PREPARING, currentTitle, null)
+    /** Everything the caller needs to draw a notification for the download currently running. */
+    data class PhaseUpdate(val id: String, val status: DownloadStatus, val title: String, val percent: Float?)
 
-    override suspend fun doWork(): Result {
-        val id = recordId ?: return Result.failure()
-        val record = dao.getById(id) ?: return Result.failure()
-        notifier.ensureChannels()
+    private class RunState {
+        @Volatile var title: String = ""
 
-        currentTitle = record.title
+        /**
+         * The last percentage the engine actually reported, kept so post-processing can carry it
+         * instead of blanking it: "every byte arrived, and there is still work to do" is the true
+         * statement, and dropping the number would look like a restart.
+         */
+        @Volatile var measuredPercent: Float? = null
+    }
+
+    suspend fun run(id: String, onPhase: suspend (PhaseUpdate) -> Unit): RunOutcome {
+        val record = dao.getById(id) ?: return RunOutcome.FAILED
+        val state = RunState()
+        state.title = record.title
+
         // Resolving metadata is not downloading — it can take seconds and moves no bytes, so it gets
         // its own phase and no percentage rather than a bar frozen at 0 %.
-        applyPhase(id, DownloadStatus.PREPARING, null)
+        applyPhase(id, state, DownloadStatus.PREPARING, null, onPhase)
 
         val info = engine.fetchInfo(record.sourceUrl, enumMode(record.mode)).getOrNull()
         if (info != null) {
             // Field-scoped: writing the whole row back here used to reset the record to QUEUED / 0 %,
             // because the in-memory copy was read before the phase was set (see DownloadDao).
             dao.updateMetadata(id, info.title, info.thumbnailUrl, now())
-            currentTitle = info.title
+            state.title = info.title
         }
 
-        val workingDir = File(applicationContext.cacheDir, "downloads/$id")
+        val workingDir = workingDirFor(id)
         fun specFor(progressive: Boolean) =
             DownloadSpec(
                 url = record.sourceUrl,
@@ -105,22 +104,25 @@ constructor(
             )
 
         // Attempt 1: best quality (may need an ffmpeg merge).
-        var result = runEngine(id, specFor(progressive = false))
+        var result = runEngine(id, state, specFor(progressive = false), onPhase)
 
         // Self-heal: a stale extractor or a merge/ffmpeg failure is recoverable — update yt-dlp and
         // retry once with a single pre-muxed format that needs no ffmpeg.
         if (result is EngineResult.Failure && isRecoverable(result.error)) {
-            applyPhase(id, DownloadStatus.PREPARING, null)
+            applyPhase(id, state, DownloadStatus.PREPARING, null, onPhase)
             engine.update()
-            result = runEngine(id, specFor(progressive = true))
+            result = runEngine(id, state, specFor(progressive = true), onPhase)
         }
 
         return when (result) {
-            is EngineResult.Failure -> finishWithError(id, currentTitle, result.error, workingDir)
+            is EngineResult.Failure -> finishWithError(id, state.title, result.error, workingDir)
             is EngineResult.Success ->
-                saveAndFinish(id, record, info?.title, result.value.file, workingDir)
+                saveAndFinish(id, state, record, info?.title, result.value.file, workingDir, onPhase)
         }
     }
+
+    /** The per-download scratch directory, kept across a pause so `.part` bytes survive. */
+    fun workingDirFor(id: String): File = File(context.cacheDir, "downloads/$id")
 
     /**
      * Runs the engine and feeds its progress callbacks to a pump coroutine.
@@ -131,13 +133,18 @@ constructor(
      * slow write can never make the engine wait, and the pump always applies the newest phase rather
      * than working through a backlog of stale ones.
      */
-    private suspend fun runEngine(id: String, spec: DownloadSpec): EngineResult<DownloadedFile> =
+    private suspend fun runEngine(
+        id: String,
+        state: RunState,
+        spec: DownloadSpec,
+        onPhase: suspend (PhaseUpdate) -> Unit,
+    ): EngineResult<DownloadedFile> =
         coroutineScope {
             val ticks = Channel<Phase>(Channel.CONFLATED)
-            launch { for (phase in ticks) applyPhase(id, phase.status, phase.percent) }
+            launch { for (phase in ticks) applyPhase(id, state, phase.status, phase.percent, onPhase) }
 
             // A retry starts a fresh transfer, so the previous run's numbers must not leak into it.
-            measuredPercent = null
+            state.measuredPercent = null
             var lastPercent = -1f
             var wasPostProcessing = false
             try {
@@ -147,17 +154,17 @@ constructor(
                     val advanced = percent != null && percent - lastPercent >= PROGRESS_STEP
                     if (advanced) {
                         lastPercent = percent!!
-                        measuredPercent = percent
+                        state.measuredPercent = percent
                     }
-                    // A phase change always gets through; otherwise only a percent that actually moved,
-                    // so a byte-by-byte stream does not queue thousands of identical updates.
+                    // A phase change always gets through; otherwise only a percent that actually
+                    // moved, so a byte-by-byte stream does not queue thousands of identical updates.
                     if (postProcessing != wasPostProcessing || advanced) {
                         wasPostProcessing = postProcessing
                         ticks.trySend(
                             if (postProcessing) {
                                 // The transfer is finished; the last measured value is the honest one
                                 // to keep showing, but the phase says the work is not over.
-                                Phase(DownloadStatus.PROCESSING, measuredPercent)
+                                Phase(DownloadStatus.PROCESSING, state.measuredPercent)
                             } else {
                                 Phase(DownloadStatus.RUNNING, percent)
                             },
@@ -172,29 +179,37 @@ constructor(
         }
 
     /** The one place a phase reaches both surfaces, so they cannot drift apart. */
-    private suspend fun applyPhase(id: String, status: DownloadStatus, percent: Float?) {
+    private suspend fun applyPhase(
+        id: String,
+        state: RunState,
+        status: DownloadStatus,
+        percent: Float?,
+        onPhase: suspend (PhaseUpdate) -> Unit,
+    ) {
         dao.updateProgress(id, status.name, percent, now())
-        runCatching { setForeground(foregroundInfo(status, currentTitle, percent)) }
+        onPhase(PhaseUpdate(id, status, state.title, percent))
     }
 
     private suspend fun saveAndFinish(
         id: String,
+        state: RunState,
         record: DownloadEntity,
         resolvedTitle: String?,
         file: File,
         workingDir: File,
-    ): Result {
+        onPhase: suspend (PhaseUpdate) -> Unit,
+    ): RunOutcome {
         // Copying into MediaStore is real work on a large video. Reporting COMPLETED here is what
         // once made the app claim "saved" while the file was still being written.
-        applyPhase(id, DownloadStatus.PROCESSING, measuredPercent)
+        applyPhase(id, state, DownloadStatus.PROCESSING, state.measuredPercent, onPhase)
 
-        val nameTitle = preferredName(resolvedTitle, file, record)
+        val nameTitle = DownloadNaming.preferredTitle(resolvedTitle, file.nameWithoutExtension, record.title)
         val displayName = FilenameSanitizer.sanitize(nameTitle, file.extension)
-        // Metadata may have resolved only after the record was created from a bare shared link, so keep
-        // the stored title in step with the name we actually save under.
+        // Metadata may have resolved only after the record was created from a bare shared link, so
+        // keep the stored title in step with the name we actually save under.
         if (record.title != nameTitle) {
             dao.updateMetadata(id, nameTitle, null, now())
-            currentTitle = nameTitle
+            state.title = nameTitle
         }
         return when (val saved = mediaWriter.save(file, displayName, enumMode(record.mode))) {
             is EngineResult.Success -> {
@@ -212,9 +227,9 @@ constructor(
                     MediaIntents.viewIntent(saved.value.uri, enumMode(record.mode)),
                 )
                 workingDir.deleteRecursively()
-                Result.success()
+                RunOutcome.COMPLETED
             }
-            is EngineResult.Failure -> finishWithError(id, currentTitle, saved.error, workingDir)
+            is EngineResult.Failure -> finishWithError(id, state.title, saved.error, workingDir)
         }
     }
 
@@ -223,43 +238,42 @@ constructor(
         title: String,
         error: DownloadError,
         workingDir: File,
-    ): Result {
-        val status =
-            if (error is DownloadError.Cancelled) DownloadStatus.CANCELLED else DownloadStatus.FAILED
-        dao.markFailed(id, status.name, error.kind, error.message, now())
-        if (error !is DownloadError.Cancelled) {
-            notifier.notifyFailed(DownloadNotificationIds.terminal(id), title, error.message)
+    ): RunOutcome {
+        if (error is DownloadError.Cancelled) {
+            // Pause and cancel both arrive here as a killed process. The record says which one it
+            // was, because the repository writes the status *before* stopping the engine — and a
+            // paused download must keep its working directory, that is the whole point of the
+            // `.part` file it will resume from.
+            val current = statusOf(id)
+            if (current != DownloadStatus.PAUSED) {
+                dao.markFailed(id, DownloadStatus.CANCELLED.name, error.kind, error.message, now())
+                workingDir.deleteRecursively()
+            }
+            return RunOutcome.STOPPED
         }
+        dao.markFailed(id, DownloadStatus.FAILED.name, error.kind, error.message, now())
+        notifier.notifyFailed(DownloadNotificationIds.terminal(id), title, error.message)
         workingDir.deleteRecursively()
-        return when {
-            error is DownloadError.Network && runAttemptCount < MAX_NETWORK_RETRIES -> Result.retry()
-            else -> Result.failure()
-        }
+        return if (error is DownloadError.Network) RunOutcome.RETRYABLE else RunOutcome.FAILED
     }
+
+    private suspend fun statusOf(id: String): DownloadStatus? =
+        dao.getById(id)?.let { runCatching { DownloadStatus.valueOf(it.status) }.getOrNull() }
 
     /**
      * A failure worth retrying after a yt-dlp update + progressive fallback: a stale/rate-limited
-     * extractor, or an unclassified error (which is where a merge / "ffmpeg not found" failure lands).
-     * Terminal errors (private/login/region/network/cancelled) are not retried.
+     * extractor, or an unclassified error (which is where a merge / "ffmpeg not found" failure
+     * lands). Terminal errors (private/login/region/network/cancelled) are not retried.
      */
     private fun isRecoverable(error: DownloadError): Boolean =
         error is DownloadError.RateLimitedOrStale || error is DownloadError.Unknown
-
-    private fun foregroundInfo(status: DownloadStatus, title: String, percent: Float?): ForegroundInfo {
-        val notification = notifier.buildProgress(status, title, percent)
-        val notifId = DownloadNotificationIds.progress(recordId ?: "download")
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            ForegroundInfo(notifId, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
-        } else {
-            ForegroundInfo(notifId, notification)
-        }
-    }
-
-    private fun preferredName(resolvedTitle: String?, file: File, record: DownloadEntity): String =
-        DownloadNaming.preferredTitle(resolvedTitle, file.nameWithoutExtension, record.title)
 
     private fun enumMode(name: String) =
         runCatching { DownloadMode.valueOf(name) }.getOrDefault(DownloadMode.VIDEO)
 
     private fun now() = System.currentTimeMillis()
+
+    private companion object {
+        const val PROGRESS_STEP = 1f
+    }
 }

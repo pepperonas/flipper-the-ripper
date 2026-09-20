@@ -29,6 +29,18 @@ data class DownloadRecord(
     /** Populated with [DownloadError.kind] and message when [status] is [DownloadStatus.FAILED]. */
     val errorKind: String?,
     val errorMessage: String?,
+    /**
+     * Position in the download queue — smaller runs first.
+     *
+     * It exists because the order used to be a claim rather than a fact: every download was its own
+     * WorkManager job and they ran in parallel, so "queued" said nothing about what would happen
+     * next. One runner drains this column in order.
+     *
+     * Reordering **permutes the existing values** among the affected rows instead of renumbering
+     * from zero, so a queue that was seeded from creation timestamps and a queue numbered 1, 2, 3
+     * can never end up on different scales and interleave wrongly.
+     */
+    val queueOrder: Long,
     val createdAtEpochMs: Long,
     val updatedAtEpochMs: Long,
 )
@@ -57,6 +69,15 @@ enum class DownloadStatus {
 
     /** Transfer finished; ffmpeg is merging or the file is being copied into MediaStore. */
     PROCESSING,
+
+    /**
+     * Stopped by the user, with the partly transferred bytes kept on disk.
+     *
+     * Deliberately distinct from [CANCELLED]: cancelling throws the working directory away, pausing
+     * keeps the `.part` file so resuming continues from the byte it reached. A paused download is
+     * still *in the queue* — it holds its position — but nothing is running for it.
+     */
+    PAUSED,
 
     COMPLETED,
     FAILED,

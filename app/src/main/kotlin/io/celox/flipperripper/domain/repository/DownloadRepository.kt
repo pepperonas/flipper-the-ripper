@@ -15,8 +15,17 @@ interface DownloadRepository {
     /** A single record, or null if unknown. */
     fun observeRecord(id: String): Flow<DownloadRecord?>
 
-    /** Request cancellation of an in-flight download. */
+    /** Request cancellation of an in-flight download; its partial file is discarded. */
     suspend fun cancel(id: String)
+
+    /** Stop an in-flight download but keep its partial file, so [resume] continues from there. */
+    suspend fun pause(id: String)
+
+    /** Put a paused download back in the queue, at the position it held. */
+    suspend fun resume(id: String)
+
+    /** Rearrange the waiting downloads; [ids] is the new order of the ones the user can move. */
+    suspend fun reorder(ids: List<String>)
 
     /** Retry a failed/cancelled record, reusing its request. */
     suspend fun retry(id: String)

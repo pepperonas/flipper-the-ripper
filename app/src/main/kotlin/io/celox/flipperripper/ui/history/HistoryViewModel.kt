@@ -8,6 +8,9 @@ import io.celox.flipperripper.domain.usecase.CancelDownloadUseCase
 import io.celox.flipperripper.domain.usecase.ClearHistoryUseCase
 import io.celox.flipperripper.domain.usecase.DeleteRecordUseCase
 import io.celox.flipperripper.domain.usecase.ObserveHistoryUseCase
+import io.celox.flipperripper.domain.usecase.PauseDownloadUseCase
+import io.celox.flipperripper.domain.usecase.ReorderQueueUseCase
+import io.celox.flipperripper.domain.usecase.ResumeDownloadUseCase
 import io.celox.flipperripper.domain.usecase.RetryDownloadUseCase
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -21,6 +24,9 @@ class HistoryViewModel
 constructor(
     observeHistory: ObserveHistoryUseCase,
     private val cancelDownload: CancelDownloadUseCase,
+    private val pauseDownload: PauseDownloadUseCase,
+    private val resumeDownload: ResumeDownloadUseCase,
+    private val reorderQueue: ReorderQueueUseCase,
     private val retryDownload: RetryDownloadUseCase,
     private val deleteRecord: DeleteRecordUseCase,
     private val clearHistory: ClearHistoryUseCase,
@@ -41,6 +47,13 @@ constructor(
         )
 
     fun cancel(id: String) = viewModelScope.launch { cancelDownload(id) }
+
+    fun pause(id: String) = viewModelScope.launch { pauseDownload(id) }
+
+    fun resume(id: String) = viewModelScope.launch { resumeDownload(id) }
+
+    /** Called once, when the finger lets go — not on every pixel of the drag. */
+    fun reorder(ids: List<String>) = viewModelScope.launch { reorderQueue(ids) }
 
     fun retry(id: String) = viewModelScope.launch { retryDownload(id) }
 

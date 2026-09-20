@@ -77,6 +77,9 @@ class FakeDownloadRepository : DownloadRepository {
     val history = MutableStateFlow<List<DownloadRecord>>(emptyList())
     val enqueued = mutableListOf<DownloadRequest>()
     val cancelled = mutableListOf<String>()
+    val paused = mutableListOf<String>()
+    val resumed = mutableListOf<String>()
+    val reordered = mutableListOf<List<String>>()
     val retried = mutableListOf<String>()
     val deleted = mutableListOf<String>()
     var cleared = false
@@ -94,6 +97,18 @@ class FakeDownloadRepository : DownloadRepository {
 
     override suspend fun cancel(id: String) {
         cancelled += id
+    }
+
+    override suspend fun pause(id: String) {
+        paused += id
+    }
+
+    override suspend fun resume(id: String) {
+        resumed += id
+    }
+
+    override suspend fun reorder(ids: List<String>) {
+        reordered += ids
     }
 
     override suspend fun retry(id: String) {
@@ -220,6 +235,7 @@ fun sampleRecord(
     id: String = "record-1",
     status: DownloadStatus = DownloadStatus.COMPLETED,
     progressPercent: Float? = null,
+    queueOrder: Long = 1_000,
 ): DownloadRecord =
     DownloadRecord(
         id = id,
@@ -235,6 +251,7 @@ fun sampleRecord(
         sizeBytes = 2_500_000,
         errorKind = null,
         errorMessage = null,
+        queueOrder = queueOrder,
         createdAtEpochMs = 1_000,
         updatedAtEpochMs = 2_000,
     )

@@ -51,6 +51,13 @@
         <item quantity="other">Damit verschwinden alle %1$d Einträge aus der Liste. Die heruntergeladenen Videos bleiben auf dem Gerät.</item>
     </plurals>
     <string name="history_clear_confirm">Verlauf löschen</string>
+    <string name="history_section_active">In der Warteschlange</string>
+    <string name="history_section_done">Fertig</string>
+    <string name="history_pause">Pausieren</string>
+    <string name="history_resume">Fortsetzen</string>
+    <string name="history_status_paused">Pausiert</string>
+    <string name="history_reorder">Umsortieren</string>
+    <string name="history_swipe_delete_hint">Einen fertigen Download zum Entfernen zur Seite wischen.</string>
     <string name="history_status_queued">In Warteschlange</string>
     <string name="history_status_running">Wird geladen…</string>
     <string name="history_status_preparing">Wird vorbereitet…</string>
@@ -120,6 +127,7 @@
     <string name="notif_preparing">Wird vorbereitet…</string>
     <string name="notif_processing">Wird abgeschlossen…</string>
     <string name="notif_percent">%1$d %%</string>
+    <string name="notif_queue_position">%1$s · %2$d von %3$d</string>
     <string name="notif_completed">Download abgeschlossen</string>
     <string name="notif_failed">Download fehlgeschlagen</string>
 

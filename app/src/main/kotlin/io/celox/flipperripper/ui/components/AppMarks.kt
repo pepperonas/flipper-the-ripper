@@ -1,5 +1,6 @@
 package io.celox.flipperripper.ui.components
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -53,3 +54,38 @@ fun VideoPlaceholder(modifier: Modifier = Modifier, color: Color = MaterialTheme
         modifier = modifier,
     )
 }
+
+/**
+ * The 2x3 dot grid that says "this card can be dragged".
+ *
+ * Drawn rather than shipped as a drawable: six circles on a computed grid is less to get wrong than
+ * hand-written path data, and it scales to whatever size the caller asks for. The visible mark is
+ * small on purpose — what makes it usable is the 44 dp touch area around it, not the ink.
+ */
+@Composable
+fun DragHandleMark(modifier: Modifier = Modifier, color: Color = MaterialTheme.colorScheme.onSurfaceVariant) {
+    Canvas(modifier = modifier) {
+        val columns = 2
+        val rows = 3
+        // Cell centres, so the grid sits centred whatever the box is.
+        val cellWidth = size.width / columns
+        val cellHeight = size.height / rows
+        val radius = minOf(cellWidth, cellHeight) * DOT_RADIUS_FRACTION
+        for (column in 0 until columns) {
+            for (row in 0 until rows) {
+                drawCircle(
+                    color = color,
+                    radius = radius,
+                    center =
+                    androidx.compose.ui.geometry.Offset(
+                        x = cellWidth * (column + 0.5f),
+                        y = cellHeight * (row + 0.5f),
+                    ),
+                )
+            }
+        }
+    }
+}
+
+/** Keeps the dots clearly separate; a larger fraction reads as a striped block rather than a grip. */
+private const val DOT_RADIUS_FRACTION = 0.18f

@@ -7,6 +7,9 @@ import io.celox.flipperripper.domain.usecase.CancelDownloadUseCase
 import io.celox.flipperripper.domain.usecase.ClearHistoryUseCase
 import io.celox.flipperripper.domain.usecase.DeleteRecordUseCase
 import io.celox.flipperripper.domain.usecase.ObserveHistoryUseCase
+import io.celox.flipperripper.domain.usecase.PauseDownloadUseCase
+import io.celox.flipperripper.domain.usecase.ReorderQueueUseCase
+import io.celox.flipperripper.domain.usecase.ResumeDownloadUseCase
 import io.celox.flipperripper.domain.usecase.RetryDownloadUseCase
 import io.celox.flipperripper.testing.FakeDownloadRepository
 import io.celox.flipperripper.testing.MainDispatcherRule
@@ -28,6 +31,9 @@ class HistoryViewModelTest {
         HistoryViewModel(
             observeHistory = ObserveHistoryUseCase(repo),
             cancelDownload = CancelDownloadUseCase(repo),
+            pauseDownload = PauseDownloadUseCase(repo),
+            resumeDownload = ResumeDownloadUseCase(repo),
+            reorderQueue = ReorderQueueUseCase(repo),
             retryDownload = RetryDownloadUseCase(repo),
             deleteRecord = DeleteRecordUseCase(repo),
             clearHistory = ClearHistoryUseCase(repo),

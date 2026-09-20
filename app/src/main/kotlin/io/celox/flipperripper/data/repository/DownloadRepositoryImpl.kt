@@ -2,7 +2,6 @@ package io.celox.flipperripper.data.repository
 
 import androidx.work.BackoffPolicy
 import androidx.work.Constraints
-import androidx.work.Data
 import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
@@ -10,11 +9,13 @@ import androidx.work.WorkManager
 import io.celox.flipperripper.data.engine.YtDlpEngine
 import io.celox.flipperripper.data.local.DownloadDao
 import io.celox.flipperripper.data.local.DownloadEntity
-import io.celox.flipperripper.data.work.DownloadWorker
+import io.celox.flipperripper.data.work.DownloadQueueWorker
 import io.celox.flipperripper.domain.model.DownloadRecord
 import io.celox.flipperripper.domain.model.DownloadRequest
 import io.celox.flipperripper.domain.model.DownloadStatus
-import io.celox.flipperripper.domain.model.isActive
+import io.celox.flipperripper.domain.model.QueueOrdering
+import io.celox.flipperripper.domain.model.isCancellable
+import io.celox.flipperripper.domain.model.isPausable
 import io.celox.flipperripper.domain.repository.DownloadRepository
 import io.celox.flipperripper.util.IdGenerator
 import kotlinx.coroutines.flow.Flow
@@ -51,29 +52,35 @@ constructor(
                 progressPercent = null,
                 errorKind = null,
                 errorMessage = null,
+                queueOrder = QueueOrdering.nextOrder(listOfNotNull(dao.maxQueueOrder())),
                 createdAtEpochMs = now,
                 updatedAtEpochMs = now,
             ),
         )
-        scheduleWork(id)
+        ensureQueueRunning()
         return id
     }
 
-    private fun scheduleWork(id: String) {
-        val constraints =
-            Constraints.Builder()
-                .setRequiredNetworkType(NetworkType.CONNECTED)
-                .build()
+    /**
+     * Makes sure the one queue worker is scheduled.
+     *
+     * `APPEND_OR_REPLACE`, not `KEEP`, because of a race that would strand a download: with KEEP, a
+     * link enqueued in the moment between the running worker's last look at the table and its return
+     * would find the work still "running", keep it, and then never be picked up — the row would sit
+     * QUEUED until something else happened to enqueue. Appending costs at most one worker run that
+     * finds nothing to do.
+     */
+    private fun ensureQueueRunning() {
         val work =
-            OneTimeWorkRequestBuilder<DownloadWorker>()
-                .setInputData(Data.Builder().putString(DownloadWorker.KEY_RECORD_ID, id).build())
-                .setConstraints(constraints)
-                .setBackoffCriteria(BackoffPolicy.LINEAR, 30, TimeUnit.SECONDS)
-                .addTag(TAG)
+            OneTimeWorkRequestBuilder<DownloadQueueWorker>()
+                .setConstraints(
+                    Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build(),
+                )
+                .setBackoffCriteria(BackoffPolicy.LINEAR, BACKOFF_SECONDS, TimeUnit.SECONDS)
                 .build()
         workManager.enqueueUniqueWork(
-            DownloadWorker.WORK_NAME_PREFIX + id,
-            ExistingWorkPolicy.KEEP,
+            DownloadQueueWorker.WORK_NAME,
+            ExistingWorkPolicy.APPEND_OR_REPLACE,
             work,
         )
     }
@@ -85,13 +92,13 @@ constructor(
         dao.observeById(id).map { it?.toDomain() }
 
     override suspend fun cancel(id: String) {
-        workManager.cancelUniqueWork(DownloadWorker.WORK_NAME_PREFIX + id)
+        // Only the engine process for this download — never the queue work itself, which is shared
+        // by every other download waiting behind it.
         engine.cancel(id)
-        val record = dao.getById(id) ?: return
+        val status = statusOf(id) ?: return
         // Every in-flight phase, via the domain rule — listing phases by hand here is how PREPARING
         // and PROCESSING would quietly become uncancellable the moment they were added.
-        val status = runCatching { DownloadStatus.valueOf(record.status) }.getOrNull()
-        if (status?.isActive == true) {
+        if (status.isCancellable) {
             dao.markFailed(
                 id = id,
                 status = DownloadStatus.CANCELLED.name,
@@ -102,14 +109,48 @@ constructor(
         }
     }
 
+    /**
+     * Stops the transfer but keeps the partly downloaded bytes.
+     *
+     * The status is written **before** the engine is stopped, and that order is load-bearing: the
+     * runner sees a killed process and asks the record whether this was a pause or a cancel. The
+     * wrong order would delete the working directory — the `.part` file resume depends on.
+     */
+    override suspend fun pause(id: String) {
+        val status = statusOf(id) ?: return
+        if (!status.isPausable) return
+        dao.updateStatus(id, DownloadStatus.PAUSED.name, System.currentTimeMillis())
+        engine.cancel(id)
+    }
+
+    /** Back into the queue at the position it held — pausing does not cost you your place. */
+    override suspend fun resume(id: String) {
+        if (statusOf(id) != DownloadStatus.PAUSED) return
+        dao.updateStatus(id, DownloadStatus.QUEUED.name, System.currentTimeMillis())
+        ensureQueueRunning()
+    }
+
+    override suspend fun reorder(ids: List<String>) {
+        val current =
+            dao.getByStatus(REORDERABLE_STATUSES).associate { it.id to it.queueOrder }
+        val now = System.currentTimeMillis()
+        QueueOrdering.reorder(ids, current).forEach { (id, order) ->
+            if (current[id] != order) dao.updateQueueOrder(id, order, now)
+        }
+    }
+
     override suspend fun retry(id: String) {
-        val record = dao.getById(id) ?: return
-        dao.updateProgress(id, DownloadStatus.QUEUED.name, 0f, System.currentTimeMillis())
-        scheduleWork(id)
+        dao.getById(id) ?: return
+        val now = System.currentTimeMillis()
+        // A retry joins the back of the queue rather than jumping ahead of downloads that have been
+        // waiting, and starts with no measured progress rather than a leftover percentage.
+        dao.updateQueueOrder(id, QueueOrdering.nextOrder(listOfNotNull(dao.maxQueueOrder())), now)
+        dao.updateProgress(id, DownloadStatus.QUEUED.name, null, now)
+        ensureQueueRunning()
     }
 
     override suspend fun delete(id: String) {
-        workManager.cancelUniqueWork(DownloadWorker.WORK_NAME_PREFIX + id)
+        engine.cancel(id)
         dao.delete(id)
     }
 
@@ -117,7 +158,12 @@ constructor(
         dao.clear()
     }
 
+    private suspend fun statusOf(id: String): DownloadStatus? =
+        dao.getById(id)?.let { runCatching { DownloadStatus.valueOf(it.status) }.getOrNull() }
+
     private companion object {
-        const val TAG = "flipper_download"
+        const val BACKOFF_SECONDS = 30L
+        val REORDERABLE_STATUSES =
+            listOf(DownloadStatus.QUEUED.name, DownloadStatus.PAUSED.name)
     }
 }

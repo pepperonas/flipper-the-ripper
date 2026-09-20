@@ -13,7 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.DeleteSweep
@@ -27,13 +27,17 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -43,6 +47,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -53,13 +59,20 @@ import io.celox.flipperripper.data.engine.DownloadNaming
 import io.celox.flipperripper.domain.model.DownloadMode
 import io.celox.flipperripper.domain.model.DownloadRecord
 import io.celox.flipperripper.domain.model.DownloadStatus
+import io.celox.flipperripper.domain.model.QueueOrdering
 import io.celox.flipperripper.domain.model.isActive
+import io.celox.flipperripper.domain.model.isPausable
+import io.celox.flipperripper.domain.model.isPending
+import io.celox.flipperripper.domain.model.isReorderable
+import io.celox.flipperripper.ui.components.DragHandleMark
 import io.celox.flipperripper.ui.components.EmptyDownloadsMark
 import io.celox.flipperripper.ui.components.ExpressiveLoadingIndicator
 import io.celox.flipperripper.ui.components.VideoPlaceholder
 import io.celox.flipperripper.ui.theme.Sizes
 import io.celox.flipperripper.ui.theme.Spacing
 import io.celox.flipperripper.util.MediaIntents
+import sh.calvin.reorderable.ReorderableItem
+import sh.calvin.reorderable.rememberReorderableLazyListState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -103,39 +116,162 @@ fun HistoryScreen(viewModel: HistoryViewModel = hiltViewModel()) {
         },
     ) { padding ->
         val loaded = records
-        if (loaded == null) {
+        when {
             // Not the same as "empty": the database has not answered yet. Drawing the empty state
             // here told anyone who had just shared a link that nothing had been downloaded.
-            LoadingState(Modifier.fillMaxSize().padding(padding))
-        } else if (loaded.isEmpty()) {
-            EmptyState(Modifier.fillMaxSize().padding(padding))
-        } else {
-            val listState = rememberLazyListState()
-            // A new download is prepended (history is newest-first). Jump back to the top whenever the
-            // leading entry changes, so the download that was just started is always the one on screen —
-            // otherwise pasting a link while scrolled down appeared to do nothing.
-            val newestId = loaded.first().id
-            LaunchedEffect(newestId) { listState.animateScrollToItem(0) }
+            loaded == null -> LoadingState(Modifier.fillMaxSize().padding(padding))
+            loaded.isEmpty() -> EmptyState(Modifier.fillMaxSize().padding(padding))
+            else -> DownloadList(loaded, Modifier.fillMaxSize().padding(padding), viewModel)
+        }
+    }
+}
 
-            LazyColumn(
-                state = listState,
-                modifier = Modifier.fillMaxSize().padding(padding),
-                contentPadding = PaddingValues(Spacing.xl),
-                verticalArrangement = Arrangement.spacedBy(Spacing.md),
-            ) {
-                itemsIndexed(loaded, key = { _, r -> r.id }) { _, record ->
+/**
+ * The queue on top, the finished downloads below.
+ *
+ * The split is [isPending], not [isActive]: a paused download shows no spinner but still belongs
+ * with the queue, because it is going to run.
+ */
+@Composable
+private fun DownloadList(records: List<DownloadRecord>, modifier: Modifier, viewModel: HistoryViewModel) {
+    val queue = records.filter { it.status.isPending }.sortedWith(compareBy({ it.queueOrder }, { it.id }))
+    val finished = records.filter { !it.status.isPending }
+
+    // While a card is under the finger the list must follow the finger, not the database — the drag
+    // is only written when it is let go. `draft` holds that intermediate order and is dropped again
+    // as soon as the database agrees (or the set of queued downloads changes underneath it).
+    var draft by remember { mutableStateOf<List<String>?>(null) }
+    val queueIds = queue.map { it.id }
+    LaunchedEffect(queueIds) {
+        val pending = draft
+        if (pending != null && (pending.toSet() != queueIds.toSet() || pending == queueIds)) draft = null
+    }
+    val shown = draft?.mapNotNull { id -> queue.firstOrNull { it.id == id } } ?: queue
+
+    val listState = rememberLazyListState()
+    val reorderState =
+        rememberReorderableLazyListState(listState) { from, to ->
+            // Keys, not indices: the list has section headers, so a raw lazy-list index is not a
+            // position in the queue, and translating between the two by hand is exactly the
+            // off-by-one this avoids.
+            val fromId = from.key as? String ?: return@rememberReorderableLazyListState
+            val toId = to.key as? String ?: return@rememberReorderableLazyListState
+            val current = draft ?: queueIds
+            val fromIndex = current.indexOf(fromId)
+            val toIndex = current.indexOf(toId)
+            if (fromIndex >= 0 && toIndex >= 0) draft = QueueOrdering.move(current, fromIndex, toIndex)
+        }
+
+    // A newly enqueued download joins the *back* of the queue, so the old "scroll to the newest"
+    // rule no longer points at it. Showing the head of the queue is the useful answer: that is what
+    // is running now.
+    LaunchedEffect(queueIds.size) { if (queueIds.isNotEmpty()) listState.animateScrollToItem(0) }
+
+    LazyColumn(
+        state = listState,
+        modifier = modifier,
+        contentPadding = PaddingValues(Spacing.xl),
+        verticalArrangement = Arrangement.spacedBy(Spacing.md),
+    ) {
+        if (shown.isNotEmpty()) {
+            item(key = KEY_HEADER_ACTIVE) { SectionHeader(stringResource(R.string.history_section_active)) }
+            items(shown, key = { it.id }) { record ->
+                ReorderableItem(reorderState, key = record.id) { _ ->
                     DownloadCard(
                         record = record,
-                        // No entrance animation: in a lazy list it re-fires every time a card scrolls
-                        // back into view, which reads as flicker. Motion is reserved for the download.
-                        modifier = Modifier,
                         onCancel = { viewModel.cancel(record.id) },
                         onRetry = { viewModel.retry(record.id) },
                         onDelete = { viewModel.delete(record.id) },
+                        onPause = { viewModel.pause(record.id) },
+                        onResume = { viewModel.resume(record.id) },
+                        dragHandle =
+                        if (record.status.isReorderable) {
+                            {
+                                val description = stringResource(R.string.history_reorder)
+                                Box(
+                                    modifier =
+                                    Modifier
+                                        .size(Sizes.touchTarget)
+                                        .draggableHandle(
+                                            onDragStopped = { draft?.let(viewModel::reorder) },
+                                        )
+                                        .semantics { contentDescription = description },
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    DragHandleMark(
+                                        modifier = Modifier.size(Sizes.dragHandle),
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
+                            }
+                        } else {
+                            null
+                        },
                     )
                 }
             }
         }
+        if (finished.isNotEmpty()) {
+            item(key = KEY_HEADER_DONE) { SectionHeader(stringResource(R.string.history_section_done)) }
+            items(finished, key = { it.id }) { record ->
+                // Swipe clears a finished entry without hunting for a button. Only finished ones:
+                // swiping away something that is still downloading would be an accident waiting to
+                // happen, and the card carries Cancel for that.
+                val dismissState = rememberSwipeToDismissBoxState()
+                // Reacting to the settled value rather than vetoing the change: `confirmValueChange`
+                // is deprecated, and it was the wrong shape anyway — the swipe is not a question to
+                // approve, the card simply leaves. It disappears from the list on its own once the
+                // row is gone, so there is no state to reset.
+                LaunchedEffect(dismissState.currentValue) {
+                    if (dismissState.currentValue != SwipeToDismissBoxValue.Settled) {
+                        viewModel.delete(record.id)
+                    }
+                }
+                SwipeToDismissBox(
+                    state = dismissState,
+                    backgroundContent = { SwipeBackground() },
+                    modifier = Modifier.animateItem(),
+                ) {
+                    DownloadCard(
+                        record = record,
+                        onCancel = { viewModel.cancel(record.id) },
+                        onRetry = { viewModel.retry(record.id) },
+                        onDelete = { viewModel.delete(record.id) },
+                        onPause = { viewModel.pause(record.id) },
+                        onResume = { viewModel.resume(record.id) },
+                        dragHandle = null,
+                    )
+                }
+            }
+        }
+    }
+}
+
+private const val KEY_HEADER_ACTIVE = "header_active"
+private const val KEY_HEADER_DONE = "header_done"
+
+@Composable
+private fun SectionHeader(text: String) {
+    Text(
+        text,
+        style = MaterialTheme.typography.titleSmallEmphasized,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(top = Spacing.xs, bottom = Spacing.xs),
+    )
+}
+
+@Composable
+private fun SwipeBackground() {
+    Box(
+        modifier = Modifier.fillMaxWidth().height(Sizes.swipeBackground).clip(MaterialTheme.shapes.extraLarge),
+        contentAlignment = Alignment.CenterEnd,
+    ) {
+        Icon(
+            Icons.Outlined.DeleteSweep,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(horizontal = Spacing.xl),
+        )
     }
 }
 
@@ -200,13 +336,15 @@ private fun EmptyState(modifier: Modifier) {
 @Composable
 private fun DownloadCard(
     record: DownloadRecord,
-    modifier: Modifier,
     onCancel: () -> Unit,
     onRetry: () -> Unit,
     onDelete: () -> Unit,
+    onPause: () -> Unit,
+    onResume: () -> Unit,
+    dragHandle: (@Composable () -> Unit)?,
 ) {
     val context = LocalContext.current
-    Card(shape = MaterialTheme.shapes.extraLarge, modifier = modifier.fillMaxWidth()) {
+    Card(shape = MaterialTheme.shapes.extraLarge, modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(Spacing.xl)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Thumbnail(record)
@@ -231,6 +369,7 @@ private fun DownloadCard(
                 if (record.status.isActive) {
                     ContainedLoadingIndicator(modifier = Modifier.size(40.dp))
                 }
+                dragHandle?.invoke()
             }
 
             if (record.status.isActive) {
@@ -256,36 +395,52 @@ private fun DownloadCard(
 
             Spacer(Modifier.height(Spacing.sm))
             Row(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
-                when (record.status) {
-                    DownloadStatus.COMPLETED -> {
-                        TextButton(
-                            onClick = {
-                                MediaIntents.viewIntent(record.mediaUri, record.mode)
-                                    ?.let { context.startActivity(it) }
-                            },
-                            enabled = record.mediaUri != null,
-                        ) { Text(stringResource(R.string.history_open)) }
-                        TextButton(
-                            onClick = {
-                                MediaIntents.shareIntent(record.mediaUri, record.mode)
-                                    ?.let { context.startActivity(it) }
-                            },
-                            enabled = record.mediaUri != null,
-                        ) { Text(stringResource(R.string.history_share)) }
-                    }
-                    DownloadStatus.QUEUED,
-                    DownloadStatus.PREPARING,
-                    DownloadStatus.RUNNING,
-                    DownloadStatus.PROCESSING,
-                    ->
-                        TextButton(onClick = onCancel) { Text(stringResource(R.string.history_cancel)) }
-                    DownloadStatus.FAILED, DownloadStatus.CANCELLED ->
-                        TextButton(onClick = onRetry) { Text(stringResource(R.string.history_retry)) }
-                }
+                CardActions(record, context, onCancel, onRetry, onPause, onResume)
                 Box(Modifier.weight(1f))
                 TextButton(onClick = onDelete) { Text(stringResource(R.string.history_delete)) }
             }
         }
+    }
+}
+
+@Composable
+private fun CardActions(
+    record: DownloadRecord,
+    context: android.content.Context,
+    onCancel: () -> Unit,
+    onRetry: () -> Unit,
+    onPause: () -> Unit,
+    onResume: () -> Unit,
+) {
+    when (record.status) {
+        DownloadStatus.COMPLETED -> {
+            TextButton(
+                onClick = {
+                    MediaIntents.viewIntent(record.mediaUri, record.mode)?.let { context.startActivity(it) }
+                },
+                enabled = record.mediaUri != null,
+            ) { Text(stringResource(R.string.history_open)) }
+            TextButton(
+                onClick = {
+                    MediaIntents.shareIntent(record.mediaUri, record.mode)?.let { context.startActivity(it) }
+                },
+                enabled = record.mediaUri != null,
+            ) { Text(stringResource(R.string.history_share)) }
+        }
+        DownloadStatus.PAUSED ->
+            TextButton(onClick = onResume) { Text(stringResource(R.string.history_resume)) }
+        DownloadStatus.FAILED, DownloadStatus.CANCELLED ->
+            TextButton(onClick = onRetry) { Text(stringResource(R.string.history_retry)) }
+        else -> Unit
+    }
+    // Pause sits beside Cancel rather than replacing it: stopping for now and giving up are
+    // different intentions, and PROCESSING deliberately offers neither pause (nothing to resume
+    // from) nor a missing Cancel.
+    if (record.status.isPausable) {
+        TextButton(onClick = onPause) { Text(stringResource(R.string.history_pause)) }
+    }
+    if (record.status.isPending) {
+        TextButton(onClick = onCancel) { Text(stringResource(R.string.history_cancel)) }
     }
 }
 
@@ -327,6 +482,9 @@ private fun statusLabel(record: DownloadRecord): String =
             stringResource(R.string.history_status_running) +
                 (record.progressPercent?.let { " · ${it.toInt().coerceIn(0, 100)} %" } ?: "")
         DownloadStatus.PROCESSING -> stringResource(R.string.history_status_processing)
+        DownloadStatus.PAUSED ->
+            stringResource(R.string.history_status_paused) +
+                (record.progressPercent?.let { " · ${it.toInt().coerceIn(0, 100)} %" } ?: "")
         DownloadStatus.COMPLETED ->
             stringResource(R.string.history_status_saved) +
                 (record.sizeBytes?.let { " · ${formatSize(it)}" } ?: "") +

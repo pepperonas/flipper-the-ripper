@@ -22,6 +22,8 @@ data class DownloadEntity(
     val progressPercent: Float?,
     val errorKind: String?,
     val errorMessage: String?,
+    /** Queue position; smaller runs first. Seeded from [createdAtEpochMs] for pre-1.10 rows. */
+    val queueOrder: Long,
     val createdAtEpochMs: Long,
     val updatedAtEpochMs: Long,
 ) {
@@ -43,6 +45,7 @@ data class DownloadEntity(
             sizeBytes = sizeBytes,
             errorKind = errorKind,
             errorMessage = errorMessage,
+            queueOrder = queueOrder,
             createdAtEpochMs = createdAtEpochMs,
             updatedAtEpochMs = updatedAtEpochMs,
         )
@@ -63,6 +66,7 @@ data class DownloadEntity(
                 progressPercent = progressPercent,
                 errorKind = record.errorKind,
                 errorMessage = record.errorMessage,
+                queueOrder = record.queueOrder,
                 createdAtEpochMs = record.createdAtEpochMs,
                 updatedAtEpochMs = record.updatedAtEpochMs,
             )

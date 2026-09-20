@@ -17,6 +17,9 @@ complexity:
   TooManyFunctions:
     thresholdInFiles: 30
     thresholdInClasses: 20
+    # A Room DAO is a list of queries; one function per query is the idiom, and splitting it into
+    # several DAOs to satisfy a counter would scatter one table's access across several files.
+    ignoreAnnotated: ['Dao']
   CyclomaticComplexMethod:
     threshold: 20
     ignoreAnnotated: ['Composable']

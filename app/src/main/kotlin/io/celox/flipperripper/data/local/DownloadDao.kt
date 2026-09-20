@@ -75,6 +75,20 @@ interface DownloadDao {
     )
     suspend fun updateMetadata(id: String, title: String, thumbnailUrl: String?, updatedAt: Long)
 
+    /** Every row the runner may still have to deal with, in the order it will run them. */
+    @Query("SELECT * FROM downloads WHERE status IN (:statuses) ORDER BY queueOrder ASC, id ASC")
+    suspend fun getByStatus(statuses: List<String>): List<DownloadEntity>
+
+    /** Status only. Used for pause/resume, which must not touch progress or the queue position. */
+    @Query("UPDATE downloads SET status = :status, updatedAtEpochMs = :updatedAt WHERE id = :id")
+    suspend fun updateStatus(id: String, status: String, updatedAt: Long)
+
+    @Query("UPDATE downloads SET queueOrder = :order, updatedAtEpochMs = :updatedAt WHERE id = :id")
+    suspend fun updateQueueOrder(id: String, order: Long, updatedAt: Long)
+
+    @Query("SELECT MAX(queueOrder) FROM downloads")
+    suspend fun maxQueueOrder(): Long?
+
     @Query("DELETE FROM downloads WHERE id = :id")
     suspend fun delete(id: String)
 

@@ -51,10 +51,15 @@ constructor(@ApplicationContext private val context: Context) {
      * A percentage is shown only while bytes are actually moving. Preparing and post-processing have
      * no measurable total, so they stay indeterminate rather than parking a bar at 0 % or 100 %.
      */
-    fun buildProgress(phase: DownloadStatus, title: String, percent: Float?): Notification {
+    fun buildProgress(
+        phase: DownloadStatus,
+        title: String,
+        percent: Float?,
+        heading: String = context.getString(phaseTitleRes(phase)),
+    ): Notification {
         val builder =
             NotificationCompat.Builder(context, PROGRESS_CHANNEL_ID)
-                .setContentTitle(context.getString(phaseTitleRes(phase)))
+                .setContentTitle(heading)
                 .setContentText(title)
                 .setSmallIcon(R.drawable.ic_download)
                 .setOngoing(true)
@@ -71,6 +76,29 @@ constructor(@ApplicationContext private val context: Context) {
             builder.setProgress(0, 0, true)
         }
         return builder.build()
+    }
+
+    /**
+     * The queue's ongoing notification: the same thing [buildProgress] shows, plus where in the
+     * batch we are.
+     *
+     * The position is only added when there is actually more than one download, because "1 of 1" is
+     * noise dressed up as information.
+     */
+    fun buildQueueProgress(
+        phase: DownloadStatus,
+        title: String,
+        percent: Float?,
+        position: Int,
+        total: Int,
+    ): Notification {
+        val heading =
+            if (total > 1) {
+                context.getString(R.string.notif_queue_position, context.getString(phaseTitleRes(phase)), position, total)
+            } else {
+                context.getString(phaseTitleRes(phase))
+            }
+        return buildProgress(phase, title, percent, heading)
     }
 
     fun notifyCompleted(id: Int, title: String, openIntent: Intent?) {

@@ -7,7 +7,7 @@ import androidx.work.WorkManager
 import androidx.work.testing.WorkManagerTestInitHelper
 import com.google.common.truth.Truth.assertThat
 import io.celox.flipperripper.data.local.FlipperDatabase
-import io.celox.flipperripper.data.work.DownloadWorker
+import io.celox.flipperripper.data.work.DownloadQueueWorker
 import io.celox.flipperripper.domain.model.DownloadMode
 import io.celox.flipperripper.domain.model.DownloadRequest
 import io.celox.flipperripper.domain.model.DownloadStatus
@@ -70,7 +70,9 @@ class DownloadRepositoryImplTest {
             assertThat(record!!.status).isEqualTo(DownloadStatus.QUEUED)
             assertThat(record.title).isEqualTo("Clip")
 
-            val infos = workManager.getWorkInfosForUniqueWork(DownloadWorker.WORK_NAME_PREFIX + id).get()
+            // One queue worker for the whole queue, not one job per download — that is what makes
+            // the order in the table the order things actually run in.
+            val infos = workManager.getWorkInfosForUniqueWork(DownloadQueueWorker.WORK_NAME).get()
             assertThat(infos).hasSize(1)
         }
 
