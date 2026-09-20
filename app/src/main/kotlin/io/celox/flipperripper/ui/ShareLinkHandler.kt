@@ -89,7 +89,7 @@ constructor(
             DownloadRequest(
                 url = parsed.url,
                 platform = parsed.platform,
-                mode = prefs.defaultMode,
+                quality = prefs.defaultQuality,
             ),
         )
     }

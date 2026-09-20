@@ -11,6 +11,7 @@ import io.celox.flipperripper.domain.model.DownloadRequest
 import io.celox.flipperripper.domain.model.DownloadStatus
 import io.celox.flipperripper.domain.model.EngineResult
 import io.celox.flipperripper.domain.model.Platform
+import io.celox.flipperripper.domain.model.QualityChoice
 import io.celox.flipperripper.domain.model.ThemeMode
 import io.celox.flipperripper.domain.model.UserPreferences
 import io.celox.flipperripper.domain.model.VideoInfo
@@ -140,8 +141,8 @@ class FakeSettingsRepository(initial: UserPreferences = UserPreferences()) : Set
         state.value = state.value.copy(autoDownloadOnShare = enabled)
     }
 
-    override suspend fun setDefaultMode(mode: DownloadMode) {
-        state.value = state.value.copy(defaultMode = mode)
+    override suspend fun setDefaultQuality(quality: QualityChoice) {
+        state.value = state.value.copy(defaultQuality = quality)
     }
 
     override suspend fun setClipboardDetection(enabled: Boolean) {
@@ -258,6 +259,7 @@ fun sampleRecord(
     status: DownloadStatus = DownloadStatus.COMPLETED,
     progressPercent: Float? = null,
     queueOrder: Long = 1_000,
+    quality: QualityChoice = QualityChoice.BEST,
 ): DownloadRecord =
     DownloadRecord(
         id = id,
@@ -274,6 +276,7 @@ fun sampleRecord(
         errorKind = null,
         errorMessage = null,
         queueOrder = queueOrder,
+        quality = quality,
         createdAtEpochMs = 1_000,
         updatedAtEpochMs = 2_000,
     )

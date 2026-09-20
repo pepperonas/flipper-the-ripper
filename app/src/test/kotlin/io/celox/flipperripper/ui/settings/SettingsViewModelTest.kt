@@ -2,9 +2,9 @@ package io.celox.flipperripper.ui.settings
 
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
-import io.celox.flipperripper.domain.model.DownloadMode
 import io.celox.flipperripper.domain.model.EngineResult
 import io.celox.flipperripper.domain.model.EngineUpdateOutcome
+import io.celox.flipperripper.domain.model.QualityChoice
 import io.celox.flipperripper.domain.model.ThemeMode
 import io.celox.flipperripper.domain.usecase.UpdateEngineUseCase
 import io.celox.flipperripper.testing.FakeEngineRepository
@@ -40,14 +40,14 @@ class SettingsViewModelTest {
             vm.setDynamicColor(false)
             vm.setAutoDownload(false)
             vm.setClipboardDetection(false)
-            vm.setDefaultMode(DownloadMode.AUDIO)
+            vm.setDefaultQuality(QualityChoice.AUDIO_ONLY)
             advanceUntilIdle()
             val prefs = settings.state.value
             assertThat(prefs.themeMode).isEqualTo(ThemeMode.DARK)
             assertThat(prefs.useDynamicColor).isFalse()
             assertThat(prefs.autoDownloadOnShare).isFalse()
             assertThat(prefs.clipboardDetection).isFalse()
-            assertThat(prefs.defaultMode).isEqualTo(DownloadMode.AUDIO)
+            assertThat(prefs.defaultQuality).isEqualTo(QualityChoice.AUDIO_ONLY)
         }
 
     @Test

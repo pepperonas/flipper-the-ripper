@@ -6,6 +6,7 @@ import io.celox.flipperripper.domain.model.DownloadError
 import io.celox.flipperripper.domain.model.DownloadMode
 import io.celox.flipperripper.domain.model.EngineResult
 import io.celox.flipperripper.domain.model.Platform
+import io.celox.flipperripper.domain.model.QualityChoice
 import io.celox.flipperripper.domain.model.UserPreferences
 import io.celox.flipperripper.domain.usecase.ObserveEngineReadyUseCase
 import io.celox.flipperripper.domain.usecase.PeekClipboardUrlUseCase
@@ -86,7 +87,71 @@ class HomeViewModelTest {
             vm.onUrlChange("https://youtu.be/abc")
             assertThat(vm.state.value.detectedPlatform).isEqualTo(Platform.YOUTUBE)
             assertThat(vm.state.value.canDownload).isTrue()
-            assertThat(vm.state.value.showAudioOption).isTrue()
+            // Audio is a quality tier now, so "is audio offered" is a question about the picker.
+            assertThat(vm.state.value.availableQualities).contains(QualityChoice.AUDIO_ONLY)
+        }
+
+    @Test
+    fun `the picked quality is what gets enqueued`() =
+        runTest {
+            val vm = createViewModel()
+            vm.onUrlChange("https://youtu.be/abc")
+            vm.setQuality(QualityChoice.P720)
+            vm.download()
+            advanceUntilIdle()
+            assertThat(downloadRepo.enqueued.single().quality).isEqualTo(QualityChoice.P720)
+        }
+
+    @Test
+    fun `the mode follows the quality instead of being set beside it`() =
+        runTest {
+            // The two used to be separate controls and could disagree; a record claiming to be
+            // audio at 720p is a contradiction nobody should be able to create.
+            val vm = createViewModel()
+            vm.onUrlChange("https://youtu.be/abc")
+            vm.setQuality(QualityChoice.AUDIO_ONLY)
+            vm.download()
+            advanceUntilIdle()
+            assertThat(downloadRepo.enqueued.single().mode).isEqualTo(DownloadMode.AUDIO)
+        }
+
+    @Test
+    fun `a fresh screen starts on the remembered default`() =
+        runTest {
+            settings.state.value = UserPreferences(defaultQuality = QualityChoice.P480)
+            val vm = createViewModel()
+            advanceUntilIdle()
+            assertThat(vm.state.value.quality).isEqualTo(QualityChoice.P480)
+        }
+
+    @Test
+    fun `a deliberate choice survives the preferences arriving late`() =
+        runTest {
+            // Preferences load asynchronously. Overwriting a choice the user just made because the
+            // stored default turned up a moment later is exactly the surprise the picker avoids.
+            val vm = createViewModel()
+            vm.setQuality(QualityChoice.P720)
+            settings.state.value = UserPreferences(defaultQuality = QualityChoice.AUDIO_ONLY)
+            advanceUntilIdle()
+            assertThat(vm.state.value.quality).isEqualTo(QualityChoice.P720)
+        }
+
+    @Test
+    fun `nothing resolved yet offers every tier rather than none`() =
+        runTest {
+            val vm = createViewModel()
+            vm.onUrlChange("https://youtu.be/abc")
+            assertThat(vm.state.value.availableQualities).containsExactlyElementsIn(QualityChoice.entries)
+        }
+
+    @Test
+    fun `a webview platform offers no choice at all`() =
+        runTest {
+            // Instagram hands back one file; showing tiers that do nothing would be a lie the sheet
+            // then has to explain.
+            val vm = createViewModel()
+            vm.onUrlChange("https://www.instagram.com/reel/DbDBPYJnUMW/")
+            assertThat(vm.state.value.availableQualities).containsExactly(QualityChoice.BEST)
         }
 
     @Test
@@ -129,7 +194,7 @@ class HomeViewModelTest {
             val vm = createViewModel()
             vm.onUrlChange("https://youtu.be/abc")
             navigator.events.test {
-                vm.download(DownloadMode.VIDEO)
+                vm.download()
                 advanceUntilIdle()
                 // Through AppNavigator, NOT a Home-screen event: the jump to History must also
                 // happen when Home is not composed (a link shared while another tab was open).
@@ -164,7 +229,7 @@ class HomeViewModelTest {
             val vm = createViewModel()
             vm.onUrlChange("https://youtu.be/abc")
             navigator.events.test {
-                vm.download(DownloadMode.VIDEO)
+                vm.download()
                 advanceUntilIdle()
                 assertThat(awaitItem()).isEqualTo(AppNavTarget.HISTORY)
             }

@@ -125,7 +125,13 @@ constructor(
             prepareWorkingDir(spec.workingDir, keepExisting = spec.resume)
             val template = java.io.File(spec.workingDir, YtDlpArgsBuilder.OUTPUT_TEMPLATE).absolutePath
             val options =
-                YtDlpArgsBuilder.buildOptions(spec.platform, spec.mode, template, spec.preferProgressive)
+                YtDlpArgsBuilder.buildOptions(
+                    spec.platform,
+                    spec.mode,
+                    template,
+                    spec.preferProgressive,
+                    spec.quality,
+                )
 
             val request = YoutubeDLRequest(spec.url)
             options.forEach { request.addOption(it) }
@@ -193,5 +199,6 @@ constructor(
             thumbnailUrl = thumbnail,
             durationSeconds = duration.toLong().takeIf { it > 0 },
             id = id,
+            formats = formats.orEmpty().map { FormatMapper.toMediaFormat(it.height, it.vcodec, it.acodec) },
         )
 }

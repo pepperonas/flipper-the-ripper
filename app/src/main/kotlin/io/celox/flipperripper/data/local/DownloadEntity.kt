@@ -6,6 +6,7 @@ import io.celox.flipperripper.domain.model.DownloadMode
 import io.celox.flipperripper.domain.model.DownloadRecord
 import io.celox.flipperripper.domain.model.DownloadStatus
 import io.celox.flipperripper.domain.model.Platform
+import io.celox.flipperripper.domain.model.QualityChoice
 
 @Entity(tableName = "downloads")
 data class DownloadEntity(
@@ -24,6 +25,8 @@ data class DownloadEntity(
     val errorMessage: String?,
     /** Queue position; smaller runs first. Seeded from [createdAtEpochMs] for pre-1.10 rows. */
     val queueOrder: Long,
+    /** The quality the user asked for; seeded from [mode] for pre-1.10 rows. */
+    val quality: String,
     val createdAtEpochMs: Long,
     val updatedAtEpochMs: Long,
 ) {
@@ -46,6 +49,7 @@ data class DownloadEntity(
             errorKind = errorKind,
             errorMessage = errorMessage,
             queueOrder = queueOrder,
+            quality = runCatching { QualityChoice.valueOf(quality) }.getOrDefault(QualityChoice.BEST),
             createdAtEpochMs = createdAtEpochMs,
             updatedAtEpochMs = updatedAtEpochMs,
         )
@@ -67,6 +71,7 @@ data class DownloadEntity(
                 errorKind = record.errorKind,
                 errorMessage = record.errorMessage,
                 queueOrder = record.queueOrder,
+                quality = record.quality.name,
                 createdAtEpochMs = record.createdAtEpochMs,
                 updatedAtEpochMs = record.updatedAtEpochMs,
             )

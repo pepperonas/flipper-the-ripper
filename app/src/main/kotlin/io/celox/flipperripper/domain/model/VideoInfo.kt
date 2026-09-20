@@ -12,4 +12,11 @@ data class VideoInfo(
     /** Duration in seconds, when known. */
     val durationSeconds: Long?,
     val id: String?,
+    /**
+     * The renditions the platform offers, reduced to what a quality choice depends on.
+     *
+     * Empty when the engine did not report any — a WebView platform, or a link nobody resolved
+     * first. The picker then offers its default rather than nothing.
+     */
+    val formats: List<MediaFormat> = emptyList(),
 )

@@ -41,10 +41,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.celox.flipperripper.R
 import io.celox.flipperripper.domain.model.EngineUpdateOutcome
+import io.celox.flipperripper.domain.model.QualityChoice
 import io.celox.flipperripper.domain.model.ThemeMode
 import io.celox.flipperripper.ui.components.ExpressiveLoadingIndicator
 import io.celox.flipperripper.ui.components.SegmentedToggle
 import io.celox.flipperripper.ui.components.springPressed
+import io.celox.flipperripper.ui.home.QualityOptions
 import io.celox.flipperripper.ui.theme.FieldShape
 import io.celox.flipperripper.ui.theme.Sizes
 import io.celox.flipperripper.ui.theme.Spacing
@@ -131,6 +133,24 @@ fun SettingsScreen(
             }
 
             SettingsSection(stringResource(R.string.settings_behavior)) {
+                Text(
+                    stringResource(R.string.settings_default_quality),
+                    style = MaterialTheme.typography.titleSmall,
+                )
+                Text(
+                    stringResource(R.string.settings_default_quality_desc),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.height(Spacing.sm))
+                // Every tier is offered here: this is the default for links whose renditions nobody
+                // has looked up yet, so there is nothing to narrow it down with.
+                QualityOptions(
+                    available = QualityChoice.entries.toSet(),
+                    selected = prefs.defaultQuality,
+                    onSelect = viewModel::setDefaultQuality,
+                )
+                Spacer(Modifier.height(Spacing.md))
                 SwitchRow(
                     title = stringResource(R.string.settings_auto_download),
                     subtitle = stringResource(R.string.settings_auto_download_desc),

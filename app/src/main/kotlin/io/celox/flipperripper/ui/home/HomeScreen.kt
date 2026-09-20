@@ -6,11 +6,13 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -21,6 +23,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.outlined.Clear
 import androidx.compose.material.icons.outlined.ContentPaste
 import androidx.compose.material3.Button
@@ -35,6 +38,8 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SplitButtonDefaults
+import androidx.compose.material3.SplitButtonLayout
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -42,11 +47,15 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.core.content.getSystemService
@@ -54,11 +63,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import io.celox.flipperripper.R
-import io.celox.flipperripper.domain.model.DownloadMode
 import io.celox.flipperripper.ui.components.AppMark
 import io.celox.flipperripper.ui.components.ExpressiveLoadingIndicator
 import io.celox.flipperripper.ui.components.PlatformBadge
-import io.celox.flipperripper.ui.components.SegmentedToggle
 import io.celox.flipperripper.ui.components.springPressed
 import io.celox.flipperripper.ui.motion.fadeRiseIn
 import io.celox.flipperripper.ui.theme.FieldShape
@@ -72,7 +79,17 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
-    var mode by remember(state.detectedPlatform) { mutableStateOf(state.defaultMode) }
+    var showOptions by rememberSaveable { mutableStateOf(false) }
+
+    if (showOptions) {
+        QualitySheet(
+            available = state.availableQualities,
+            selected = state.quality,
+            bestHeight = state.bestHeight,
+            onSelect = viewModel::setQuality,
+            onDismiss = { showOptions = false },
+        )
+    }
 
     ObserveAsEvents(viewModel.events) { event ->
         when (event) {
@@ -191,27 +208,27 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
                 }
             }
 
-            AnimatedVisibility(visible = state.showAudioOption) {
-                Column {
-                    Spacer(Modifier.height(Spacing.lg))
-                    SegmentedToggle(
-                        options =
-                        listOf(
-                            DownloadMode.VIDEO to stringResource(R.string.home_mode_video),
-                            DownloadMode.AUDIO to stringResource(R.string.home_mode_audio),
-                        ),
-                        selected = mode,
-                        onSelect = { mode = it },
-                    )
-                }
-            }
-
             Spacer(Modifier.height(Spacing.xl))
             ActionRow(
                 canDownload = state.canDownload,
                 isResolving = state.isResolving,
                 onResolve = viewModel::resolve,
-                onDownload = { viewModel.download(mode) },
+                onDownload = viewModel::download,
+                onOpenOptions = { showOptions = true },
+            )
+
+            // What will happen, in one line, and tappable — the same sheet the chevron opens.
+            // Without it the choice lives only inside a sheet nobody has open.
+            Spacer(Modifier.height(Spacing.sm))
+            Text(
+                text = qualityLabel(state.quality),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier =
+                Modifier
+                    .clip(MaterialTheme.shapes.small)
+                    .clickable { showOptions = true }
+                    .padding(horizontal = Spacing.sm, vertical = Spacing.xs),
             )
 
             AnimatedVisibility(visible = state.isResolving) {
@@ -262,15 +279,23 @@ private fun Hero() {
     }
 }
 
+/**
+ * `[Load info] [Download ▾]`.
+ *
+ * The leading half downloads with whatever is already chosen — the one-tap path is untouched. The
+ * chevron is the only new thing, and it opens the options rather than asking a question first.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ActionRow(
     canDownload: Boolean,
     isResolving: Boolean,
     onResolve: () -> Unit,
     onDownload: () -> Unit,
+    onOpenOptions: () -> Unit,
 ) {
     val resolveInteraction = remember { MutableInteractionSource() }
-    val downloadInteraction = remember { MutableInteractionSource() }
+    val optionsLabel = stringResource(R.string.home_options)
     Row(horizontalArrangement = Arrangement.spacedBy(Spacing.md), modifier = Modifier.fillMaxWidth()) {
         FilledTonalButton(
             onClick = onResolve,
@@ -278,12 +303,32 @@ private fun ActionRow(
             interactionSource = resolveInteraction,
             modifier = Modifier.weight(1f).height(Sizes.primaryButtonHeight).springPressed(resolveInteraction),
         ) { Text(stringResource(R.string.home_fetch)) }
-        Button(
-            onClick = onDownload,
-            enabled = canDownload,
-            interactionSource = downloadInteraction,
-            modifier = Modifier.weight(1f).height(Sizes.primaryButtonHeight).springPressed(downloadInteraction),
-        ) { Text(stringResource(R.string.home_download)) }
+        SplitButtonLayout(
+            modifier = Modifier.weight(1f).height(Sizes.primaryButtonHeight),
+            leadingButton = {
+                SplitButtonDefaults.LeadingButton(
+                    onClick = onDownload,
+                    enabled = canDownload,
+                    modifier = Modifier.fillMaxHeight(),
+                ) { Text(stringResource(R.string.home_download)) }
+            },
+            trailingButton = {
+                SplitButtonDefaults.TrailingButton(
+                    checked = false,
+                    onCheckedChange = { onOpenOptions() },
+                    enabled = canDownload,
+                    modifier = Modifier.fillMaxHeight().semantics {
+                        contentDescription = optionsLabel
+                    },
+                ) {
+                    Icon(
+                        Icons.Filled.KeyboardArrowDown,
+                        contentDescription = null,
+                        modifier = Modifier.size(SplitButtonDefaults.TrailingIconSize),
+                    )
+                }
+            },
+        )
     }
 }
 

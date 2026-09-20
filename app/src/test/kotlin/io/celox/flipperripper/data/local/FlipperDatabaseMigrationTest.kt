@@ -5,6 +5,7 @@ import android.database.sqlite.SQLiteDatabase
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.google.common.truth.Truth.assertThat
+import io.celox.flipperripper.domain.model.QualityChoice
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Before
@@ -78,6 +79,35 @@ class FlipperDatabaseMigrationTest {
             assertThat(openCurrent().downloadDao().getByStatus(listOf("COMPLETED"))).isEmpty()
         }
 
+    @Test
+    fun `an audio download stays audio when the quality column arrives`() =
+        runTest {
+            // Defaulting every pre-1.10 row to BEST would have turned a saved audio download into a
+            // video one the moment somebody retried it.
+            writeVersion1(
+                Row(id = "song", title = "Song", created = 1_000, mode = "AUDIO"),
+                Row(id = "clip", title = "Clip", created = 2_000, mode = "VIDEO"),
+            )
+
+            val dao = openCurrent().downloadDao()
+
+            assertThat(dao.getById("song")?.toDomain()?.quality).isEqualTo(QualityChoice.AUDIO_ONLY)
+            assertThat(dao.getById("clip")?.toDomain()?.quality).isEqualTo(QualityChoice.BEST)
+        }
+
+    @Test
+    fun `a version 2 database upgrades on its own`() =
+        runTest {
+            // The chain 1 to 3 is what an old install takes; this is what an install from the queue
+            // release takes, and it has to work without passing through the first migration.
+            writeVersion2(Row(id = "kept", title = "Kept", created = 5_000, mode = "AUDIO"))
+
+            val row = openCurrent().downloadDao().getById("kept")
+
+            assertThat(row?.title).isEqualTo("Kept")
+            assertThat(row?.toDomain()?.quality).isEqualTo(QualityChoice.AUDIO_ONLY)
+        }
+
     private fun openCurrent(): FlipperDatabase =
         Room.databaseBuilder(context, FlipperDatabase::class.java, name)
             .addMigrations(*FlipperDatabase.MIGRATIONS)
@@ -85,7 +115,17 @@ class FlipperDatabaseMigrationTest {
             .build()
             .also { db = it }
 
-    private data class Row(val id: String, val title: String, val created: Long)
+    private data class Row(val id: String, val title: String, val created: Long, val mode: String = "VIDEO")
+
+    /** Version 2: the queue column exists, the quality column does not. */
+    private fun writeVersion2(vararg rows: Row) {
+        writeVersion1(*rows)
+        val raw = SQLiteDatabase.openOrCreateDatabase(context.getDatabasePath(name), null)
+        raw.execSQL("ALTER TABLE downloads ADD COLUMN queueOrder INTEGER NOT NULL DEFAULT 0")
+        raw.execSQL("UPDATE downloads SET queueOrder = createdAtEpochMs")
+        raw.version = 2
+        raw.close()
+    }
 
     /** The table exactly as version 1 shipped it — no `queueOrder`. */
     private fun writeVersion1(vararg rows: Row) {
@@ -108,7 +148,7 @@ class FlipperDatabaseMigrationTest {
             raw.execSQL(
                 "INSERT INTO downloads VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 arrayOf(
-                    it.id, "https://youtu.be/${it.id}", "YOUTUBE", it.title, "VIDEO", null,
+                    it.id, "https://youtu.be/${it.id}", "YOUTUBE", it.title, it.mode, null,
                     "COMPLETED", null, null, null, null, null, null, it.created, it.created,
                 ),
             )

@@ -59,6 +59,7 @@ class Job:
     id: str
     url: str
     mode: str
+    max_height: int = 0
     status: str = "queued"  # queued | running | completed | failed
     progress: float = 0.0
     error: Optional[str] = None
@@ -79,6 +80,9 @@ class ResolveBody(BaseModel):
 class JobBody(BaseModel):
     url: str
     mode: str = "video"  # video | audio
+    # A resolution ceiling in pixels, e.g. 720. Absent or 0 means "no ceiling".
+    # Without this the server silently ignored the tier the user picked and always returned best.
+    max_height: int = 0
 
 
 def _is_supported(url: str) -> bool:
@@ -120,12 +124,24 @@ def _is_youtube(url: str) -> bool:
     return any(host == h or host.endswith("." + h) for h in YOUTUBE_HOSTS)
 
 
-def _base_args(url: str, mode: str, out_template: str) -> list[str]:
+def _base_args(url: str, mode: str, out_template: str, max_height: int = 0) -> list[str]:
     args = [YTDLP, "--no-playlist", "--no-mtime", "--no-warnings", "--newline"]
     if IMPERSONATE:
         args += ["--impersonate", IMPERSONATE]
     if mode == "audio":
         args += ["-x", "--audio-format", "m4a", "--audio-quality", "0"]
+    elif max_height > 0:
+        # A cap, not a preference: `-S res:720` merely sorts by closeness and will hand back 1080p.
+        # Mirrors the app's FormatSelection, including the trailing `/b` so a video that exists only
+        # above the cap still downloads instead of failing.
+        args += [
+            "-f",
+            f"bv*[height<={max_height}]+ba/b[height<={max_height}]/b",
+            "-S",
+            "vcodec:h264,acodec:m4a",
+            "--merge-output-format",
+            "mp4",
+        ]
     else:
         args += ["-S", "vcodec:h264,res,acodec:m4a", "--merge-output-format", "mp4"]
     # Prefer YouTube player clients that need no GVS PO token and serve no DRM. `tv` is token-free but
@@ -168,7 +184,7 @@ async def _run_download(job: Job) -> None:
     work = DATA_DIR / job.id
     work.mkdir(parents=True, exist_ok=True)
     template = str(work / "%(title).100B [%(id)s].%(ext)s")
-    args = _base_args(job.url, job.mode, template)
+    args = _base_args(job.url, job.mode, template, job.max_height)
     stderr_buf: list[str] = []
     pct_re = re.compile(r"flip:\s*([0-9.]+)%")
 
@@ -250,7 +266,14 @@ async def create_job(body: JobBody) -> dict:
     if not _is_supported(body.url):
         raise HTTPException(status_code=400, detail="unsupported url")
     _cleanup_expired()
-    job = Job(id=uuid.uuid4().hex, url=body.url, mode=("audio" if body.mode == "audio" else "video"))
+    job = Job(
+        id=uuid.uuid4().hex,
+        url=body.url,
+        mode=("audio" if body.mode == "audio" else "video"),
+        # Clamped rather than trusted: this is a number from the network that lands in a yt-dlp
+        # format string. Anything outside a plausible video height means "no ceiling".
+        max_height=body.max_height if 0 < body.max_height <= 4320 else 0,
+    )
     JOBS[job.id] = job
     asyncio.create_task(_run_download(job))
     return {"jobId": job.id}

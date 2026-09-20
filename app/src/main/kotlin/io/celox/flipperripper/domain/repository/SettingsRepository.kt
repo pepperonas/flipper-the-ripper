@@ -1,7 +1,7 @@
 package io.celox.flipperripper.domain.repository
 
 import io.celox.flipperripper.domain.model.AppUpdate
-import io.celox.flipperripper.domain.model.DownloadMode
+import io.celox.flipperripper.domain.model.QualityChoice
 import io.celox.flipperripper.domain.model.ThemeMode
 import io.celox.flipperripper.domain.model.UserPreferences
 import kotlinx.coroutines.flow.Flow
@@ -16,7 +16,7 @@ interface SettingsRepository {
 
     suspend fun setAutoDownloadOnShare(enabled: Boolean)
 
-    suspend fun setDefaultMode(mode: DownloadMode)
+    suspend fun setDefaultQuality(quality: QualityChoice)
 
     suspend fun setClipboardDetection(enabled: Boolean)
 

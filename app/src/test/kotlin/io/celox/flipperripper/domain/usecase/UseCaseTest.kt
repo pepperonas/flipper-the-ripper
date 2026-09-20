@@ -59,7 +59,7 @@ class UseCaseTest {
         runTest {
             val repo = FakeDownloadRepository().apply { nextId = "abc" }
             val useCase = StartDownloadUseCase(repo)
-            val result = useCase(DownloadRequest("https://youtu.be/x", Platform.YOUTUBE, DownloadMode.VIDEO))
+            val result = useCase(DownloadRequest("https://youtu.be/x", Platform.YOUTUBE, mode = DownloadMode.VIDEO))
             assertThat((result as EngineResult.Success).value).isEqualTo("abc")
             assertThat(repo.enqueued).hasSize(1)
         }

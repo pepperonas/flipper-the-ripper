@@ -109,6 +109,7 @@ constructor(
                 processId = id,
                 preferProgressive = progressive,
                 resume = resume,
+                quality = record.toDomain().quality,
             )
 
         // Attempt 1: best quality (may need an ffmpeg merge).

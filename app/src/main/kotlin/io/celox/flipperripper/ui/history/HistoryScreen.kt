@@ -511,6 +511,9 @@ private fun statusLabel(record: DownloadRecord): String =
         DownloadStatus.COMPLETED ->
             stringResource(R.string.history_status_saved) +
                 (record.sizeBytes?.let { " · ${formatSize(it)}" } ?: "") +
+                // The quality the user asked for, so a list of downloads of the same video is not a
+                // row of identical cards. "Best" is the default and says nothing, so it is left out.
+                (record.quality.maxHeight?.let { " · ${it}p" } ?: "") +
                 if (record.mode == DownloadMode.AUDIO) " · ${stringResource(R.string.history_status_audio)}" else ""
         DownloadStatus.FAILED -> stringResource(R.string.history_status_failed)
         DownloadStatus.CANCELLED -> stringResource(R.string.history_status_cancelled)

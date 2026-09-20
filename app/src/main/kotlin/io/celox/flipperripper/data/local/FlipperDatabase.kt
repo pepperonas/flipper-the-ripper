@@ -5,7 +5,7 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [DownloadEntity::class], version = 2, exportSchema = false)
+@Database(entities = [DownloadEntity::class], version = 3, exportSchema = false)
 abstract class FlipperDatabase : RoomDatabase() {
     abstract fun downloadDao(): DownloadDao
 
@@ -32,6 +32,22 @@ abstract class FlipperDatabase : RoomDatabase() {
                 }
             }
 
-        val MIGRATIONS = arrayOf(MIGRATION_1_2)
+        /**
+         * Adds the quality the download was asked for, so a retry repeats the choice and the card
+         * can say "720p".
+         *
+         * Existing rows are mapped from the column that already carried half the answer: an audio
+         * download becomes AUDIO_ONLY, everything else BEST. Defaulting all of them to BEST would
+         * have turned every saved audio download into a video one the moment it was retried.
+         */
+        val MIGRATION_2_3 =
+            object : Migration(2, 3) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL("ALTER TABLE downloads ADD COLUMN quality TEXT NOT NULL DEFAULT 'BEST'")
+                    db.execSQL("UPDATE downloads SET quality = 'AUDIO_ONLY' WHERE mode = 'AUDIO'")
+                }
+            }
+
+        val MIGRATIONS = arrayOf(MIGRATION_1_2, MIGRATION_2_3)
     }
 }

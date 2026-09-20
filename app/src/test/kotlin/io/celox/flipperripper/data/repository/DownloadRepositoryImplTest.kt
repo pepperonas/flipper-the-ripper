@@ -61,7 +61,7 @@ class DownloadRepositoryImplTest {
         runTest {
             val id =
                 repository.enqueue(
-                    DownloadRequest("https://youtu.be/x", Platform.YOUTUBE, DownloadMode.VIDEO, title = "Clip"),
+                    DownloadRequest("https://youtu.be/x", Platform.YOUTUBE, mode = DownloadMode.VIDEO, title = "Clip"),
                 )
             assertThat(id).isEqualTo("rec-1")
 

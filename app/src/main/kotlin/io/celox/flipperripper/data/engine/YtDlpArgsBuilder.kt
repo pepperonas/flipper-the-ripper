@@ -1,7 +1,9 @@
 package io.celox.flipperripper.data.engine
 
 import io.celox.flipperripper.domain.model.DownloadMode
+import io.celox.flipperripper.domain.model.FormatSelection
 import io.celox.flipperripper.domain.model.Platform
+import io.celox.flipperripper.domain.model.QualityChoice
 
 /**
  * Builds the yt-dlp argument list.
@@ -55,21 +57,18 @@ object YtDlpArgsBuilder {
         mode: DownloadMode,
         outputTemplate: String,
         preferProgressive: Boolean = false,
+        quality: QualityChoice = QualityChoice.BEST,
     ): List<String> {
         val args = mutableListOf<String>()
 
         when (mode) {
-            DownloadMode.VIDEO ->
-                if (preferProgressive) {
-                    // Progressive fallback: a single pre-muxed file (video+audio in one stream), so no
-                    // ffmpeg merge is required. Used to retry when a merge/ffmpeg failure occurred.
-                    args += listOf("-f", "best[ext=mp4]/best")
-                } else {
-                    // Prefer H.264 + m4a so the muxed mp4 plays everywhere; avoids the "audio-only/broken"
-                    // VP9-in-mp4 problem described in social_dl.rs. (Best quality — may require ffmpeg merge.)
-                    args += listOf("-S", "vcodec:h264,res,acodec:m4a")
-                    args += listOf("--merge-output-format", "mp4")
-                }
+            DownloadMode.VIDEO -> {
+                // Which renditions may be taken is [FormatSelection]'s decision, not this builder's:
+                // it is the part a person actually chose, and the one worth reading in a test.
+                // Everything around it — the mp4 muxing, the playlist and mtime flags — is unchanged.
+                args += FormatSelection.videoFormatArgs(quality, preferProgressive)
+                if (!preferProgressive) args += listOf("--merge-output-format", "mp4")
+            }
             DownloadMode.AUDIO ->
                 if (preferProgressive) {
                     // Grab the best m4a audio stream directly, without an ffmpeg extraction/convert pass.

@@ -10,7 +10,8 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.celox.flipperripper.domain.model.AppUpdate
-import io.celox.flipperripper.domain.model.DownloadMode
+import io.celox.flipperripper.domain.model.QualityChoice
+import io.celox.flipperripper.domain.model.QualityPreference
 import io.celox.flipperripper.domain.model.ThemeMode
 import io.celox.flipperripper.domain.model.UserPreferences
 import io.celox.flipperripper.domain.repository.SettingsRepository
@@ -30,6 +31,7 @@ constructor(@ApplicationContext private val context: Context) : SettingsReposito
         val DYNAMIC = booleanPreferencesKey("dynamic_color")
         val AUTO_DOWNLOAD = booleanPreferencesKey("auto_download_on_share")
         val DEFAULT_MODE = stringPreferencesKey("default_mode")
+        val DEFAULT_QUALITY = stringPreferencesKey("default_quality")
         val CLIPBOARD = booleanPreferencesKey("clipboard_detection")
         val LAST_ENGINE_UPDATE = longPreferencesKey("last_engine_update_ms")
         val LAST_APP_UPDATE_CHECK = longPreferencesKey("last_app_update_check_ms")
@@ -45,8 +47,7 @@ constructor(@ApplicationContext private val context: Context) : SettingsReposito
                     ?: ThemeMode.SYSTEM,
                 useDynamicColor = prefs[Keys.DYNAMIC] ?: true,
                 autoDownloadOnShare = prefs[Keys.AUTO_DOWNLOAD] ?: true,
-                defaultMode = prefs[Keys.DEFAULT_MODE]?.let { runCatching { DownloadMode.valueOf(it) }.getOrNull() }
-                    ?: DownloadMode.VIDEO,
+                defaultQuality = QualityPreference.read(prefs[Keys.DEFAULT_QUALITY], prefs[Keys.DEFAULT_MODE]),
                 clipboardDetection = prefs[Keys.CLIPBOARD] ?: true,
             )
         }
@@ -63,8 +64,8 @@ constructor(@ApplicationContext private val context: Context) : SettingsReposito
         context.dataStore.edit { it[Keys.AUTO_DOWNLOAD] = enabled }
     }
 
-    override suspend fun setDefaultMode(mode: DownloadMode) {
-        context.dataStore.edit { it[Keys.DEFAULT_MODE] = mode.name }
+    override suspend fun setDefaultQuality(quality: QualityChoice) {
+        context.dataStore.edit { it[Keys.DEFAULT_QUALITY] = quality.name }
     }
 
     override suspend fun setClipboardDetection(enabled: Boolean) {

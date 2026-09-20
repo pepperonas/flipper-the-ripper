@@ -179,6 +179,7 @@ class DownloadQueueWorkerTest {
                 errorKind = null,
                 errorMessage = null,
                 queueOrder = order,
+                quality = "BEST",
                 createdAtEpochMs = created,
                 updatedAtEpochMs = created,
             ),

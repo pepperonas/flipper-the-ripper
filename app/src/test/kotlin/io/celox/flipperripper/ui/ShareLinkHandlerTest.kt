@@ -4,6 +4,7 @@ import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
 import io.celox.flipperripper.domain.model.DownloadMode
 import io.celox.flipperripper.domain.model.Platform
+import io.celox.flipperripper.domain.model.QualityChoice
 import io.celox.flipperripper.domain.model.UserPreferences
 import io.celox.flipperripper.domain.repository.SettingsRepository
 import io.celox.flipperripper.domain.usecase.ResolveUrlUseCase
@@ -156,7 +157,7 @@ class ShareLinkHandlerTest {
     fun `the default download mode from settings is used`() =
         runTest {
             settings.state.value =
-                UserPreferences(autoDownloadOnShare = true, defaultMode = DownloadMode.AUDIO)
+                UserPreferences(autoDownloadOnShare = true, defaultQuality = QualityChoice.AUDIO_ONLY)
             handler()
             bus.post("https://youtu.be/abc")
             advanceUntilIdle()
@@ -184,6 +185,19 @@ class ShareLinkHandlerTest {
             handler()
             advanceUntilIdle()
             assertThat(downloads.enqueued).hasSize(1)
+        }
+
+    @Test
+    fun `a shared link takes the default quality and is never asked`() =
+        runTest {
+            // The one-tap path stays one tap. The picker is an offer beside it, not a question in
+            // front of it.
+            settings.state.value =
+                UserPreferences(autoDownloadOnShare = true, defaultQuality = QualityChoice.P720)
+            handler()
+            bus.post("https://youtu.be/abc")
+            advanceUntilIdle()
+            assertThat(downloads.enqueued.single().quality).isEqualTo(QualityChoice.P720)
         }
 
     @Test

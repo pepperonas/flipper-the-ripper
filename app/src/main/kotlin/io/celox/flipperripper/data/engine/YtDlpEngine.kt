@@ -22,6 +22,9 @@ data class DownloadSpec(
     val processId: String,
     /** Use a single pre-muxed format (no ffmpeg merge) — the fallback retry after a merge failure. */
     val preferProgressive: Boolean = false,
+    /** The resolution ceiling the user picked; [io.celox.flipperripper.domain.model.QualityChoice.BEST] for no ceiling. */
+    val quality: io.celox.flipperripper.domain.model.QualityChoice =
+        io.celox.flipperripper.domain.model.QualityChoice.BEST,
     /**
      * Continue what is already in [workingDir] instead of starting over.
      *

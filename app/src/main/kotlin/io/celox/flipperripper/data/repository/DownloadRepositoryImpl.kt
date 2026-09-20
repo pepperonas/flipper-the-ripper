@@ -53,6 +53,7 @@ constructor(
                 errorKind = null,
                 errorMessage = null,
                 queueOrder = QueueOrdering.nextOrder(listOfNotNull(dao.maxQueueOrder())),
+                quality = request.quality.name,
                 createdAtEpochMs = now,
                 updatedAtEpochMs = now,
             ),

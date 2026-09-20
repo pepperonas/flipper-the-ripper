@@ -73,6 +73,8 @@
     <string name="settings_dynamic_color">Dynamic color</string>
     <string name="settings_dynamic_color_desc">Use wallpaper-based colors (Android 12+)</string>
     <string name="settings_behavior">Behavior</string>
+    <string name="settings_default_quality">Default quality</string>
+    <string name="settings_default_quality_desc">Used for shared links and as the starting point on Home.</string>
     <string name="settings_auto_download">Auto-download on share</string>
     <string name="settings_auto_download_desc">Start downloading immediately when a link is shared</string>
     <string name="settings_clipboard">Clipboard detection</string>
@@ -117,6 +119,17 @@
     <string name="about_open_failed">No app can open this link.</string>
     <string name="settings_legal">Legal notice</string>
     <string name="settings_legal_body">Only download content you have the right to save. Respect the terms of service of each platform and applicable copyright law. Flipper the Ripper does not bypass DRM or access restrictions.</string>
+
+    <!-- Quality picker -->
+    <string name="quality_title">Quality</string>
+    <string name="quality_best">Best</string>
+    <string name="quality_audio_only">Audio only</string>
+    <!-- A resolution tier, e.g. "720p". -->
+    <string name="quality_p">%1$dp</string>
+    <string name="quality_up_to">This video goes up to %1$dp.</string>
+    <string name="quality_unknown">Load info to see which qualities this video has.</string>
+    <string name="quality_single_file">This platform hands back one file — original quality, as published.</string>
+    <string name="home_options">Download options</string>
 
     <!-- Notifications -->
     <string name="channel_downloads_progress">Download progress</string>

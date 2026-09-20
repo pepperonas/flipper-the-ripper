@@ -4,9 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.celox.flipperripper.BuildConfig
-import io.celox.flipperripper.domain.model.DownloadMode
 import io.celox.flipperripper.domain.model.DownloadRequest
 import io.celox.flipperripper.domain.model.EngineResult
+import io.celox.flipperripper.domain.model.FormatSelection
+import io.celox.flipperripper.domain.model.QualityChoice
 import io.celox.flipperripper.domain.repository.SettingsRepository
 import io.celox.flipperripper.domain.usecase.ObserveEngineReadyUseCase
 import io.celox.flipperripper.domain.usecase.PeekClipboardUrlUseCase
@@ -55,7 +56,11 @@ constructor(
             settingsRepository.preferences.collect { prefs ->
                 _state.update {
                     it.copy(
-                        defaultMode = prefs.defaultMode,
+                        defaultQuality = prefs.defaultQuality,
+                        // Only when the user has not picked for this download yet: overwriting a
+                        // deliberate choice because the stored default arrived a moment later is
+                        // exactly the kind of surprise the picker exists to avoid.
+                        quality = if (it.quality == it.defaultQuality) prefs.defaultQuality else it.quality,
                         clipboardDetectionEnabled = prefs.clipboardDetection,
                     )
                 }
@@ -142,7 +147,7 @@ constructor(
         }
         _state.update { it.copy(isResolving = true, errorMessage = null, videoInfo = null) }
         viewModelScope.launch {
-            when (val result = resolveVideoInfo(url, _state.value.defaultMode)) {
+            when (val result = resolveVideoInfo(url, FormatSelection.mode(_state.value.quality))) {
                 is EngineResult.Success ->
                     _state.update { it.copy(isResolving = false, videoInfo = result.value) }
                 is EngineResult.Failure ->
@@ -161,7 +166,9 @@ constructor(
      * happening. The History card, queued or running with its progress wave at the top of the
      * list, is the only evidence that answers that; so that is where a share lands.
      */
-    fun download(mode: DownloadMode) {
+    fun setQuality(choice: QualityChoice) = _state.update { it.copy(quality = choice) }
+
+    fun download() {
         val state = _state.value
         val platform = state.detectedPlatform ?: return
         viewModelScope.launch {
@@ -169,13 +176,19 @@ constructor(
                 DownloadRequest(
                     url = state.urlInput.trim(),
                     platform = platform,
-                    mode = mode,
+                    quality = state.quality,
                     title = state.videoInfo?.title,
                     thumbnailUrl = state.videoInfo?.thumbnailUrl,
                 )
             when (val result = startDownload(request)) {
                 is EngineResult.Success -> {
-                    _state.update { HomeUiState(engineReady = it.engineReady, defaultMode = it.defaultMode) }
+                    _state.update {
+                        HomeUiState(
+                            engineReady = it.engineReady,
+                            defaultQuality = it.defaultQuality,
+                            quality = it.defaultQuality,
+                        )
+                    }
                     // Through the app-level navigator, not a Home-screen event: a share arrives with
                     // whatever tab was last open, and Home may not be composed at all.
                     appNavigator.navigateTo(AppNavTarget.HISTORY)

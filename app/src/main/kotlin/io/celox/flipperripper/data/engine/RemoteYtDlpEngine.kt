@@ -145,7 +145,15 @@ constructor(
 
     private fun startJob(cfg: BackendConfig, spec: DownloadSpec): String? {
         val mode = if (spec.mode == DownloadMode.AUDIO) "audio" else "video"
-        val body = JSONObject().put("url", spec.url).put("mode", mode).toString().toRequestBody(jsonMedia)
+        // The chosen ceiling travels with the job; without it the server quietly returned best
+        // quality no matter which tier the user picked.
+        val body =
+            JSONObject()
+                .put("url", spec.url)
+                .put("mode", mode)
+                .put("max_height", spec.quality.maxHeight ?: 0)
+                .toString()
+                .toRequestBody(jsonMedia)
         client.newCall(request(cfg, "/api/jobs").post(body).build()).execute().use { resp ->
             if (!resp.isSuccessful) return null
             return JSONObject(resp.body?.string().orEmpty()).optString("jobId").ifBlank { null }

@@ -77,6 +77,8 @@
     <string name="settings_dynamic_color">Dynamische Farben</string>
     <string name="settings_dynamic_color_desc">Farben vom Hintergrundbild übernehmen (Android 12+)</string>
     <string name="settings_behavior">Verhalten</string>
+    <string name="settings_default_quality">Standard-Qualität</string>
+    <string name="settings_default_quality_desc">Gilt für geteilte Links und als Startpunkt auf der Startseite.</string>
     <string name="settings_auto_download">Beim Teilen sofort laden</string>
     <string name="settings_auto_download_desc">Der Download startet, sobald ein Link geteilt wird</string>
     <string name="settings_clipboard">Zwischenablage prüfen</string>
@@ -119,6 +121,15 @@
     <string name="about_open_failed">Keine App kann diesen Link öffnen.</string>
     <string name="settings_legal">Rechtlicher Hinweis</string>
     <string name="settings_legal_body">Lade nur Inhalte herunter, die du speichern darfst. Beachte die Nutzungsbedingungen der jeweiligen Plattform und das geltende Urheberrecht. Flipper the Ripper umgeht weder DRM noch Zugriffsbeschränkungen.</string>
+
+    <string name="quality_title">Qualität</string>
+    <string name="quality_best">Beste</string>
+    <string name="quality_audio_only">Nur Audio</string>
+    <string name="quality_p">%1$dp</string>
+    <string name="quality_up_to">Dieses Video gibt es bis %1$dp.</string>
+    <string name="quality_unknown">Infos laden, um die verfügbaren Qualitäten zu sehen.</string>
+    <string name="quality_single_file">Diese Plattform liefert eine Datei — Originalqualität, wie veröffentlicht.</string>
+    <string name="home_options">Download-Optionen</string>
 
     <!-- Notifications -->
     <string name="channel_downloads_progress">Download-Fortschritt</string>

@@ -219,6 +219,7 @@ class DownloadRunnerTest {
                 errorKind = null,
                 errorMessage = null,
                 queueOrder = 1,
+                quality = "BEST",
                 createdAtEpochMs = 1,
                 updatedAtEpochMs = 1,
             ),

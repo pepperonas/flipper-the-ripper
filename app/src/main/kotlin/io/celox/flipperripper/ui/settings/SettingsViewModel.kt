@@ -4,10 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.celox.flipperripper.domain.model.BackendConfig
-import io.celox.flipperripper.domain.model.DownloadMode
 import io.celox.flipperripper.domain.model.DownloadSource
 import io.celox.flipperripper.domain.model.EngineResult
 import io.celox.flipperripper.domain.model.EngineUpdateOutcome
+import io.celox.flipperripper.domain.model.QualityChoice
 import io.celox.flipperripper.domain.model.ThemeMode
 import io.celox.flipperripper.domain.model.UserPreferences
 import io.celox.flipperripper.domain.repository.BackendConfigRepository
@@ -76,7 +76,8 @@ constructor(
     fun setClipboardDetection(enabled: Boolean) =
         viewModelScope.launch { settingsRepository.setClipboardDetection(enabled) }
 
-    fun setDefaultMode(mode: DownloadMode) = viewModelScope.launch { settingsRepository.setDefaultMode(mode) }
+    fun setDefaultQuality(quality: QualityChoice) =
+        viewModelScope.launch { settingsRepository.setDefaultQuality(quality) }
 
     fun updateEngineNow() {
         // Claim the slot synchronously, before any coroutine starts. Checking the flag *inside* the

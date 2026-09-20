@@ -41,6 +41,11 @@ data class DownloadRecord(
      * can never end up on different scales and interleave wrongly.
      */
     val queueOrder: Long,
+    /**
+     * What the user asked for. Kept on the record so a retry repeats the same choice and the card
+     * can say which one it was — [mode] alone only distinguishes video from audio.
+     */
+    val quality: QualityChoice,
     val createdAtEpochMs: Long,
     val updatedAtEpochMs: Long,
 )
