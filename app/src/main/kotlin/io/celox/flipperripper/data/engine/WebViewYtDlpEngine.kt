@@ -79,7 +79,7 @@ constructor(
                 ?: return EngineResult.Failure(browserExtractionFailed(spec.platform))
 
         return withContext(ioDispatcher) {
-            prepareDir(spec.workingDir)
+            prepareDir(spec.workingDir, keepExisting = spec.resume)
             val target = File(spec.workingDir, "${spec.processId}.mp4")
             try {
                 streamToFile(spec, media.mediaUrl, target, onProgress)
@@ -106,6 +106,9 @@ constructor(
         target: File,
         onProgress: (DownloadProgress) -> Unit,
     ) {
+        // Resuming asks for the rest of the file. The header was always sent (video is always
+        // range-requested) — it simply always said "from zero".
+        val alreadyHave = if (spec.resume && target.isFile) target.length() else 0L
         // Replicate what the page's own <video> element sends. A platform CDN returns 403 to a bare GET
         // for gated/authenticated media: a real cross-site video request carries the *site's* Referer
         // (instagram.com / tiktok.com / facebook.com — the wrong one is a 403), a Range header (video is
@@ -119,7 +122,7 @@ constructor(
                 .header("Accept-Language", "en-US,en;q=0.9")
                 .header("Accept-Encoding", "identity")
                 .header("Referer", PlatformWeb.referer(spec.platform))
-                .header("Range", "bytes=0-")
+                .header("Range", "bytes=$alreadyHave-")
                 .header("Sec-Fetch-Dest", "video")
                 .header("Sec-Fetch-Mode", "no-cors")
                 .header("Sec-Fetch-Site", "cross-site")
@@ -137,8 +140,15 @@ constructor(
                 val host = resp.request.url.host
                 throw IOException("HTTP ${resp.code} from $host")
             }
+            // 206 means the server honoured the range and is sending the remainder; anything else
+            // (a 200 from a CDN that ignores Range) is the whole file again, and appending it to
+            // what we have would produce a corrupt video. Then we start the file over.
+            val continuing = alreadyHave > 0 && resp.code == HTTP_PARTIAL
+            val total = body.contentLength().takeIf { it > 0 }?.let { it + if (continuing) alreadyHave else 0L } ?: -1L
             body.byteStream().use { input ->
-                target.outputStream().use { out -> copyStream(spec, input, out, body.contentLength(), onProgress) }
+                java.io.FileOutputStream(target, continuing).use { out ->
+                    copyStream(spec, input, out, total, onProgress, startedAt = if (continuing) alreadyHave else 0L)
+                }
             }
         }
     }
@@ -162,9 +172,12 @@ constructor(
         out: java.io.OutputStream,
         total: Long,
         onProgress: (DownloadProgress) -> Unit,
+        startedAt: Long = 0L,
     ) {
         val buffer = ByteArray(BUFFER)
-        var copied = 0L
+        // Counts from what was already on disk, so a resumed download picks the bar up where it left
+        // it instead of sliding back to zero.
+        var copied = startedAt
         var read = input.read(buffer)
         while (read >= 0 && cancelled[spec.processId] != true) {
             out.write(buffer, 0, read)
@@ -182,8 +195,9 @@ constructor(
 
     override suspend fun update(): EngineResult<String> = EngineResult.Success("WEBVIEW")
 
-    private fun prepareDir(dir: File) {
-        if (dir.exists()) dir.deleteRecursively()
+    /** A fresh run starts empty; a resumed one keeps the bytes it is about to continue from. */
+    private fun prepareDir(dir: File, keepExisting: Boolean) {
+        if (dir.exists() && !keepExisting) dir.deleteRecursively()
         dir.mkdirs()
     }
 
@@ -203,6 +217,9 @@ constructor(
 
     private companion object {
         const val BUFFER = 64 * 1024
+
+        /** 206 Partial Content — the server accepted the byte range and is sending the remainder. */
+        const val HTTP_PARTIAL = 206
 
         /** A real short clip is comfortably above this; anything smaller is a cover image or an error. */
         const val MIN_VIDEO_BYTES = 50_000L

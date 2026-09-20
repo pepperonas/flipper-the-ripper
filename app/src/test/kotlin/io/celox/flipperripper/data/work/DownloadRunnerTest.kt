@@ -146,6 +146,23 @@ class DownloadRunnerTest {
         }
 
     @Test
+    fun `leftover bytes make the next run a continuation, not a fresh download`() =
+        runTest {
+            givenRecord(DownloadStatus.QUEUED)
+            givenPartialBytes()
+
+            assertThat(specOfNextRun().resume).isTrue()
+        }
+
+    @Test
+    fun `a first run is not a continuation`() =
+        runTest {
+            givenRecord(DownloadStatus.QUEUED)
+
+            assertThat(specOfNextRun().resume).isFalse()
+        }
+
+    @Test
     fun `a network failure asks the queue to try again later`() =
         runTest {
             givenRecord(DownloadStatus.QUEUED)
@@ -154,6 +171,30 @@ class DownloadRunnerTest {
             assertThat(runner.run(ID) {}).isEqualTo(RunOutcome.RETRYABLE)
             assertThat(statusOf()).isEqualTo(DownloadStatus.FAILED)
         }
+
+    /** Runs once and hands back the spec the engine was actually given. */
+    private suspend fun specOfNextRun(): io.celox.flipperripper.data.engine.DownloadSpec {
+        var captured: io.celox.flipperripper.data.engine.DownloadSpec? = null
+        val capturing =
+            object : FakeYtDlpEngine() {
+                override suspend fun download(
+                    spec: io.celox.flipperripper.data.engine.DownloadSpec,
+                    onProgress: (io.celox.flipperripper.domain.model.DownloadProgress) -> Unit,
+                ): EngineResult<DownloadedFile> {
+                    captured = spec
+                    val file = File(spec.workingDir.apply { mkdirs() }, "clip.mp4").apply { writeText("x") }
+                    return EngineResult.Success(DownloadedFile(file, "mp4"))
+                }
+            }
+        DownloadRunner(
+            context = context,
+            dao = db.downloadDao(),
+            engine = capturing,
+            mediaWriter = FakeMediaStoreWriter(),
+            notifier = DownloadNotifier(context),
+        ).run(ID) {}
+        return requireNotNull(captured)
+    }
 
     private suspend fun statusOf(): DownloadStatus? =
         db.downloadDao().getById(ID)?.let { DownloadStatus.valueOf(it.status) }

@@ -5,6 +5,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import io.celox.flipperripper.data.engine.DownloadNaming
 import io.celox.flipperripper.data.engine.DownloadSpec
 import io.celox.flipperripper.data.engine.DownloadedFile
+import io.celox.flipperripper.data.engine.EngineOutput
 import io.celox.flipperripper.data.engine.FilenameSanitizer
 import io.celox.flipperripper.data.engine.YtDlpEngine
 import io.celox.flipperripper.data.local.DownloadDao
@@ -96,7 +97,10 @@ constructor(
         }
 
         val workingDir = workingDirFor(id)
-        fun specFor(progressive: Boolean) =
+        // Bytes left behind by a pause (the only thing that keeps this directory) — the run that
+        // follows continues them instead of fetching the file again.
+        val continuing = EngineOutput.hasPartialBytes(workingDir)
+        fun specFor(progressive: Boolean, resume: Boolean = false) =
             DownloadSpec(
                 url = record.sourceUrl,
                 platform = record.toDomain().platform,
@@ -104,10 +108,11 @@ constructor(
                 workingDir = workingDir,
                 processId = id,
                 preferProgressive = progressive,
+                resume = resume,
             )
 
         // Attempt 1: best quality (may need an ffmpeg merge).
-        var result = runEngine(id, state, specFor(progressive = false), onPhase)
+        var result = runEngine(id, state, specFor(progressive = false, resume = continuing), onPhase)
 
         // Self-heal: a stale extractor or a merge/ffmpeg failure is recoverable — update yt-dlp and
         // retry once with a single pre-muxed format that needs no ffmpeg.

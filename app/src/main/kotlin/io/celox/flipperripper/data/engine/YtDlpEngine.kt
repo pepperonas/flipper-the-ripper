@@ -22,6 +22,14 @@ data class DownloadSpec(
     val processId: String,
     /** Use a single pre-muxed format (no ffmpeg merge) — the fallback retry after a merge failure. */
     val preferProgressive: Boolean = false,
+    /**
+     * Continue what is already in [workingDir] instead of starting over.
+     *
+     * Every engine wipes the working directory before a run, which is right for a fresh download and
+     * fatal for a resumed one: it deletes the very `.part` file the pause existed to keep. Measured
+     * before this flag existed — paused at 62,436,533 bytes, resumed at 0.
+     */
+    val resume: Boolean = false,
 )
 
 /**

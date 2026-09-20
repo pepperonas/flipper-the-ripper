@@ -122,7 +122,7 @@ constructor(
         }
 
         return withContext(ioDispatcher) {
-            prepareWorkingDir(spec.workingDir)
+            prepareWorkingDir(spec.workingDir, keepExisting = spec.resume)
             val template = java.io.File(spec.workingDir, YtDlpArgsBuilder.OUTPUT_TEMPLATE).absolutePath
             val options =
                 YtDlpArgsBuilder.buildOptions(spec.platform, spec.mode, template, spec.preferProgressive)
@@ -141,7 +141,7 @@ constructor(
                     )
                 }
                 val produced =
-                    spec.workingDir.listFiles()?.firstOrNull { it.isFile && it.length() > 0 }
+                    EngineOutput.finished(spec.workingDir.listFiles()?.toList().orEmpty())
                         ?: return@withContext EngineResult.Failure(
                             DownloadError.Unknown("Download produced no file."),
                         )
@@ -175,8 +175,12 @@ constructor(
         }
     }
 
-    private fun prepareWorkingDir(dir: java.io.File) {
-        if (dir.exists()) dir.deleteRecursively()
+    /**
+     * A fresh run starts from an empty directory; a resumed one must not, or yt-dlp has no `.part`
+     * to continue and silently downloads the whole file again.
+     */
+    private fun prepareWorkingDir(dir: java.io.File, keepExisting: Boolean) {
+        if (dir.exists() && !keepExisting) dir.deleteRecursively()
         dir.mkdirs()
     }
 
