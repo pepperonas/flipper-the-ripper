@@ -10,6 +10,7 @@ import io.celox.flipperripper.domain.model.DownloadRecord
 import io.celox.flipperripper.domain.model.DownloadRequest
 import io.celox.flipperripper.domain.model.DownloadStatus
 import io.celox.flipperripper.domain.model.EngineResult
+import io.celox.flipperripper.domain.model.MediaFormat
 import io.celox.flipperripper.domain.model.Platform
 import io.celox.flipperripper.domain.model.QualityChoice
 import io.celox.flipperripper.domain.model.ThemeMode
@@ -253,6 +254,21 @@ open class FakeYtDlpEngine(
 
     override suspend fun update(): EngineResult<String> = EngineResult.Success("DONE")
 }
+
+fun sampleVideoInfo(
+    title: String = "Sample title",
+    formats: List<MediaFormat> = emptyList(),
+): VideoInfo =
+    VideoInfo(
+        sourceUrl = "https://youtu.be/x",
+        platform = Platform.YOUTUBE,
+        title = title,
+        uploader = "Uploader",
+        thumbnailUrl = "https://img/thumb.jpg",
+        durationSeconds = 42,
+        id = "x",
+        formats = formats,
+    )
 
 fun sampleRecord(
     id: String = "record-1",

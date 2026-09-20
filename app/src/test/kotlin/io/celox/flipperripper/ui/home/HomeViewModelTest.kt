@@ -5,6 +5,7 @@ import com.google.common.truth.Truth.assertThat
 import io.celox.flipperripper.domain.model.DownloadError
 import io.celox.flipperripper.domain.model.DownloadMode
 import io.celox.flipperripper.domain.model.EngineResult
+import io.celox.flipperripper.domain.model.MediaFormat
 import io.celox.flipperripper.domain.model.Platform
 import io.celox.flipperripper.domain.model.QualityChoice
 import io.celox.flipperripper.domain.model.UserPreferences
@@ -20,6 +21,7 @@ import io.celox.flipperripper.testing.FakeEngineRepository
 import io.celox.flipperripper.testing.FakeSettingsRepository
 import io.celox.flipperripper.testing.FakeVideoRepository
 import io.celox.flipperripper.testing.MainDispatcherRule
+import io.celox.flipperripper.testing.sampleVideoInfo
 import io.celox.flipperripper.ui.AppNavTarget
 import io.celox.flipperripper.ui.AppNavigator
 import io.celox.flipperripper.ui.IncomingLinkBus
@@ -132,6 +134,43 @@ class HomeViewModelTest {
             val vm = createViewModel()
             vm.setQuality(QualityChoice.P720)
             settings.state.value = UserPreferences(defaultQuality = QualityChoice.AUDIO_ONLY)
+            advanceUntilIdle()
+            assertThat(vm.state.value.quality).isEqualTo(QualityChoice.P720)
+        }
+
+    @Test
+    fun `a choice the resolved video cannot deliver falls back to best`() =
+        runTest {
+            // Measured on the device: picking 720p and then loading a 240p video left "720p" under
+            // the button while the tier itself was greyed out — a label for something that would
+            // not happen.
+            videoRepo.result =
+                EngineResult.Success(
+                    sampleVideoInfo(
+                        formats = listOf(MediaFormat(height = 240, hasVideo = true, hasAudio = true)),
+                    ),
+                )
+            val vm = createViewModel()
+            vm.onUrlChange("https://youtu.be/abc")
+            vm.setQuality(QualityChoice.P720)
+            vm.resolve()
+            advanceUntilIdle()
+            assertThat(vm.state.value.quality).isEqualTo(QualityChoice.BEST)
+        }
+
+    @Test
+    fun `a choice the resolved video can deliver is kept`() =
+        runTest {
+            videoRepo.result =
+                EngineResult.Success(
+                    sampleVideoInfo(
+                        formats = listOf(MediaFormat(height = 1080, hasVideo = true, hasAudio = true)),
+                    ),
+                )
+            val vm = createViewModel()
+            vm.onUrlChange("https://youtu.be/abc")
+            vm.setQuality(QualityChoice.P720)
+            vm.resolve()
             advanceUntilIdle()
             assertThat(vm.state.value.quality).isEqualTo(QualityChoice.P720)
         }

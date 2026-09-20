@@ -14,6 +14,7 @@ import io.celox.flipperripper.domain.model.DownloadMode
 import io.celox.flipperripper.domain.model.DownloadRecord
 import io.celox.flipperripper.domain.model.DownloadStatus
 import io.celox.flipperripper.domain.model.Platform
+import io.celox.flipperripper.domain.model.QualityChoice
 import io.celox.flipperripper.ui.history.DownloadActions
 import io.celox.flipperripper.ui.history.DownloadQueueList
 import io.celox.flipperripper.ui.theme.FlipperTheme
@@ -46,6 +47,7 @@ class DownloadQueueListTest {
             errorKind = null,
             errorMessage = null,
             queueOrder = order,
+            quality = QualityChoice.BEST,
             createdAtEpochMs = order,
             updatedAtEpochMs = order,
         )

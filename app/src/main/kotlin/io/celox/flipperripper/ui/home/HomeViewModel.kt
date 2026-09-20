@@ -149,7 +149,18 @@ constructor(
         viewModelScope.launch {
             when (val result = resolveVideoInfo(url, FormatSelection.mode(_state.value.quality))) {
                 is EngineResult.Success ->
-                    _state.update { it.copy(isResolving = false, videoInfo = result.value) }
+                    _state.update {
+                        // Resolving can take a tier away: 720p was a perfectly good choice until the
+                        // platform said this video only goes to 240p. Leaving it selected would put a
+                        // greyed-out label under the button and download something else — measured on
+                        // the device, the summary line said "720p" for a 240p video.
+                        val resolved = it.copy(isResolving = false, videoInfo = result.value)
+                        if (resolved.quality in resolved.availableQualities) {
+                            resolved
+                        } else {
+                            resolved.copy(quality = QualityChoice.BEST)
+                        }
+                    }
                 is EngineResult.Failure ->
                     _state.update { it.copy(isResolving = false, errorMessage = result.error.message) }
             }

@@ -7,13 +7,13 @@
 **A modern, open-source Android app to download publicly accessible videos from YouTube, Instagram, TikTok, Facebook, X and Dailymotion.**
 
 [![version](https://img.shields.io/badge/version-1.9.2-7B4DFF?style=for-the-badge&logo=android&logoColor=white)](https://github.com/pepperonas/flipper-the-ripper/releases/latest)
-[![unit tests](https://img.shields.io/badge/unit%20tests-384-2E9E5B?style=for-the-badge&logo=junit5&logoColor=white)](app/src/test)
+[![unit tests](https://img.shields.io/badge/unit%20tests-386-2E9E5B?style=for-the-badge&logo=junit5&logoColor=white)](app/src/test)
 [![lines of code](https://img.shields.io/badge/lines%20of%20code-8.5k-4B6BDF?style=for-the-badge&logo=kotlin&logoColor=white)](app/src/main/kotlin)
-[![test code](https://img.shields.io/badge/test%20code-6.1k-2E9E5B?style=for-the-badge&logo=kotlin&logoColor=white)](app/src/test)
+[![test code](https://img.shields.io/badge/test%20code-6.3k-2E9E5B?style=for-the-badge&logo=kotlin&logoColor=white)](app/src/test)
 
 [![CI](https://img.shields.io/github/actions/workflow/status/pepperonas/flipper-the-ripper/ci.yml?branch=main&label=build&logo=github)](https://github.com/pepperonas/flipper-the-ripper/actions/workflows/ci.yml)
 [![Release workflow](https://img.shields.io/github/actions/workflow/status/pepperonas/flipper-the-ripper/release.yml?label=release&logo=githubactions)](https://github.com/pepperonas/flipper-the-ripper/actions/workflows/release.yml)
-[![instrumented](https://img.shields.io/badge/instrumented-15-2E9E5B?logo=android&logoColor=white)](app/src/androidTest)
+[![instrumented](https://img.shields.io/badge/instrumented-20-2E9E5B?logo=android&logoColor=white)](app/src/androidTest)
 [![Coverage](https://img.shields.io/badge/coverage-%E2%89%A580%25-brightgreen?logo=kotlin)](https://github.com/pepperonas/flipper-the-ripper/actions/workflows/ci.yml)
 [![APK size](https://img.shields.io/badge/APK-53.5%20MB-4B6BDF?logo=android&logoColor=white)](#-download)
 [![ABI](https://img.shields.io/badge/ABI-arm64--v8a%20only-4B6BDF?logo=arm&logoColor=white)](#-download)
