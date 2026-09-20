@@ -182,13 +182,39 @@ Found along the way, all measured on the device and fixed here:
 Measured after: never more than 1 download active across 80 samples over 160 s (it was 2 in
 parallel before); queue order followed end to end, including after a drag.
 
-**B · Quality**
-- [ ] `FormatSelection` pure rule + tests with YouTube/X/Dailymotion format fixtures
-- [ ] `VideoInfo.formats`; DB v3 `quality` on the record; settings "Default quality"
-- [ ] Home: SplitButton, options sheet with the Quality group, summary line; Video/Audio toggle merged
-- [ ] Backend: pass `quality` through
-- [ ] Instrumented: chevron → sheet → summary; leading half downloads directly
-- [ ] Mutation probe
+**B · Quality — DONE 2026-09-21**
+- [x] `FormatSelection` pure rule + tests with **real** captured format fixtures
+      (`app/src/test/resources/formats/`: a 144/240p-only video and a full 27–2160p ladder).
+      ⚠️ X and Dailymotion fixtures could not be captured — the sample URLs tried are gone. The two
+      YouTube fixtures cover the shapes that matter (no ladder / full ladder); noted rather than faked.
+- [x] `VideoInfo.formats`; DB v3 `quality` on the record; settings "Default quality"
+- [x] Home: SplitButton, options sheet with the Quality group, summary line; Video/Audio toggle merged
+- [x] Backend: `max_height` passed through and clamped server-side
+- [x] Instrumented: 5 tests on the picker (disabled tiers, tapping, visibility); chevron → sheet →
+      summary verified on the device
+- [x] Mutation probe (6 caught)
+
+Found along the way:
+- ⚠️ The first `availableTiers` asked whether the **cap could be honoured** rather than whether the
+  video **reaches** the tier, and offered 480p for a video that exists only in 144p and 240p. A real
+  fixture caught it; an invented one would have agreed with the bug.
+- ⚠️ `-S res:720` does not cap. It prefers the closest match and returns 1080p when that is closer.
+  The rule uses `height<=720`, ending in `/b` so a video that exists only above the cap still
+  downloads.
+- ⚠️ Picking 720p and then resolving a 240p video left "720p" under the button while the tier itself
+  was greyed out. Resolving now drops an unreachable choice back to Best.
+- ⚠️ `uiautomator`'s `enabled` attribute does **not** reflect Compose's disabled state — it reported
+  every tier as enabled while the screenshot showed three greyed out. Use the Compose test API.
+- ⚠️ Blind coordinate taps uninstalled the app under test (they landed on the launcher and dragged
+  the icon onto Uninstall). Every device tap now checks the foreground first.
+
+Measured end to end, same video, same device: **480p → 38,776,395 bytes, 720p → 161,192,090** —
+matching yt-dlp's own prediction for those filters (38,478,640 / 160,796,363).
+
+**Known limitation:** when the ffmpeg merge fails, the existing self-heal retries with a single
+pre-muxed stream, and YouTube's progressive formats top out well below 720p. The download then
+succeeds at a lower resolution than the card says was asked for. Observed once. Showing the
+*delivered* height (from MediaStore) rather than the requested one would fix it and is not built.
 
 **C · Subtitles**
 - [ ] **Spike:** `--embed-subs` with the bundled ffmpeg on the emulator — record the outcome here
