@@ -10,6 +10,7 @@ import io.celox.flipperripper.domain.usecase.DeleteRecordUseCase
 import io.celox.flipperripper.domain.usecase.ObserveHistoryUseCase
 import io.celox.flipperripper.domain.usecase.RetryDownloadUseCase
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -24,11 +25,19 @@ constructor(
     private val deleteRecord: DeleteRecordUseCase,
     private val clearHistory: ClearHistoryUseCase,
 ) : ViewModel() {
-    val history =
+    /**
+     * `null` means the database has not answered yet — deliberately not an empty list.
+     *
+     * The screen used to start from `emptyList()` and could not tell the two apart, so right after
+     * sharing a link it drew "No downloads yet" for a few hundred milliseconds before the card
+     * arrived (measured 260-320 ms). The first thing a user saw after a share was the app telling
+     * them nothing had been downloaded.
+     */
+    val history: StateFlow<List<DownloadRecord>?> =
         observeHistory().stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS),
-            initialValue = emptyList<DownloadRecord>(),
+            initialValue = null,
         )
 
     fun cancel(id: String) = viewModelScope.launch { cancelDownload(id) }

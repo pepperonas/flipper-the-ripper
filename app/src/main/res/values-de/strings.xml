@@ -53,6 +53,8 @@
     <string name="history_clear_confirm">Verlauf löschen</string>
     <string name="history_status_queued">In Warteschlange</string>
     <string name="history_status_running">Wird geladen…</string>
+    <string name="history_status_preparing">Wird vorbereitet…</string>
+    <string name="history_status_processing">Wird abgeschlossen…</string>
     <string name="history_status_saved">Gespeichert</string>
     <string name="history_status_failed">Fehlgeschlagen</string>
     <string name="history_status_cancelled">Abgebrochen</string>
@@ -115,6 +117,9 @@
     <string name="channel_downloads_progress">Download-Fortschritt</string>
     <string name="channel_downloads_status">Download-Status</string>
     <string name="notif_downloading">Wird heruntergeladen…</string>
+    <string name="notif_preparing">Wird vorbereitet…</string>
+    <string name="notif_processing">Wird abgeschlossen…</string>
+    <string name="notif_percent">%1$d %%</string>
     <string name="notif_completed">Download abgeschlossen</string>
     <string name="notif_failed">Download fehlgeschlagen</string>
 

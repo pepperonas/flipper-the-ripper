@@ -48,6 +48,8 @@
     <string name="history_clear_confirm">Clear history</string>
     <string name="history_status_queued">Queued</string>
     <string name="history_status_running">Downloading…</string>
+    <string name="history_status_preparing">Preparing…</string>
+    <string name="history_status_processing">Finishing…</string>
     <string name="history_status_saved">Saved</string>
     <string name="history_status_failed">Failed</string>
     <string name="history_status_cancelled">Cancelled</string>
@@ -112,6 +114,10 @@
     <string name="channel_downloads_progress">Download progress</string>
     <string name="channel_downloads_status">Download status</string>
     <string name="notif_downloading">Downloading…</string>
+    <string name="notif_preparing">Preparing…</string>
+    <string name="notif_processing">Finishing…</string>
+    <!-- Shown beside the app name on the progress notification, e.g. "47 %". -->
+    <string name="notif_percent">%1$d %%</string>
     <string name="notif_completed">Download complete</string>
     <string name="notif_failed">Download failed</string>
 

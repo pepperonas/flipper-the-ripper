@@ -38,7 +38,7 @@ class HistoryViewModelTest {
         runTest {
             val vm = createViewModel()
             vm.history.test {
-                assertThat(awaitItem()).isEmpty()
+                assertThat(awaitItem()).isNull()
                 repo.history.value = listOf(sampleRecord(id = "a"), sampleRecord(id = "b"))
                 assertThat(awaitItem()).hasSize(2)
                 cancelAndIgnoreRemainingEvents()
@@ -61,14 +61,23 @@ class HistoryViewModelTest {
         }
 
     @Test
+    fun `history starts as not-loaded, never as empty`() =
+        runTest {
+            // The screen draws its empty state from an empty list. Starting there meant a user who
+            // had just shared a link was told "no downloads yet" before the card arrived.
+            val vm = createViewModel()
+            assertThat(vm.history.value).isNull()
+        }
+
+    @Test
     fun `running record stays observable`() =
         runTest {
             repo.history.value = listOf(sampleRecord(id = "x", status = DownloadStatus.RUNNING))
             val vm = createViewModel()
             vm.history.test {
                 var list = awaitItem()
-                while (list.isEmpty()) list = awaitItem() // skip the stateIn initial value
-                assertThat(list.first().status).isEqualTo(DownloadStatus.RUNNING)
+                while (list.isNullOrEmpty()) list = awaitItem() // skip the "not loaded yet" value
+                assertThat(list!!.first().status).isEqualTo(DownloadStatus.RUNNING)
                 cancelAndIgnoreRemainingEvents()
             }
         }

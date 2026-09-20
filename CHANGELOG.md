@@ -12,6 +12,76 @@ section for the version in `app/build.gradle.kts` exists before anything is tagg
 
 ## [Unreleased]
 
+## [1.9.2] - 2026-09-20
+
+A shared link now always turns into a download you can see. Four defects behind that, all measured
+on a device before anything was changed, all of them silent — nothing crashed and nothing logged.
+
+### Fixed
+- **A shared link was silently dropped when the app had last been on History or Settings.**
+  Reproduced 5 times out of 5. The only consumer of the shared-link bus lived in `HomeViewModel`,
+  which `hiltViewModel()` creates when the Home screen composes. After the system reclaimed the
+  process, the NavHost restored whichever tab was last open — if that was not Home, the ViewModel
+  was never built, nobody read the bus, and the link stayed in the channel: the app opened and
+  nothing happened, with no error anywhere. That is why the behaviour looked random rather than
+  broken; it depended on the tab you had used last. The consumer is now an application-scoped
+  `ShareLinkHandler` that exists from process start, so no screen can be a precondition for a
+  download.
+
+  | App parked on | Process killed by the system | Before | Now |
+  |---|---|---|---|
+  | Home | yes | download starts | download starts |
+  | History | yes | **link lost** | download starts |
+  | Settings | yes | **link lost** | download starts |
+
+- **The status ran backwards mid-download, and the loading animation went with it.** The worker read
+  the record once, while it still said QUEUED, and later wrote that stale copy back twice with
+  `REPLACE` — after metadata resolution and again at 100 % just before saving. Measured:
+  `RUNNING/99.4 %` → `QUEUED/0 %`. The spinner is drawn for RUNNING, so it blinked out at exactly
+  those two moments, the second time for the whole duration of the save. Both writes are now
+  field-scoped updates that cannot touch the phase or the progress.
+
+- **The real progress never reached the screen.** The database recorded it on every step
+  (2 → 12 → 23 → … → 99) and the notification showed it as a determinate bar, but
+  `DownloadEntity.toDomain()` dropped the column, so the History card could only ever draw an
+  indeterminate wave. Card and notification now read the same field, and the card shows the
+  percentage in its status line.
+
+- **A finished download left no notification at all.** The completion notification was posted under
+  the same id as the ongoing foreground notification, and WorkManager cancels that id when the
+  worker ends — measured as zero notifications at +0 s, +2 s and +5 s after completion. Terminal
+  notifications now have an id of their own.
+
+- **Sharing a link left the app on the start screen for seconds with no sign of anything happening.**
+  Measured 1.1 s warm and 9.3 s on a cold start between the share and the first visible evidence,
+  because navigation waited for preferences, the database and WorkManager. The handler now runs from
+  process start (no ViewModel to build first) and moves to History before enqueuing.
+
+- **History answered a share with "No downloads yet."** Its list started as an empty list, which the
+  screen cannot tell apart from "not loaded", so the empty state was drawn for 260–320 ms right
+  after a share. Not-yet-loaded is now its own state.
+
+### Added
+- **Real phases: Preparing → Downloading → Finishing → Saved.** `RUNNING` used to cover four
+  different things, including an 3–11 s metadata resolve where nothing downloads and an ffmpeg merge
+  after the bar already read 100 %. Post-processing is detected from the engine's own status line
+  (`DownloadPhases`), so a merge no longer reads as a finished download that is stuck. The loading
+  indicator is shown for every in-flight phase, not only one of them.
+- **The notification says what is happening and how far along it is:** phase as the title, video
+  title as the text, the percentage beside them, and tapping it opens the app. Indeterminate while
+  there is no measurable total, determinate as soon as there is — never an invented number.
+
+### Changed
+- The progress callback no longer blocks the engine's download thread on a database round-trip and a
+  binder call (`runBlocking`, roughly a hundred times per file). It hands the value to a conflated
+  channel; a slow write cannot slow the download, and the newest phase always wins.
+- Cancelling covers every in-flight phase, via the domain rule rather than a hand-written list.
+
+### Verified
+- On the emulator, with real downloads: share from a cold start, from a running app, and after the
+  system killed the process while parked on each tab; leaving the app mid-download; a failing
+  download; the notification through all phases; rotation.
+
 ## [1.9.1] - 2026-09-15
 
 ### Fixed

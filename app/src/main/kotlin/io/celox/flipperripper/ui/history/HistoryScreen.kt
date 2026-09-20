@@ -55,6 +55,7 @@ import io.celox.flipperripper.domain.model.DownloadRecord
 import io.celox.flipperripper.domain.model.DownloadStatus
 import io.celox.flipperripper.domain.model.isActive
 import io.celox.flipperripper.ui.components.EmptyDownloadsMark
+import io.celox.flipperripper.ui.components.ExpressiveLoadingIndicator
 import io.celox.flipperripper.ui.components.VideoPlaceholder
 import io.celox.flipperripper.ui.theme.Sizes
 import io.celox.flipperripper.ui.theme.Spacing
@@ -70,7 +71,7 @@ fun HistoryScreen(viewModel: HistoryViewModel = hiltViewModel()) {
 
     if (askClearAll) {
         ClearHistoryDialog(
-            entryCount = records.size,
+            entryCount = records?.size ?: 0,
             onConfirm = {
                 askClearAll = false
                 viewModel.clearAll()
@@ -89,7 +90,7 @@ fun HistoryScreen(viewModel: HistoryViewModel = hiltViewModel()) {
                     )
                 },
                 actions = {
-                    if (records.isNotEmpty()) {
+                    if (!records.isNullOrEmpty()) {
                         IconButton(onClick = { askClearAll = true }) {
                             Icon(
                                 Icons.Outlined.DeleteSweep,
@@ -101,14 +102,19 @@ fun HistoryScreen(viewModel: HistoryViewModel = hiltViewModel()) {
             )
         },
     ) { padding ->
-        if (records.isEmpty()) {
+        val loaded = records
+        if (loaded == null) {
+            // Not the same as "empty": the database has not answered yet. Drawing the empty state
+            // here told anyone who had just shared a link that nothing had been downloaded.
+            LoadingState(Modifier.fillMaxSize().padding(padding))
+        } else if (loaded.isEmpty()) {
             EmptyState(Modifier.fillMaxSize().padding(padding))
         } else {
             val listState = rememberLazyListState()
             // A new download is prepended (history is newest-first). Jump back to the top whenever the
             // leading entry changes, so the download that was just started is always the one on screen —
             // otherwise pasting a link while scrolled down appeared to do nothing.
-            val newestId = records.first().id
+            val newestId = loaded.first().id
             LaunchedEffect(newestId) { listState.animateScrollToItem(0) }
 
             LazyColumn(
@@ -117,7 +123,7 @@ fun HistoryScreen(viewModel: HistoryViewModel = hiltViewModel()) {
                 contentPadding = PaddingValues(Spacing.xl),
                 verticalArrangement = Arrangement.spacedBy(Spacing.md),
             ) {
-                itemsIndexed(records, key = { _, r -> r.id }) { _, record ->
+                itemsIndexed(loaded, key = { _, r -> r.id }) { _, record ->
                     DownloadCard(
                         record = record,
                         // No entrance animation: in a lazy list it re-fires every time a card scrolls
@@ -156,6 +162,17 @@ fun ClearHistoryDialog(entryCount: Int, onConfirm: () -> Unit, onDismiss: () -> 
             TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
         },
     )
+}
+
+@Composable
+private fun LoadingState(modifier: Modifier) {
+    Column(
+        modifier = modifier.padding(Spacing.xxxl),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        ExpressiveLoadingIndicator(modifier = Modifier.size(Sizes.inlineIndicator))
+    }
 }
 
 @Composable
@@ -208,14 +225,28 @@ private fun DownloadCard(
                         color = statusColor(record.status),
                     )
                 }
-                if (record.status == DownloadStatus.RUNNING) {
+                // Every in-flight phase, not only RUNNING. Gating this on one phase is what made
+                // the indicator blink out while metadata resolved and again while the file was
+                // being saved — exactly the moments the user needed to see that work continued.
+                if (record.status.isActive) {
                     ContainedLoadingIndicator(modifier = Modifier.size(40.dp))
                 }
             }
 
             if (record.status.isActive) {
                 Spacer(Modifier.height(Spacing.md))
-                LinearWavyProgressIndicator(modifier = Modifier.fillMaxWidth())
+                val percent = record.progressPercent
+                // Determinate only while bytes are moving and a total is known — the same rule the
+                // notification follows, from the same field, so the two cannot show different
+                // numbers. Preparing and post-processing have nothing honest to measure.
+                if (record.status == DownloadStatus.RUNNING && percent != null) {
+                    LinearWavyProgressIndicator(
+                        progress = { (percent / 100f).coerceIn(0f, 1f) },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                } else {
+                    LinearWavyProgressIndicator(modifier = Modifier.fillMaxWidth())
+                }
             }
 
             record.errorMessage?.takeIf { record.status == DownloadStatus.FAILED }?.let {
@@ -242,7 +273,11 @@ private fun DownloadCard(
                             enabled = record.mediaUri != null,
                         ) { Text(stringResource(R.string.history_share)) }
                     }
-                    DownloadStatus.RUNNING, DownloadStatus.QUEUED ->
+                    DownloadStatus.QUEUED,
+                    DownloadStatus.PREPARING,
+                    DownloadStatus.RUNNING,
+                    DownloadStatus.PROCESSING,
+                    ->
                         TextButton(onClick = onCancel) { Text(stringResource(R.string.history_cancel)) }
                     DownloadStatus.FAILED, DownloadStatus.CANCELLED ->
                         TextButton(onClick = onRetry) { Text(stringResource(R.string.history_retry)) }
@@ -287,7 +322,11 @@ private fun Thumbnail(record: DownloadRecord) {
 private fun statusLabel(record: DownloadRecord): String =
     when (record.status) {
         DownloadStatus.QUEUED -> stringResource(R.string.history_status_queued)
-        DownloadStatus.RUNNING -> stringResource(R.string.history_status_running)
+        DownloadStatus.PREPARING -> stringResource(R.string.history_status_preparing)
+        DownloadStatus.RUNNING ->
+            stringResource(R.string.history_status_running) +
+                (record.progressPercent?.let { " · ${it.toInt().coerceIn(0, 100)} %" } ?: "")
+        DownloadStatus.PROCESSING -> stringResource(R.string.history_status_processing)
         DownloadStatus.COMPLETED ->
             stringResource(R.string.history_status_saved) +
                 (record.sizeBytes?.let { " · ${formatSize(it)}" } ?: "") +
