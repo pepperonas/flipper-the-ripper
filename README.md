@@ -155,7 +155,7 @@ flowchart TD
         REPO[Repository impls]
         UPD["update · UpdateCoordinator\n(yt-dlp refresh · release check · UpdatePolicy)"]
         ENGINE["engine · RoutingYtDlpEngine\n(EngineRouting per platform · ErrorClassifier · FilenameSanitizer)"]
-        WORK["work · DownloadWorker\n(foreground service)"]
+        WORK["work · DownloadQueueWorker → DownloadRunner\n(one runner, foreground service)"]
         ROOM[(Room · history)]
         DS[(DataStore · settings)]
         MEDIA[MediaStoreWriter]
@@ -187,6 +187,14 @@ flowchart TD
 death, minimisation and rotation. A bare service wouldn't give persistence, constraints, retry or
 observable progress; WorkManager provides all of that and runs a foreground (`dataSync`) service
 under the hood for the long-running case.
+
+**Why exactly one worker (1.10.0).** Every download used to be its own WorkManager job, and
+WorkManager ran several at once — so "queued" was a label with nothing behind it: what started next
+was whatever the scheduler picked, the order in History was decoration, and offering to reorder it
+would have been a lie. A single unique `DownloadQueueWorker` now drains `queueOrder` ascending and
+hands each record to `DownloadRunner`, which is the old per-download logic unchanged. The state
+lives only in the Room row — the card and the notification both read it, which is why neither can
+show a different number than the other.
 
 ### Tech stack
 
@@ -315,6 +323,10 @@ refused as a downgrade. Versioning follows [Semantic Versioning](https://semver.
 
 **Do X (Twitter) and Dailymotion work?** Yes — both go through the bundled yt-dlp on the device, using the platforms' guest APIs (no sign-in). Paste or share an `x.com` / `twitter.com` post link (the post itself must carry the video — a post that only *links* to a video elsewhere is not a video post) or a `dailymotion.com` / `dai.ly` link. Posts marked sensitive/NSFW, protected accounts and login-only content are not supported. Live broadcasts (X Spaces/live streams) resolve, but they are recordings of the whole stream and can be very large.
 
+**Can I choose the quality?** Yes — the chevron beside *Download* opens **Best · 1080p · 720p · 480p · Audio only**, and the line under the button says which one will happen. After *Load info* the app knows what the video actually has, so a tier it does not reach is greyed out with the real maximum named. Your last choice becomes the default and is what shared links use, so sharing stays one tap. Instagram, TikTok and Facebook hand back a single file and offer no choice; the sheet says so instead of showing buttons that do nothing.
+
+**Can I pause a download?** Yes, and resuming continues from where it stopped rather than starting over. A paused download keeps its place in the queue. Downloads run one at a time in the order you see; drag the handle on a waiting one to move it.
+
 **Where do files go?** The public *Movies/FlipperTheRipper* folder (audio → *Music/FlipperTheRipper*), visible in Gallery/Photos/file managers.
 
 **Does it work on an x86 emulator?** No — use an ARM system image or a physical device.
@@ -408,6 +420,8 @@ is silent: nothing crashes, nothing logs, the wrong thing just ships.
 | `TranslationTest` | every English string has a German one, placeholders match, no orphans, nothing merely copied | one English sentence on a German phone |
 | `ShareTargetRegistrationTest` | manifest filter ↔ `shortcuts.xml` ↔ `SharedText` — what the sheet offers, the app accepts, the activity reads | the share filter widened on one side only (v1.8.2) |
 | `ReleaseArtifactsTest` | the ABI the build produces == the file the release workflow publishes == the file the README tells people to download | dropping or adding an ABI in one place |
+| `DownloadRunnerContractTest` | the runner never writes a whole row back, reports every phase, does not block the engine, and pauses *before* it stops the engine | a running download reset to QUEUED; a pause deleting the file it exists to keep (both shipped) |
+| `FlipperDatabaseMigrationTest` | a genuine old database still has its rows after the upgrade | the destructive fallback that would have wiped every user's history at the first schema change |
 | `ChangelogTest` | a section exists for the version being built, dates are valid, versions descend | a tag with no release notes |
 | `ReleaseNotesScriptTest` | `scripts/release-notes.sh` cuts exactly the tagged section out of the real `CHANGELOG.md`, and fails on an unknown tag | the release page showing the wrong version's notes |
 | `SecurityPolicyTest` | permissions in `SECURITY.md` == `uses-permission` in the manifest; platform lists cover the `Platform` enum | the security policy omitting a permission or a platform |
