@@ -227,6 +227,43 @@ h1 {
 }
 .note { margin: 20px 4px 0; color: var(--on-variant); font-size: 15px; }
 
+/* ---------- support ---------- */
+.support {
+  position: relative; overflow: hidden; isolation: isolate;
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 24px 40px;
+  padding: clamp(24px, 4vw, 40px); border-radius: var(--r-xl);
+  background:
+    radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--primary-container) 55%, transparent), transparent 60%),
+    radial-gradient(90% 120% at 100% 100%, color-mix(in srgb, #ffc439 10%, transparent), transparent 60%),
+    var(--surface-low);
+  border: 1px solid color-mix(in srgb, var(--primary) 22%, transparent);
+}
+.support-text { flex: 1 1 320px; }
+.support-text h2 { margin-bottom: 10px; }
+.support-text p { margin: 0; color: var(--on-variant); max-width: 52ch; }
+.support-actions { display: flex; flex-wrap: wrap; gap: 12px; flex: 0 1 auto; }
+.btn.paypal {
+  background: #ffc439; color: #111;
+  box-shadow: 0 8px 26px -10px rgba(255, 196, 57, .55);
+}
+.btn.paypal svg { width: 20px; height: 20px; color: #003087; }
+.btn.paypal:hover { background: #ffd05c; transform: translateY(-2px); box-shadow: 0 12px 32px -10px rgba(255, 196, 57, .7); }
+.btn.review {
+  background: transparent; color: var(--on-bg);
+  border: 1px solid var(--outline);
+}
+.btn.review:hover { background: color-mix(in srgb, var(--on-bg) 8%, transparent); border-color: var(--on-variant); transform: translateY(-2px); }
+.stars { display: inline-flex; gap: 1px; color: #fbbc04; }
+.stars svg { width: 16px; height: 16px; transition: transform .35s var(--ease-spring); }
+@media (hover: hover) {
+  .btn.review:hover .stars svg { transform: translateY(-2px) scale(1.12); }
+  .btn.review:hover .stars svg:nth-child(2) { transition-delay: .03s; }
+  .btn.review:hover .stars svg:nth-child(3) { transition-delay: .06s; }
+  .btn.review:hover .stars svg:nth-child(4) { transition-delay: .09s; }
+  .btn.review:hover .stars svg:nth-child(5) { transition-delay: .12s; }
+}
+@media (max-width: 480px) { .support-actions .btn { flex: 1 1 100%; } }
+
 .legal {
   margin-top: 88px; padding-top: 0;
 }

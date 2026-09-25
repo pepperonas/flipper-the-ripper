@@ -45,7 +45,12 @@
     'l.p': 'Flipper the Ripper ist für öffentlich zugängliche Inhalte und den persönlichen, rechtmäßigen Gebrauch gedacht. Die App umgeht weder DRM noch Bezahlschranken oder Zugangssperren. Beachte die Nutzungsbedingungen der Plattformen und das Urheberrecht.',
     'ft.license': 'MIT-Lizenz',
     'ft.changelog': 'Änderungen',
-    'ft.donate': 'Projekt unterstützen',
+    'ft.review': 'celox.io bewerten',
+    'nav.support': 'Unterstützen',
+    'sp.h': 'Gefällt dir die App?',
+    'sp.p': 'Flipper the Ripper ist kostenlos, werbefrei und bleibt es. Eine kleine Spende hält die Entwicklung am Laufen — und eine Bewertung von celox.io auf Google hilft genauso.',
+    'sp.donate': 'Mit PayPal spenden',
+    'sp.review': 'celox.io auf Google bewerten',
     'ft.imprint': 'Impressum',
     'ft.privacy': 'Datenschutz'
   };
