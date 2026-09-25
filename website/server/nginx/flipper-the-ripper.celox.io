@@ -45,6 +45,13 @@ server {
     # /download -> 302 to the newest APK; written by ftr-latest.py (glob: absent file is fine).
     include /etc/nginx/ftr-download*.conf;
 
+    # Copied from GitHub by ftr-latest.py; read by the changelog dialog and by agents.
+    location = /changelog.md {
+        types { }
+        default_type "text/markdown; charset=utf-8";
+        add_header Cache-Control "no-cache" always;
+        add_header X-Content-Type-Options "nosniff" always;
+    }
     location = /latest.json {
         add_header Cache-Control "no-cache" always;
         add_header X-Content-Type-Options "nosniff" always;

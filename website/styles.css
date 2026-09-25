@@ -357,6 +357,32 @@ h1 {
   white-space: pre-wrap; overflow-wrap: anywhere;
 }
 .license-text:focus { outline: none; }
+/* Changelog: same dialog as the licence, rendered Markdown in the same monospace voice. */
+.changelog { width: min(760px, calc(100vw - 32px)); }
+.cl-source { margin-left: auto; font: 500 13px/1 var(--mono); color: var(--on-variant); }
+.cl-source:hover { color: var(--primary); }
+.changelog-body {
+  overflow: auto; padding: 8px 24px 28px;
+  font: 13.5px/1.7 var(--mono); color: var(--on-variant); overflow-wrap: anywhere;
+}
+.changelog-body:focus { outline: none; }
+.changelog-body .cl-version {
+  position: sticky; top: -8px; z-index: 1;
+  display: flex; align-items: baseline; gap: 12px; margin: 22px -24px 8px; padding: 12px 24px 10px;
+  background: var(--surface-low); border-bottom: 1px solid var(--outline-variant);
+  font: 700 1.05rem/1.3 var(--mono); color: var(--on-bg);
+}
+.changelog-body .cl-version:first-child { margin-top: 0; }
+.cl-version time { font-weight: 500; font-size: .85rem; color: var(--on-variant); }
+.changelog-body h4 { margin: 16px 0 6px; font: 700 .8rem/1.3 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--primary); }
+.changelog-body p { margin: 8px 0; }
+.changelog-body ul, .changelog-body ol { margin: 6px 0; padding-left: 20px; }
+.changelog-body li { margin: 4px 0; }
+.changelog-body li::marker { color: var(--outline); }
+.changelog-body strong { color: var(--on-bg); }
+.changelog-body em { color: var(--on-bg); font-style: italic; font-weight: 400; }
+.changelog-body code { font-size: .92em; padding: 1px 5px; border-radius: 6px; background: var(--surface-high); color: var(--on-bg); }
+.cl-loading { color: var(--on-variant); }
 @keyframes dialog-in { from { opacity: 0; transform: translateY(12px) scale(.97); } }
 
 /* ---------- motion ---------- */

@@ -2,6 +2,10 @@
 // data-i18n key to its text. A key missing here falls back to English (app.js).
 window.FTR_I18N = {
   de: {
+    "cl.h": "Änderungen",
+    "cl.source": "auf GitHub",
+    "cl.loading": "Wird geladen …",
+    "cl.error": "Der Changelog ließ sich nicht laden. Nachlesen auf",
     "lic.h": "Lizenz",
     "lic.close": "Schließen",
     skip: 'Zum Inhalt springen',
@@ -55,6 +59,10 @@ window.FTR_I18N = {
     'ft.privacy': 'Datenschutz'
   },
   es: {
+    "cl.h": "Cambios",
+    "cl.source": "en GitHub",
+    "cl.loading": "Cargando…",
+    "cl.error": "No se pudo cargar el registro de cambios. Léelo en",
     "lic.h": "Licencia",
     "lic.close": "Cerrar",
     "skip": "Saltar al contenido",
@@ -108,6 +116,10 @@ window.FTR_I18N = {
     "ft.privacy": "Privacidad"
   },
   it: {
+    "cl.h": "Modifiche",
+    "cl.source": "su GitHub",
+    "cl.loading": "Caricamento…",
+    "cl.error": "Impossibile caricare il registro delle modifiche. Leggilo su",
     "lic.h": "Licenza",
     "lic.close": "Chiudi",
     "skip": "Vai al contenuto",
@@ -161,6 +173,10 @@ window.FTR_I18N = {
     "ft.privacy": "Privacy"
   },
   fr: {
+    "cl.h": "Nouveautés",
+    "cl.source": "sur GitHub",
+    "cl.loading": "Chargement…",
+    "cl.error": "Impossible de charger le journal des modifications. À lire sur",
     "lic.h": "Licence",
     "lic.close": "Fermer",
     "skip": "Aller au contenu",

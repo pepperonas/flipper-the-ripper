@@ -4,6 +4,7 @@
 Runs on the VPS from ftr-latest.timer. Writes two files, both only when something changed:
 
   <webroot>/latest.json      read by the page (same origin: visitors never call GitHub's API)
+  <webroot>/changelog.md     CHANGELOG.md from main, shown in the page's changelog dialog
   /etc/nginx/ftr-download.conf  `location = /download` -> 302 to the newest APK, so
                                https://flipper-the-ripper.celox.io/download is a stable link
 
@@ -44,6 +45,21 @@ def fetch():
     }
 
 
+CHANGELOG_URL = f"https://raw.githubusercontent.com/{REPO}/main/CHANGELOG.md"
+CHANGELOG_MAX = 1_000_000
+
+
+def fetch_changelog():
+    req = urllib.request.Request(CHANGELOG_URL, headers={"User-Agent": "ftr-latest"})
+    with urllib.request.urlopen(req, timeout=20) as r:
+        body = r.read(CHANGELOG_MAX + 1)
+    text = body.decode("utf-8")
+    # Refuse anything that is not recognisably the changelog (an error page, a truncated body).
+    if len(body) > CHANGELOG_MAX or not text.startswith("# Changelog") or "\n## [" not in text:
+        raise ValueError("unexpected CHANGELOG.md content")
+    return text
+
+
 def same(path, text):
     try:
         with open(path) as f:
@@ -74,6 +90,11 @@ def main():
         print(f"ftr-latest: keeping previous state ({e})", file=sys.stderr)
         return 1
     changed_json = write_if_changed(os.path.join(WEBROOT, "latest.json"), json.dumps(d, indent=2) + "\n")
+    try:
+        changed_log = write_if_changed(os.path.join(WEBROOT, "changelog.md"), fetch_changelog())
+    except Exception as e:  # the dialog keeps showing the last good copy
+        print(f"ftr-latest: changelog not refreshed ({e})", file=sys.stderr)
+        changed_log = False
     conf = (
         "# Written by ftr-latest.py - do not edit.\n"
         f"location = /download {{\n    add_header Cache-Control \"no-store\" always;\n    return 302 {d['url']};\n}}\n"
@@ -97,7 +118,10 @@ def main():
             return 1
         subprocess.run(["systemctl", "reload", "nginx"], check=True)
         changed_conf = True
-    print(f"ftr-latest: {d['version']} json={'new' if changed_json else 'same'} nginx={'reloaded' if changed_conf else 'same'}")
+    print(
+        f"ftr-latest: {d['version']} json={'new' if changed_json else 'same'} "
+        f"changelog={'new' if changed_log else 'same'} nginx={'reloaded' if changed_conf else 'same'}"
+    )
     return 0
 
 

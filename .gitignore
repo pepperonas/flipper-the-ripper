@@ -39,3 +39,4 @@ backend.properties
 # Playwright MCP scratch output
 .playwright-mcp/
 website/latest.json
+website/changelog.md

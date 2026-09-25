@@ -7,8 +7,8 @@ cd "$(dirname "$0")"
 HOST=root@69.62.121.168
 ROOT=/var/www/flipper-the-ripper.celox.io
 
-# latest.json is written on the server by ftr-latest.py — never delete it from here.
-rsync -avz --delete --exclude latest.json --exclude server/ --exclude deploy.sh --exclude README.md \
+# latest.json and changelog.md are written on the server by ftr-latest.py — never delete them from here.
+rsync -avz --delete --exclude latest.json --exclude changelog.md --exclude server/ --exclude deploy.sh --exclude README.md \
   --exclude .DS_Store ./ "$HOST:$ROOT/"
 ssh "$HOST" "chown -R root:root $ROOT && chmod -R u=rwX,go=rX $ROOT"
 

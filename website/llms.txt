@@ -38,6 +38,6 @@
 ## Links
 
 - Source code: https://github.com/pepperonas/flipper-the-ripper
-- Changelog: https://github.com/pepperonas/flipper-the-ripper/blob/main/CHANGELOG.md
+- Changelog (Markdown, mirrored from GitHub every 15 min): https://flipper-the-ripper.celox.io/changelog.md — source: https://github.com/pepperonas/flipper-the-ripper/blob/main/CHANGELOG.md
 - Licence: MIT — https://github.com/pepperonas/flipper-the-ripper/blob/main/LICENSE
 - Author: Martin Pfeffer, https://celox.io
