@@ -1,25 +1,32 @@
 # Flipper the Ripper
 
-> Free, open-source (MIT) Android app that saves publicly accessible videos from YouTube, Instagram, TikTok, Facebook, X and Dailymotion to the phone's gallery. Share a link to the app and the download starts. No account, no ads, no tracking. Not on Google Play by design; distributed as a signed APK.
+> Free, open-source (MIT) Android app that saves publicly accessible videos from YouTube, Instagram, TikTok, Facebook, X and Dailymotion to the phone's gallery. Share a link to the app and the download starts. No account, no ads, no tracking. Not on Google Play by design; distributed as one signed APK per release. Requires Android 7.0 or later on 64-bit ARM.
+
+Everything below is also available without JavaScript: the page's HTML carries the current version and checksum, and `/` returns Markdown for `Accept: text/markdown`.
 
 ## Get the app
 
-- Newest APK, always: https://flipper-the-ripper.celox.io/download (302 redirect to the current GitHub release asset)
-- This page as Markdown (with the current version and SHA-256): https://flipper-the-ripper.celox.io/index.md — also served at / for `Accept: text/markdown`
-- Newest release as JSON: https://flipper-the-ripper.celox.io/latest.json — fields `version`, `name`, `url`, `size` (bytes), `sha256`, `published` (ISO 8601), `notes`
-- All releases and notes: https://github.com/pepperonas/flipper-the-ripper/releases
-- Requirements: Android 7.0 or later, 64-bit ARM (every phone sold since about 2016). One APK, nothing to choose.
+- [Newest APK](https://flipper-the-ripper.celox.io/download): 302 to the current GitHub release asset — always the newest version
+- [Newest release as JSON](https://flipper-the-ripper.celox.io/latest.json): `version`, `published`, `notes`, and `assets[]` with `target`, `name`, `url`, `size` (bytes), `sha256`; refreshed every 15 minutes
+- [All releases and notes](https://github.com/pepperonas/flipper-the-ripper/releases)
+
+## Docs
+
+- [Product page as Markdown](https://flipper-the-ripper.celox.io/index.md): features, install steps, verification, FAQ, with the current version and SHA-256 filled in
+- [Agent skill: get Flipper the Ripper](https://flipper-the-ripper.celox.io/skills/get-flipper-the-ripper/SKILL.md): download, verify and install, step by step
+- [Changelog](https://flipper-the-ripper.celox.io/changelog.md): Markdown, mirrored from GitHub every 15 minutes
+- [README](https://github.com/pepperonas/flipper-the-ripper#readme): architecture, download engine, build and release process
 
 ## Install
 
-1. Open https://flipper-the-ripper.celox.io/download on the phone.
+1. Open [the download link](https://flipper-the-ripper.celox.io/download) on the phone.
 2. Open the downloaded file; allow the browser to install apps when Android asks (once).
 3. In any supported app tap Share and pick Flipper the Ripper. Updates install over the existing app; the app announces new releases itself.
 
 ## Verify
 
-- APK checksum: `sha256` in https://flipper-the-ripper.celox.io/latest.json, also `SHA256SUMS.txt` in each release.
-- Signing certificate SHA-256 (identical for every release since 1.0.0): `1fc3904fd80eb8135b25ee15fe62ec3b74545eba360298c152f712646fd910cb` — check with `apksigner verify --print-certs`.
+- APK checksum: `assets[0].sha256` in [latest.json](https://flipper-the-ripper.celox.io/latest.json), also `SHA256SUMS.txt` in each release.
+- Signing certificate SHA-256, identical for every release since 1.0.0: `1fc3904fd80eb8135b25ee15fe62ec3b74545eba360298c152f712646fd910cb` — check with `apksigner verify --print-certs`.
 
 ## Features
 
@@ -36,9 +43,9 @@
 - Only for publicly accessible content and personal, lawful use. Does not bypass DRM, paywalls or access restrictions.
 - No playlists, no subtitles.
 
-## Links
+## Optional
 
-- Source code: https://github.com/pepperonas/flipper-the-ripper
-- Changelog (Markdown, mirrored from GitHub every 15 min): https://flipper-the-ripper.celox.io/changelog.md — source: https://github.com/pepperonas/flipper-the-ripper/blob/main/CHANGELOG.md
-- Licence: MIT — https://github.com/pepperonas/flipper-the-ripper/blob/main/LICENSE
-- Author: Martin Pfeffer, https://celox.io
+- [Source code](https://github.com/pepperonas/flipper-the-ripper)
+- [Licence (MIT)](https://github.com/pepperonas/flipper-the-ripper/blob/main/LICENSE)
+- [Agent resource catalog](https://flipper-the-ripper.celox.io/.well-known/ai-catalog.json)
+- [Author: Martin Pfeffer, celox.io](https://celox.io)

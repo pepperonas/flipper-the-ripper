@@ -1,6 +1,6 @@
 User-agent: *
 Allow: /
 
-# Machine-readable summary for LLMs and agents: /llms.txt
-# Newest release as JSON: /latest.json
+# For LLMs and agents: summary /llms.txt · this page as Markdown /index.md · newest release /latest.json
+# Agent resource catalog: /.well-known/ai-catalog.json (no "Agentmap:" line — SEO validators reject the directive)
 Sitemap: https://flipper-the-ripper.celox.io/sitemap.xml

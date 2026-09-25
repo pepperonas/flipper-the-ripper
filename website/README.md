@@ -29,8 +29,11 @@ for three readers — people, search engines, and **AI agents** — and each get
 | `i18n.js` | German, Spanish, Italian and French strings, keyed like the `data-i18n` attributes. A missing key falls back to the English in the markup. |
 | `changelog.js` | Changelog dialog: loads `changelog.md` (same origin) and renders it with a small escaping Markdown renderer. |
 | `index.md` | The page as Markdown for agents, with the same SSI includes. |
-| `llms.txt` | One-screen summary for LLMs and agents: what the app is, every link, install, verification, limits. |
-| `robots.txt`, `sitemap.xml` | Allow everything; point at the sitemap, `llms.txt` and `index.md`. |
+| `llms.txt` | One-screen summary for LLMs and agents in the [llms.txt](https://llmstxt.org) format: H1, summary quote, sections of Markdown links (`- [Name](url): note`). |
+| `webmcp.js` | [WebMCP](https://developer.chrome.com/docs/ai/webmcp) tools for AI agents in the browser (see *For agents and tools*). |
+| `.well-known/ai-catalog.json` | [Agent Resource Discovery](https://agenticresourcediscovery.org/spec/) catalog; also served as `/.well-known/ard.json`. |
+| `skills/get-flipper-the-ripper/SKILL.md` | Agent skill (listed in the catalog): download, verify and install the newest APK. |
+| `robots.txt`, `sitemap.xml` | Allow everything; comments point at `llms.txt`, `index.md`, `latest.json` and the catalog; the sitemap lists the page, `llms.txt`, `index.md` and the skill. |
 | `assets/` | Hero art (`hero-1400.webp`, `hero-2400.webp`, `hero.jpg` fallback), `og.jpg` (1200 × 630), `screens.webp/.jpg`, `mark.svg` icon, `apple-touch-icon.png`. |
 | `server/ftr-latest.py` + `.service` / `.timer` | The timer (see below). Installed to `/usr/local/sbin/` and `/etc/systemd/system/`. |
 | `server/nginx/flipper-the-ripper.celox.io` | Vendored vhost — the live file is `/etc/nginx/sites-available/flipper-the-ripper.celox.io`. |
@@ -81,7 +84,10 @@ Everything a person sees is available without running JavaScript:
 | Page as Markdown | `/index.md`, or `/` with `Accept: text/markdown` | Content negotiation; responses carry `Vary: Accept`. |
 | Summary | `/llms.txt` | The [llms.txt](https://llmstxt.org) convention: purpose, links, install, verify, features, limits. |
 | Changelog | `/changelog.md` | `text/markdown; charset=utf-8`, mirrored from GitHub. |
-| Discovery | `<link rel="alternate">` in `<head>` and an HTTP `Link` header on `/` | Both point at `llms.txt`, `index.md` and `latest.json`. |
+| Discovery | `<link rel="alternate">` / `<link rel="ai-catalog">` in `<head>` and an HTTP `Link` header on `/` | Point at `llms.txt`, `index.md`, `latest.json` and the ARD catalog. |
+| Resource catalog | `/.well-known/ai-catalog.json` (= `/.well-known/ard.json`) | ARD 1.0: one entry, the agent skill below, with representative queries. CORS open. |
+| Agent skill | `/skills/get-flipper-the-ripper/SKILL.md` | YAML front matter (`name`, `description`) + steps: latest release, download, verify (checksum and certificate), install, limits. |
+| WebMCP tools | `webmcp.js`, registered via `navigator.modelContext` / `document.modelContext` where the browser offers it | `get_app_facts`, `get_latest_release`, `get_download_url`, `get_checksums`, `get_changelog` (read-only, same data as the page) and `set_page_language`. |
 | Structured data | JSON-LD in `<head>` | `MobileApplication` (features, languages, licence, price 0, download URL, version, size), `HowTo` (install steps), `FAQPage` (the six FAQ answers). |
 
 Try it:
@@ -90,6 +96,15 @@ Try it:
 curl -sI https://flipper-the-ripper.celox.io/ | grep -i -E '^link|^vary'
 curl -s  -H 'Accept: text/markdown' https://flipper-the-ripper.celox.io/ | head -20
 curl -s  https://flipper-the-ripper.celox.io/latest.json
+```
+
+**Lighthouse (13.5, 2026-09-25):** 100 in Performance, Accessibility, Best Practices and SEO, and
+**Agentic Browsing 4/4**, mobile and desktop. The three WebMCP audits only apply when the browser has
+WebMCP; with it enabled (`--chrome-flags="--headless=new --enable-experimental-web-platform-features --enable-features=WebMCP,WebMCPTesting"`)
+all six tools are listed and their schemas pass. Re-run after changes:
+
+```bash
+npx -y lighthouse@latest https://flipper-the-ripper.celox.io/ --output=json --output-path=lh.json --chrome-flags="--headless=new"
 ```
 
 Rules that keep it that way: every fact on the page must also be in `index.md` and, briefly, in
@@ -184,6 +199,17 @@ In a browser (Playwright): 1440 × 900 and 390 × 844, every language once, the 
 keyboard, both dialogs, zero console messages, zero horizontal overflow.
 
 ## Traps we have already stepped in
+
+- **`llms.txt` needs Markdown links.** Lighthouse's audit requires an H1 and at least one
+  `[text](url)`; bare URLs fail it ("File does not appear to contain any links").
+- **Every link needs a name at every width.** The GitHub link in the bar hides its text on phones;
+  without `aria-label` it failed both Accessibility and the agent accessibility-tree audit (Lighthouse
+  tests as a phone).
+- **No `Agentmap:` in `robots.txt`.** ARD suggests it, but Lighthouse's SEO audit rejects it as an
+  unknown directive (SEO dropped to 92). The catalog is found via the well-known path, `<link rel="ai-catalog">`
+  and the `Link` header instead.
+- **ARD validation:** Lighthouse ships the validator — `node --input-type=module -e "import {ConformanceTester}
+  from '<lighthouse>/third-party/ard/ard.js'; …"` — use it before deploying a catalog change.
 
 - **SSI blocks must be defined before their first use.** The fallbacks (`<!--# block … -->`) sit at
   the top of `<head>`; when they were in `<body>`, the JSON-LD in `<head>` rendered

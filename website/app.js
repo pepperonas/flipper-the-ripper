@@ -82,6 +82,13 @@
     store('ftr-lang', current);
     apply(current);
   }
+  // For the WebMCP tool set_page_language (webmcp.js).
+  window.SITE_setLanguage = function (lang) {
+    if (LANGS.indexOf(lang) < 0 || lang === current) return;
+    current = lang;
+    store('ftr-lang', current);
+    apply(current);
+  };
   langBtn.addEventListener('click', function () { if (langMenu.hidden) openMenu(); else closeMenu(true); });
   langBtn.addEventListener('keydown', function (e) {
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); openMenu(); }

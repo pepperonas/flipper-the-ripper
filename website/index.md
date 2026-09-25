@@ -57,6 +57,8 @@ This is the Markdown version of https://flipper-the-ripper.celox.io/ for agents 
 
 - Source code: https://github.com/pepperonas/flipper-the-ripper
 - Changelog: https://flipper-the-ripper.celox.io/changelog.md
+- Agent skill (download, verify, install): https://flipper-the-ripper.celox.io/skills/get-flipper-the-ripper/SKILL.md
+- Agent resource catalog: https://flipper-the-ripper.celox.io/.well-known/ai-catalog.json
 - Licence (MIT): https://github.com/pepperonas/flipper-the-ripper/blob/main/LICENSE
 - Support the project: https://www.paypal.com/donate/?business=martin.pfeffer@celox.io&currency_code=EUR&item_name=Flipper%20the%20Ripper
 - Author: Martin Pfeffer, https://celox.io — Imprint https://celox.io/impressum/ · Privacy https://celox.io/datenschutz/

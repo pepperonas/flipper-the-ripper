@@ -1,0 +1,24 @@
+{
+  "specVersion": "1.0",
+  "host": {
+    "displayName": "Flipper the Ripper",
+    "identifier": "did:web:flipper-the-ripper.celox.io",
+    "documentationUrl": "https://flipper-the-ripper.celox.io/llms.txt"
+  },
+  "entries": [
+    {
+      "identifier": "urn:air:flipper-the-ripper.celox.io:skills:get-flipper-the-ripper",
+      "displayName": "Get Flipper the Ripper",
+      "type": "text/markdown; profile=\"urn:air:agent-skills\"",
+      "url": "https://flipper-the-ripper.celox.io/skills/get-flipper-the-ripper/SKILL.md",
+      "description": "How to download, verify and install the newest Flipper the Ripper APK — a free, open-source Android app that saves public videos from YouTube, Instagram, TikTok, Facebook, X and Dailymotion.",
+      "tags": ["android", "video-downloader", "open-source", "apk"],
+      "representativeQueries": [
+        "Download the latest Flipper the Ripper APK",
+        "Which version of Flipper the Ripper is current?",
+        "How do I verify the Flipper the Ripper APK signature?",
+        "Android app to save Instagram and TikTok videos"
+      ]
+    }
+  ]
+}
