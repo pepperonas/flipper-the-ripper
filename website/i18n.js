@@ -2,11 +2,13 @@
 // data-i18n key to its text. A key missing here falls back to English (app.js).
 window.FTR_I18N = {
   de: {
+    "lic.h": "Lizenz",
+    "lic.close": "Schließen",
     skip: 'Zum Inhalt springen',
     'nav.features': 'Funktionen',
     'nav.install': 'Installieren',
     'hero.kicker': 'Android · Open Source · Kostenlos',
-    'hero.title': 'Link teilen.<br>Video behalten.',
+    'hero.title': 'Link teilen. <br>Video behalten.',
     'hero.lead': 'Speichere öffentliche Videos von sechs Plattformen direkt in deine Galerie — <em>Teilen</em> antippen, Flipper the Ripper wählen, fertig. Kein Konto, keine Werbung, kein Tracking.',
     'hero.download': 'APK herunterladen',
     'hero.source': 'Quellcode',
@@ -53,12 +55,14 @@ window.FTR_I18N = {
     'ft.privacy': 'Datenschutz'
   },
   es: {
+    "lic.h": "Licencia",
+    "lic.close": "Cerrar",
     "skip": "Saltar al contenido",
     "nav.features": "Funciones",
     "nav.install": "Instalar",
     "nav.support": "Apoyar",
     "hero.kicker": "Android · Código abierto · Gratis",
-    "hero.title": "Comparte un enlace.<br>Quédate el vídeo.",
+    "hero.title": "Comparte un enlace. <br>Quédate el vídeo.",
     "hero.lead": "Guarda vídeos públicos de seis plataformas directamente en tu galería: toca <em>Compartir</em>, elige Flipper the Ripper y listo. Sin cuenta, sin anuncios, sin rastreo.",
     "hero.download": "Descargar APK",
     "hero.source": "Código fuente",
@@ -104,12 +108,14 @@ window.FTR_I18N = {
     "ft.privacy": "Privacidad"
   },
   it: {
+    "lic.h": "Licenza",
+    "lic.close": "Chiudi",
     "skip": "Vai al contenuto",
     "nav.features": "Funzioni",
     "nav.install": "Installa",
     "nav.support": "Sostieni",
     "hero.kicker": "Android · Open source · Gratis",
-    "hero.title": "Condividi un link.<br>Tieni il video.",
+    "hero.title": "Condividi un link. <br>Tieni il video.",
     "hero.lead": "Salva i video pubblici di sei piattaforme direttamente nella galleria: tocca <em>Condividi</em>, scegli Flipper the Ripper, fatto. Nessun account, nessuna pubblicità, nessun tracciamento.",
     "hero.download": "Scarica l’APK",
     "hero.source": "Codice sorgente",
@@ -155,12 +161,14 @@ window.FTR_I18N = {
     "ft.privacy": "Privacy"
   },
   fr: {
+    "lic.h": "Licence",
+    "lic.close": "Fermer",
     "skip": "Aller au contenu",
     "nav.features": "Fonctions",
     "nav.install": "Installer",
     "nav.support": "Soutenir",
     "hero.kicker": "Android · Open source · Gratuit",
-    "hero.title": "Partagez un lien.<br>Gardez la vidéo.",
+    "hero.title": "Partagez un lien. <br>Gardez la vidéo.",
     "hero.lead": "Enregistrez les vidéos publiques de six plateformes directement dans votre galerie : touchez <em>Partager</em>, choisissez Flipper the Ripper, c’est fait. Sans compte, sans pub, sans pistage.",
     "hero.download": "Télécharger l’APK",
     "hero.source": "Code source",

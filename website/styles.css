@@ -27,6 +27,7 @@
   --gutter: clamp(16px, 4vw, 32px);
   --ease-spring: cubic-bezier(.34, 1.36, .64, 1);
   --ease-emph: cubic-bezier(.2, 0, 0, 1);
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace;
   --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
@@ -43,7 +44,7 @@ img { max-width: 100%; height: auto; display: block; }
 a { color: var(--primary); text-underline-offset: 3px; }
 em { font-style: normal; color: var(--on-primary-container); font-weight: 600; }
 code {
-  font: .85em/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font: .85em/1.4 var(--mono);
   overflow-wrap: anywhere;
 }
 :focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; border-radius: 8px; }
@@ -73,21 +74,55 @@ code {
 }
 .brand span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .bar-links { display: flex; align-items: center; gap: 4px; }
-.bar-links a, .lang {
+.bar-links a {
   display: inline-flex; align-items: center; gap: 6px; min-height: 40px;
   padding: 0 14px; border-radius: var(--r-full);
   color: var(--on-variant); text-decoration: none; font: 500 14px/1 var(--font);
   transition: background-color .2s, color .2s;
 }
-.bar-links a:hover, .lang:hover { background: color-mix(in srgb, var(--on-bg) 8%, transparent); color: var(--on-bg); }
+.bar-links a:hover { background: color-mix(in srgb, var(--on-bg) 8%, transparent); color: var(--on-bg); }
 .bar-links .gh svg { width: 18px; height: 18px; }
-.lang {
-  border: 1px solid var(--outline-variant); cursor: pointer; letter-spacing: .06em;
-  -webkit-appearance: none; appearance: none;
-  padding: 0 30px 0 14px;
-  background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5' fill='none' stroke='%23cac4d0' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 11px center / 12px;
+.lang { position: relative; }
+.lang-btn {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 12px 0 10px;
+  border: 1px solid var(--outline-variant); border-radius: var(--r-full); background: transparent;
+  color: var(--on-bg); font: 600 13px/1 var(--font); letter-spacing: .06em; cursor: pointer;
+  transition: background-color .2s, border-color .2s;
 }
-.lang option { background: var(--surface-high); color: var(--on-bg); }
+.lang-btn:hover, .lang-btn[aria-expanded="true"] {
+  background: color-mix(in srgb, var(--on-bg) 8%, transparent); border-color: var(--outline);
+}
+.lang-chev { width: 12px; height: 12px; color: var(--on-variant); transition: transform .3s var(--ease-spring); }
+.lang-btn[aria-expanded="true"] .lang-chev { transform: rotate(180deg); }
+.flag {
+  flex: none; width: 22px; height: 16px; border-radius: 4px; overflow: hidden;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .14); background-size: cover; background-position: center;
+}
+.flag-en { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 30'%3E%3CclipPath id='t'%3E%3Cpath d='M30,15 h30 v15 z v15 h-30 z h-30 v-15 z v-15 h30 z'/%3E%3C/clipPath%3E%3Cpath d='M0,0 v30 h60 v-30 z' fill='%23012169'/%3E%3Cpath d='M0,0 L60,30 M60,0 L0,30' stroke='%23fff' stroke-width='6'/%3E%3Cpath d='M0,0 L60,30 M60,0 L0,30' clip-path='url(%23t)' stroke='%23C8102E' stroke-width='4'/%3E%3Cpath d='M30,0 v30 M0,15 h60' stroke='%23fff' stroke-width='10'/%3E%3Cpath d='M30,0 v30 M0,15 h60' stroke='%23C8102E' stroke-width='6'/%3E%3C/svg%3E"); }
+.flag-de { background: linear-gradient(#000 0 33.3%, #dd0000 0 66.6%, #ffce00 0); }
+.flag-es { background: linear-gradient(#c60b1e 0 25%, #ffc400 0 75%, #c60b1e 0); }
+.flag-it { background: linear-gradient(90deg, #009246 0 33.3%, #f1f2f1 0 66.6%, #ce2b37 0); }
+.flag-fr { background: linear-gradient(90deg, #0055a4 0 33.3%, #f5f5f5 0 66.6%, #ef4135 0); }
+.lang-menu {
+  position: absolute; right: 0; top: calc(100% + 8px); z-index: 30; min-width: 196px;
+  margin: 0; padding: 6px; list-style: none;
+  background: var(--surface-high); border: 1px solid var(--outline-variant); border-radius: 20px;
+  box-shadow: 0 18px 48px -12px rgba(0, 0, 0, .6);
+  transform-origin: top right; animation: menu-in .28s var(--ease-spring) both;
+}
+.lang-menu[hidden] { display: none; }
+/* The menu takes focus so the arrow keys work; the highlighted row shows where you are, not a ring. */
+.lang-menu:focus, .lang-menu:focus-visible { outline: none; }
+.lang-menu li {
+  display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px;
+  border-radius: 14px; color: var(--on-bg); font: 500 15px/1.2 var(--font); cursor: pointer;
+}
+.lang-menu li:hover, .lang-menu li.active { background: color-mix(in srgb, var(--on-bg) 8%, transparent); }
+.lang-menu li[aria-selected="true"] { background: var(--secondary-container); color: var(--on-secondary-container); }
+.lang-name { flex: 1; }
+.lang-check { width: 18px; height: 18px; color: var(--primary); opacity: 0; }
+.lang-menu li[aria-selected="true"] .lang-check { opacity: 1; }
+@keyframes menu-in { from { opacity: 0; transform: scale(.92) translateY(-6px); } }
 @media (max-width: 640px) {
   .bar-links a:not(.gh) { display: none; }
   .bar-links .gh span { display: none; }
@@ -95,40 +130,56 @@ code {
 }
 
 /* ---------- hero ---------- */
+/* The banner is shown whole and smaller than its 1672 px — scaled down it stays sharp, and its own
+   lettering (wordmark, tagline, corner words) is readable. Its edges melt into the page colour. */
 .hero {
   position: relative; isolation: isolate; overflow: hidden;
-  min-height: min(100svh, 900px);
-  display: flex; align-items: center; justify-content: flex-end;
-  padding: calc(env(safe-area-inset-top) + 88px) var(--gutter) 72px;
+  display: flex; flex-direction: column; align-items: center;
+  padding: calc(env(safe-area-inset-top) + 76px) var(--gutter) 64px;
 }
-.hero-bg, .hero-bg img {
-  position: absolute; inset: 0; width: 100%; height: 100%; z-index: -2;
+.hero::before {
+  content: ""; position: absolute; z-index: -1; left: 50%; top: 8%;
+  width: min(1100px, 120vw); aspect-ratio: 2 / 1; transform: translateX(-50%);
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--accent) 22%, transparent), transparent);
+  pointer-events: none;
 }
-/* Desktop: the picture starts below the bar, so its corner lettering does not sit under the brand. */
-@media (min-width: 861px) {
-  .hero-bg, .hero-scrim { top: calc(env(safe-area-inset-top) + 64px); height: auto; bottom: 0; }
+.hero-bg {
+  position: relative; display: block;
+  /* Leaves room for the headline and the buttons on a typical laptop screen. */
+  width: min(100%, 980px, calc((100svh - 420px) * 1.777));
+  min-width: min(100%, 560px);
+}
+/* A halo in the banner's own background colour, so its edges have nothing to stand out against. */
+.hero-bg::before {
+  content: ""; position: absolute; inset: -14% -10%; z-index: -1;
+  background: radial-gradient(closest-side, #0a0b1d 62%, transparent);
+  pointer-events: none;
 }
 .hero-bg img {
-  object-fit: cover; object-position: 12% 50%;
+  width: 100%; height: auto; aspect-ratio: 1672 / 941;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent),
+    linear-gradient(180deg, transparent, #000 5%, #000 88%, transparent);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent),
+    linear-gradient(180deg, transparent, #000 5%, #000 88%, transparent);
+  mask-composite: intersect;
   animation: hero-in 1.6s var(--ease-emph) both;
 }
-/* The banner carries its own wordmark on the right; the scrim sinks it into the page colour
-   so the headline reads on top of it, while the phone and the dolphin stay in full light. */
-.hero-scrim {
-  position: absolute; inset: 0; z-index: -1;
-  background:
-    linear-gradient(90deg, transparent 24%, color-mix(in srgb, var(--bg) 96%, transparent) 45%, var(--bg) 58%),
-    linear-gradient(180deg, color-mix(in srgb, var(--bg) 92%, transparent) 0, color-mix(in srgb, var(--bg) 40%, transparent) 12%, transparent 22%, transparent 72%, var(--bg) 100%);
+.hero-content {
+  width: min(100%, 940px); margin-top: clamp(8px, 2vw, 20px);
+  text-align: center;
 }
-.hero-content { width: min(100%, 520px); margin-right: max(0px, calc((100vw - var(--measure)) / 2 - var(--gutter))); }
+.hero-content .cta { justify-content: center; }
+@media (min-width: 1000px) { .hero-content h1 br { display: none; } }
+.hero-content .lead { max-width: 640px; margin-left: auto; margin-right: auto; }
 .kicker {
   display: inline-block; margin: 0 0 16px; padding: 6px 14px; border-radius: var(--r-full);
   background: color-mix(in srgb, var(--primary-container) 70%, transparent);
   color: var(--on-primary-container); font: 600 13px/1.2 var(--font); letter-spacing: .04em;
 }
 h1 {
-  margin: 0 0 18px;
-  font-size: clamp(2.4rem, 5.4vw, 4rem); line-height: 1.02; letter-spacing: -.035em; font-weight: 800;
+  margin: 0 0 16px;
+  font-size: clamp(2.3rem, 4.6vw, 3.6rem); line-height: 1.02; letter-spacing: -.035em; font-weight: 800;
   text-wrap: balance;
 }
 .lead { margin: 0 0 28px; font-size: clamp(1.02rem, 1.6vw, 1.15rem); color: var(--on-variant); text-wrap: pretty; }
@@ -148,7 +199,7 @@ h1 {
 .btn.tonal { background: var(--secondary-container); color: var(--on-secondary-container); }
 .btn.tonal:hover { background: color-mix(in srgb, var(--secondary-container) 80%, var(--on-bg)); }
 .btn:active { transform: scale(.96); border-radius: 18px; }
-.meta { margin: 14px 0 0 4px; font-size: 14px; color: var(--on-variant); font-variant-numeric: tabular-nums; }
+.meta { margin: 14px 0 0; font-size: 14px; color: var(--on-variant); font-variant-numeric: tabular-nums; }
 
 .hero-content > * { animation: rise .8s var(--ease-emph) both; }
 .hero-content > :nth-child(2) { animation-delay: .06s; }
@@ -156,23 +207,12 @@ h1 {
 .hero-content > :nth-child(4) { animation-delay: .18s; }
 .hero-content > :nth-child(5) { animation-delay: .24s; }
 
-@media (max-width: 860px) {
-  /* Narrow screens show the whole banner — cropping it cut its wordmark mid-word. */
-  .hero {
-    display: block; min-height: 0;
-    padding-top: calc(env(safe-area-inset-top) + 60px + 56.3vw + 8px);
-    padding-bottom: 56px;
-  }
-  .hero-bg, .hero-scrim {
-    top: calc(env(safe-area-inset-top) + 60px); height: 56.3vw; bottom: auto;
-  }
-  .hero-bg img { object-fit: cover; object-position: 50% 50%; }
-  .hero-scrim {
-    background:
-      linear-gradient(180deg, var(--bg) 0, transparent 14%, transparent 72%, var(--bg) 100%),
-      linear-gradient(90deg, var(--bg) 0, transparent 6%, transparent 94%, var(--bg) 100%);
-  }
-  .hero-content { width: 100%; margin: 0; }
+@media (max-width: 640px) {
+  .hero { padding-top: calc(env(safe-area-inset-top) + 64px); padding-bottom: 48px; }
+  /* Edge to edge on a phone: every pixel of width makes the banner's own lettering bigger. */
+  .hero-bg { width: calc(100% + 2 * var(--gutter)); max-width: none; margin: 0 calc(-1 * var(--gutter)); }
+  .hero-content { text-align: left; }
+  .hero-content .cta { justify-content: flex-start; }
 }
 @media (max-width: 480px) {
   .cta .btn { flex: 1 1 100%; }
@@ -290,6 +330,39 @@ h1 {
 .foot-links { display: flex; flex-wrap: wrap; gap: 6px 18px; }
 .foot a { color: var(--on-variant); }
 .foot a:hover { color: var(--primary); }
+
+/* ---------- licence dialog ---------- */
+.linklike {
+  padding: 0; border: 0; background: none; cursor: pointer;
+  color: var(--on-variant); font: inherit; text-decoration: underline; text-underline-offset: 3px;
+}
+.linklike:hover { color: var(--primary); }
+.license {
+  width: min(680px, calc(100vw - 32px)); max-height: min(80vh, 720px); padding: 0;
+  border: 1px solid var(--outline-variant); border-radius: var(--r-xl);
+  background: var(--surface-low); color: var(--on-bg);
+  box-shadow: 0 30px 80px -20px rgba(0, 0, 0, .7);
+}
+.license[open] { display: flex; flex-direction: column; animation: dialog-in .35s var(--ease-spring) both; }
+.license::backdrop { background: rgba(8, 7, 12, .66); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
+.license-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 16px 16px 12px 24px; border-bottom: 1px solid var(--outline-variant);
+}
+.license-head h2 { margin: 0; font: 700 1.1rem/1.3 var(--mono); letter-spacing: -.01em; }
+.license-close {
+  display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 50%;
+  background: transparent; color: var(--on-variant); cursor: pointer;
+}
+.license-close:hover { background: color-mix(in srgb, var(--on-bg) 8%, transparent); color: var(--on-bg); }
+.license-close svg { width: 22px; height: 22px; }
+.license-text {
+  margin: 0; padding: 20px 24px 24px; overflow: auto;
+  font: 13.5px/1.65 var(--mono); color: var(--on-variant);
+  white-space: pre-wrap; overflow-wrap: anywhere;
+}
+.license-text:focus { outline: none; }
+@keyframes dialog-in { from { opacity: 0; transform: translateY(12px) scale(.97); } }
 
 /* ---------- motion ---------- */
 @keyframes rise { from { opacity: 0; transform: translateY(18px); } }
