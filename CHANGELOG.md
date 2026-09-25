@@ -12,23 +12,25 @@ section for the version in `app/build.gradle.kts` exists before anything is tagg
 
 ## [Unreleased]
 
-### Added
-- Product page at [flipper-the-ripper.celox.io](https://flipper-the-ripper.celox.io) (also
-  `flippertheripper.celox.io` and `ftr.celox.io`). It always offers the newest APK;
-  `https://flipper-the-ripper.celox.io/download` is a stable direct link. Source in `website/`.
+## [1.11.0] - 2026-09-25
 
+Five languages, an Undo for the swipe, and a home page that always has the newest APK.
+
+### Added
 - **Spanish, Italian and French.** The app now speaks five languages. On Android 13+ the language
   can also be chosen for the app alone (*Settings → Apps → Flipper the Ripper → Language*).
 - **Undo after deleting.** Swiping a finished download away (or deleting it) shows a snackbar with
   *Undo*, which puts the entry back exactly as it was. Downloads still in the queue offer no undo:
   deleting them also cancels them.
-- Settings → About links to the product page.
+- **Product page** at [flipper-the-ripper.celox.io](https://flipper-the-ripper.celox.io) (also
+  `flippertheripper.celox.io` and `ftr.celox.io`). It always offers the newest APK;
+  <https://flipper-the-ripper.celox.io/download> is a stable direct link. Settings → About links to it.
 
 ### Changed
-- Gradle names its APKs like the published file: `flipper-the-ripper-v1.10.0.apk` and
-  `flipper-the-ripper-v1.10.0-debug.apk` instead of `app-arm64-v8a-release.apk`. The release
-  workflow now takes the file under the tag's name, so a tag that does not match `versionName`
-  fails the job instead of publishing a mislabelled APK.
+- Gradle names its APKs like the published file (`flipper-the-ripper-v1.11.0.apk`,
+  `…-debug.apk`) instead of `app-arm64-v8a-release.apk`. The release workflow takes the file under
+  the tag's name, so a tag that does not match `versionName` fails the job instead of publishing a
+  mislabelled APK.
 
 ## [1.10.0] - 2026-09-21
 
