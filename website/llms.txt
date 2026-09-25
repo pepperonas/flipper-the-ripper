@@ -35,6 +35,7 @@ Everything below is also available without JavaScript: the page's HTML carries t
 - Quality: Best, 1080p, 720p, 480p, audio only
 - Queue: one download at a time, pause/resume from the last byte, drag to reorder, swipe finished entries away with undo
 - Background downloads with one progress notification; files saved to Movies, named after the video title
+- Instagram reels that need an account: the failed download offers a sign-in wizard (on Instagram's own page) and restarts itself once signed in
 - Self-updating yt-dlp extractor
 - Languages: English, German, Spanish, Italian, French
 

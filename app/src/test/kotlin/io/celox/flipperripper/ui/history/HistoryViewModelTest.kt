@@ -39,6 +39,7 @@ class HistoryViewModelTest {
             deleteRecord = DeleteRecordUseCase(repo),
             restoreRecord = RestoreRecordUseCase(repo),
             clearHistory = ClearHistoryUseCase(repo),
+            instagramSession = io.celox.flipperripper.data.engine.InstagramSession { false },
         )
 
     @Test

@@ -3,6 +3,7 @@ package io.celox.flipperripper.ui.history
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.celox.flipperripper.data.engine.InstagramSession
 import io.celox.flipperripper.domain.model.DownloadRecord
 import io.celox.flipperripper.domain.model.isPending
 import io.celox.flipperripper.domain.usecase.CancelDownloadUseCase
@@ -35,7 +36,15 @@ constructor(
     private val deleteRecord: DeleteRecordUseCase,
     private val restoreRecord: RestoreRecordUseCase,
     private val clearHistory: ClearHistoryUseCase,
+    private val instagramSession: InstagramSession,
 ) : ViewModel() {
+    /** Whether an Instagram session exists — a failed Instagram card offers the sign-in only without one. */
+    val instagramSignedIn: StateFlow<Boolean> = instagramSession.loggedIn
+
+    init {
+        instagramSession.refresh()
+    }
+
     /**
      * `null` means the database has not answered yet — deliberately not an empty list.
      *

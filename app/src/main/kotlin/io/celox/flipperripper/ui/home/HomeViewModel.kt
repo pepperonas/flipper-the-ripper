@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.celox.flipperripper.BuildConfig
+import io.celox.flipperripper.data.engine.InstagramSession
 import io.celox.flipperripper.domain.model.DownloadRequest
 import io.celox.flipperripper.domain.model.EngineResult
 import io.celox.flipperripper.domain.model.FormatSelection
@@ -41,6 +42,7 @@ constructor(
     private val settingsRepository: SettingsRepository,
     private val shareLinkHandler: ShareLinkHandler,
     private val appNavigator: AppNavigator,
+    private val instagramSession: InstagramSession,
 ) : ViewModel() {
     private val _state = MutableStateFlow(HomeUiState())
     val state = _state.asStateFlow()
@@ -49,6 +51,16 @@ constructor(
     val events: Flow<HomeEvent> = _events.receiveAsFlow()
 
     init {
+        instagramSession.refresh()
+        viewModelScope.launch {
+            instagramSession.loggedIn.collect { signedIn ->
+                val offered = _state.value.offerInstagramSignIn
+                _state.update { it.copy(instagramSignedIn = signedIn) }
+                // Back from the sign-in wizard with a session: try the link again, so the user does
+                // not have to press Load info a second time for what they came for.
+                if (signedIn && offered) resolve()
+            }
+        }
         viewModelScope.launch {
             observeEngineReady().collect { ready -> _state.update { it.copy(engineReady = ready) } }
         }
@@ -100,6 +112,7 @@ constructor(
                 detectedPlatform = UrlParser.detectPlatform(text),
                 videoInfo = null,
                 errorMessage = null,
+                errorKind = null,
             )
         }
     }
@@ -142,10 +155,10 @@ constructor(
     fun resolve() {
         val url = _state.value.urlInput.trim()
         if (UrlParser.detectPlatform(url) == null) {
-            _state.update { it.copy(errorMessage = "This link is not from a supported platform.") }
+            _state.update { it.copy(errorMessage = "This link is not from a supported platform.", errorKind = null) }
             return
         }
-        _state.update { it.copy(isResolving = true, errorMessage = null, videoInfo = null) }
+        _state.update { it.copy(isResolving = true, errorMessage = null, errorKind = null, videoInfo = null) }
         viewModelScope.launch {
             when (val result = resolveVideoInfo(url, FormatSelection.mode(_state.value.quality))) {
                 is EngineResult.Success ->
@@ -162,7 +175,9 @@ constructor(
                         }
                     }
                 is EngineResult.Failure ->
-                    _state.update { it.copy(isResolving = false, errorMessage = result.error.message) }
+                    _state.update {
+                        it.copy(isResolving = false, errorMessage = result.error.message, errorKind = result.error.kind)
+                    }
             }
         }
     }
@@ -205,7 +220,7 @@ constructor(
                     appNavigator.navigateTo(AppNavTarget.HISTORY)
                 }
                 is EngineResult.Failure ->
-                    _state.update { it.copy(errorMessage = result.error.message) }
+                    _state.update { it.copy(errorMessage = result.error.message, errorKind = result.error.kind) }
             }
         }
     }

@@ -49,6 +49,8 @@ class HomeViewModelTest {
     private val settings = FakeSettingsRepository()
     private val bus = IncomingLinkBus()
     private val navigator = AppNavigator()
+    private var instagramCookie = false
+    private val instagramSession = io.celox.flipperripper.data.engine.InstagramSession { instagramCookie }
     private var handler: ShareLinkHandler? = null
 
     private val handlerScopes = mutableListOf<CoroutineScope>()
@@ -80,6 +82,7 @@ class HomeViewModelTest {
             settingsRepository = settings,
             shareLinkHandler = shareHandler(),
             appNavigator = navigator,
+            instagramSession = instagramSession,
         )
 
     @Test
@@ -313,5 +316,43 @@ class HomeViewModelTest {
             engineRepo.setReady(true)
             advanceUntilIdle()
             assertThat(vm.state.value.engineReady).isTrue()
+        }
+
+    @Test
+    fun `an Instagram login error offers the sign-in, and signing in loads the link again`() =
+        runTest {
+            videoRepo.result =
+                io.celox.flipperripper.domain.model.EngineResult.Failure(
+                    io.celox.flipperripper.domain.model.DownloadError.LoginRequired("sign in"),
+                )
+            val vm = createViewModel()
+            advanceUntilIdle()
+            vm.onUrlChange("https://www.instagram.com/reel/abc/")
+            vm.resolve()
+            advanceUntilIdle()
+            assertThat(vm.state.value.offerInstagramSignIn).isTrue()
+
+            // The wizard signs in; Home notices and resolves again, this time successfully.
+            videoRepo.result = FakeVideoRepository().result
+            instagramCookie = true
+            instagramSession.refresh()
+            advanceUntilIdle()
+            assertThat(vm.state.value.offerInstagramSignIn).isFalse()
+            assertThat(vm.state.value.videoInfo).isNotNull()
+        }
+
+    @Test
+    fun `a YouTube login wall offers no Instagram sign-in`() =
+        runTest {
+            videoRepo.result =
+                io.celox.flipperripper.domain.model.EngineResult.Failure(
+                    io.celox.flipperripper.domain.model.DownloadError.LoginRequired("bot check"),
+                )
+            val vm = createViewModel()
+            vm.onUrlChange("https://youtu.be/abc")
+            vm.resolve()
+            advanceUntilIdle()
+            assertThat(vm.state.value.errorMessage).isNotNull()
+            assertThat(vm.state.value.offerInstagramSignIn).isFalse()
         }
 }

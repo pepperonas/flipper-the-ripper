@@ -20,6 +20,7 @@ This is the Markdown version of https://flipper-the-ripper.celox.io/ for agents 
 - **Choose the quality** — Best, 1080p, 720p, 480p or audio only. Tiers a video does not reach are greyed out; a remembered default keeps shared links one tap.
 - **Keeps going in the background** — locked screen, minimised app, rotated phone; one notification for the whole batch.
 - **Straight into your gallery** — files land in Movies, named after the video title, visible in Google Photos and every file manager.
+- **Instagram sign-in where it is needed** — a reel only visible to signed-in accounts offers *Sign in to Instagram* on the failed card; a three-step wizard signs in on Instagram's own page and restarts the download by itself.
 - **Stays working** — the bundled yt-dlp updates itself; the app tells you when a new release is out.
 - **Five languages** — English, German, Spanish, Italian, French.
 

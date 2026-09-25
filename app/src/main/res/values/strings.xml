@@ -93,6 +93,24 @@
     <string name="settings_instagram_sign_in">Sign in to Instagram</string>
     <string name="settings_instagram_sign_out">Sign out of Instagram</string>
     <string name="settings_instagram_signed_in">Signed in ✓</string>
+    <!-- Instagram sign-in offered where the error happens, and the wizard it opens. -->
+    <string name="ig_signin_needed">This reel is only visible to signed-in Instagram accounts.</string>
+    <string name="ig_signin_action">Sign in to Instagram</string>
+    <string name="ig_wizard_title">Instagram sign-in</string>
+    <string name="ig_wizard_close">Close</string>
+    <string name="ig_wizard_step">Step %1$d of %2$d</string>
+    <string name="ig_wizard_intro_title">Sign in once, then it just works</string>
+    <string name="ig_wizard_intro_why">Some reels are only visible to signed-in accounts. Signed in, Flipper the Ripper can download everything your own account can see.</string>
+    <string name="ig_wizard_intro_password">You sign in on Instagram\'s own page. The app never sees your password — it only keeps the session, like a browser does.</string>
+    <string name="ig_wizard_intro_signout">You can sign out any time under Settings → Instagram.</string>
+    <string name="ig_wizard_continue">Continue</string>
+    <string name="ig_wizard_not_now">Not now</string>
+    <string name="ig_wizard_login_hint">Sign in below. This screen moves on by itself once you are in.</string>
+    <string name="ig_wizard_done_title">You are signed in</string>
+    <string name="ig_wizard_done_retry">The download is starting again.</string>
+    <string name="ig_wizard_done_home">The video info is loading again.</string>
+    <string name="ig_wizard_show_downloads">Show downloads</string>
+    <string name="ig_wizard_back">Back to the link</string>
     <string name="login_title">Sign in to Instagram</string>
     <string name="login_back">Back</string>
 

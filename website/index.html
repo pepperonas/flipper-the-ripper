@@ -17,9 +17,9 @@
   <meta name="color-scheme" content="dark">
   <meta name="format-detection" content="telephone=no">
   <link rel="canonical" href="https://flipper-the-ripper.celox.io/">
-  <link rel="icon" href="assets/mark.svg?v=15" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=15">
-  <link rel="preload" as="image" type="image/webp" imagesrcset="assets/hero-1400.webp?v=15 1400w, assets/hero-2400.webp?v=15 2400w" imagesizes="100vw">
+  <link rel="icon" href="assets/mark.svg?v=16" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=16">
+  <link rel="preload" as="image" type="image/webp" imagesrcset="assets/hero-1400.webp?v=16 1400w, assets/hero-2400.webp?v=16 2400w" imagesizes="100vw">
   <!-- For agents and tools: machine-readable facts about the app and its newest release. -->
   <link rel="ai-catalog" href="/.well-known/ai-catalog.json" type="application/json">
   <link rel="alternate" type="text/markdown" href="/llms.txt" title="Flipper the Ripper for LLMs and agents">
@@ -37,8 +37,8 @@
   <meta property="og:locale:alternate" content="es_ES">
   <meta property="og:locale:alternate" content="it_IT">
   <meta property="og:locale:alternate" content="fr_FR">
-  <meta property="og:image" content="https://flipper-the-ripper.celox.io/assets/og.jpg?v=15">
-  <meta property="og:image:secure_url" content="https://flipper-the-ripper.celox.io/assets/og.jpg?v=15">
+  <meta property="og:image" content="https://flipper-the-ripper.celox.io/assets/og.jpg?v=16">
+  <meta property="og:image:secure_url" content="https://flipper-the-ripper.celox.io/assets/og.jpg?v=16">
   <meta property="og:image:type" content="image/jpeg">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
@@ -46,7 +46,7 @@
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Flipper the Ripper — Rip it. Keep it.">
   <meta name="twitter:description" content="Free, open-source Android video downloader for YouTube, Instagram, TikTok, Facebook, X and Dailymotion. No account, no ads, no tracking.">
-  <meta name="twitter:image" content="https://flipper-the-ripper.celox.io/assets/og.jpg?v=15">
+  <meta name="twitter:image" content="https://flipper-the-ripper.celox.io/assets/og.jpg?v=16">
   <meta name="twitter:image:alt" content="Flipper the Ripper — a cartoon dolphin leaping out of a phone, videos flying into a download arrow.">
 
   <script type="application/ld+json">
@@ -62,8 +62,8 @@
   ],
   "description": "Free, open-source Android app that saves publicly accessible videos from YouTube, Instagram, TikTok, Facebook, X and Dailymotion to the phone's gallery. Share a link to the app and the download starts. No account, no ads, no tracking.",
   "url": "https://flipper-the-ripper.celox.io/",
-  "image": "https://flipper-the-ripper.celox.io/assets/og.jpg?v=15",
-  "screenshot": "https://flipper-the-ripper.celox.io/assets/screens.jpg?v=15",
+  "image": "https://flipper-the-ripper.celox.io/assets/og.jpg?v=16",
+  "screenshot": "https://flipper-the-ripper.celox.io/assets/screens.jpg?v=16",
   "operatingSystem": "Android 7.0 or later (64-bit ARM)",
   "applicationCategory": "MultimediaApplication",
   "applicationSubCategory": "Video downloader",
@@ -100,6 +100,7 @@
    "Swipe finished downloads away, with undo",
    "Background downloads with a single progress notification",
    "Saves to the Movies folder, named after the video title",
+   "Instagram sign-in offered on a failed reel; the download restarts by itself once signed in",
    "Self-updating yt-dlp extractor",
    "Available in English, German, Spanish, Italian and French",
    "No account, no ads, no tracking"
@@ -202,18 +203,18 @@
 ]
   </script>
 
-  <link rel="stylesheet" href="styles.css?v=15">
-  <script src="i18n.js?v=15" defer></script>
-  <script src="app.js?v=15" defer></script>
-  <script src="changelog.js?v=15" defer></script>
-  <script src="webmcp.js?v=15" defer></script>
+  <link rel="stylesheet" href="styles.css?v=16">
+  <script src="i18n.js?v=16" defer></script>
+  <script src="app.js?v=16" defer></script>
+  <script src="changelog.js?v=16" defer></script>
+  <script src="webmcp.js?v=16" defer></script>
 </head>
 <body>
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
 
   <header class="bar">
     <a class="brand" href="#top" aria-label="Flipper the Ripper">
-      <img src="assets/mark.svg?v=15" alt="" width="28" height="28">
+      <img src="assets/mark.svg?v=16" alt="" width="28" height="28">
       <span>Flipper the Ripper</span>
     </a>
     <nav class="bar-links" aria-label="Main">
@@ -246,8 +247,8 @@
     <section class="hero" id="top">
       <picture class="hero-bg" aria-hidden="true">
         <source type="image/webp" sizes="100vw"
-                srcset="assets/hero-1400.webp?v=15 1400w, assets/hero-2400.webp?v=15 2400w">
-        <img src="assets/hero.jpg?v=15" alt="" width="2912" height="1440" fetchpriority="high">
+                srcset="assets/hero-1400.webp?v=16 1400w, assets/hero-2400.webp?v=16 2400w">
+        <img src="assets/hero.jpg?v=16" alt="" width="2912" height="1440" fetchpriority="high">
       </picture>
       <div class="hero-scrim" aria-hidden="true"></div>
 
@@ -312,8 +313,8 @@
     <section class="section shots" aria-labelledby="s-h">
       <h2 id="s-h" data-i18n="s.h">Material 3 Expressive, dark and light</h2>
       <picture>
-        <source srcset="assets/screens.webp?v=15" type="image/webp">
-        <img src="assets/screens.jpg?v=15" width="1600" height="894" loading="lazy" decoding="async"
+        <source srcset="assets/screens.webp?v=16" type="image/webp">
+        <img src="assets/screens.jpg?v=16" width="1600" height="894" loading="lazy" decoding="async"
              data-i18n-alt="s.alt" alt="Four screens: the quality sheet on Home, the download queue, the progress notification and the German settings">
       </picture>
     </section>

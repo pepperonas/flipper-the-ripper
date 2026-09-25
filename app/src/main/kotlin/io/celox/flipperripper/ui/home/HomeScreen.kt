@@ -23,6 +23,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.Login
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.outlined.Clear
 import androidx.compose.material.icons.outlined.ContentPaste
@@ -75,7 +76,7 @@ import io.celox.flipperripper.ui.util.ObserveAsEvents
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
+fun HomeScreen(onSignInToInstagram: () -> Unit = {}, viewModel: HomeViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
@@ -251,7 +252,22 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
                 state.errorMessage?.let { message ->
                     Column {
                         Spacer(Modifier.height(Spacing.lg))
-                        ErrorCard(message)
+                        if (state.offerInstagramSignIn) {
+                            // Said in the user's language, with the way out right under it — the
+                            // wizard signs in and this screen loads the link again by itself.
+                            ErrorCard(stringResource(R.string.ig_signin_needed))
+                            Spacer(Modifier.height(Spacing.sm))
+                            FilledTonalButton(
+                                onClick = onSignInToInstagram,
+                                modifier = Modifier.fillMaxWidth().height(Sizes.buttonHeight),
+                            ) {
+                                Icon(Icons.AutoMirrored.Outlined.Login, contentDescription = null)
+                                Spacer(Modifier.width(Spacing.sm))
+                                Text(stringResource(R.string.ig_signin_action))
+                            }
+                        } else {
+                            ErrorCard(message)
+                        }
                     }
                 }
             }

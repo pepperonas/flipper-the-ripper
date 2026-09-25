@@ -43,6 +43,7 @@
             'Queue: one at a time, pause/resume, drag to reorder, swipe away with undo',
             'Background downloads with one progress notification',
             'Saves to Movies, named after the video title',
+            'Instagram reels that need an account: a sign-in wizard on the failed download, which then restarts',
             'Self-updating yt-dlp extractor',
             'English, German, Spanish, Italian, French'],
           limits: ['Publicly accessible content and lawful personal use only; no DRM/paywall/login bypass',

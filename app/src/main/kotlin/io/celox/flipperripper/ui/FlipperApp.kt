@@ -18,13 +18,17 @@ import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import io.celox.flipperripper.ui.history.HistoryScreen
 import io.celox.flipperripper.ui.home.HomeScreen
 import io.celox.flipperripper.ui.login.InstagramLoginScreen
+import io.celox.flipperripper.ui.login.InstagramSignInViewModel
+import io.celox.flipperripper.ui.login.InstagramSignInWizard
 import io.celox.flipperripper.ui.motion.ScreenMotion
 import io.celox.flipperripper.ui.motion.ScreenTransitions
 import io.celox.flipperripper.ui.motion.rememberReduceMotion
@@ -34,6 +38,20 @@ import io.celox.flipperripper.ui.util.ObserveAsEvents
 
 /** A full-screen destination outside the bottom-nav tabs. */
 private const val INSTAGRAM_LOGIN_ROUTE = "instagram_login"
+
+/** The sign-in wizard a failed Instagram download offers; `retry` = the download to restart. */
+private const val INSTAGRAM_SIGNIN_ROUTE = "instagram_signin"
+private const val INSTAGRAM_SIGNIN_PATTERN = "$INSTAGRAM_SIGNIN_ROUTE?retry={retry}" // retry = InstagramSignInViewModel.ARG_RETRY
+
+private fun NavController.openInstagramSignIn(retryId: String? = null) {
+    val route =
+        if (retryId == null) {
+            INSTAGRAM_SIGNIN_ROUTE
+        } else {
+            "$INSTAGRAM_SIGNIN_ROUTE?${InstagramSignInViewModel.ARG_RETRY}=$retryId"
+        }
+    navigate(route) { launchSingleTop = true }
+}
 
 /** Test tag of the bottom bar, so its measured height can be pinned. */
 const val BOTTOM_BAR_TAG = "bottom-bar"
@@ -111,12 +129,22 @@ fun FlipperApp(appNavigator: AppNavigator) {
             // what stops the double counting.
             modifier = Modifier.padding(padding).consumeWindowInsets(padding),
             enterTransition = { transitions.tabEnter(forward = isForward()) },
-            exitTransition = { transitions.tabExit(forward = isForward()) },
-            popEnterTransition = { transitions.tabEnter(forward = isForward()) },
+            // A tab covered by a full-screen child (the sign-in wizard) uses the hierarchical pair, like
+            // Settings does for its own child; between tabs the lateral motion applies.
+            exitTransition = {
+                if (targetState.isHierarchyChild()) transitions.hierarchyExit() else transitions.tabExit(forward = isForward())
+            },
+            popEnterTransition = {
+                if (initialState.isHierarchyChild()) transitions.hierarchyPopEnter() else transitions.tabEnter(forward = isForward())
+            },
             popExitTransition = { transitions.tabExit(forward = isForward()) },
         ) {
-            composable(Destination.HOME.route) { HomeScreen() }
-            composable(Destination.HISTORY.route) { HistoryScreen() }
+            composable(Destination.HOME.route) {
+                HomeScreen(onSignInToInstagram = { navController.openInstagramSignIn() })
+            }
+            composable(Destination.HISTORY.route) {
+                HistoryScreen(onSignInToInstagram = { id -> navController.openInstagramSignIn(id) })
+            }
             composable(
                 Destination.SETTINGS.route,
                 // Settings is the parent of the sign-in screen: when that child covers or uncovers it,
@@ -145,11 +173,27 @@ fun FlipperApp(appNavigator: AppNavigator) {
             ) {
                 InstagramLoginScreen(onDone = { navController.popBackStack() })
             }
+            composable(
+                INSTAGRAM_SIGNIN_PATTERN,
+                arguments =
+                listOf(
+                    navArgument(InstagramSignInViewModel.ARG_RETRY) {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    },
+                ),
+                enterTransition = { transitions.hierarchyEnter() },
+                popExitTransition = { transitions.hierarchyPopExit() },
+            ) {
+                InstagramSignInWizard(onClose = { navController.popBackStack() })
+            }
         }
     }
 }
 
-private fun NavBackStackEntry.isHierarchyChild(): Boolean = destination.route == INSTAGRAM_LOGIN_ROUTE
+private fun NavBackStackEntry.isHierarchyChild(): Boolean =
+    destination.route == INSTAGRAM_LOGIN_ROUTE || destination.route?.startsWith(INSTAGRAM_SIGNIN_ROUTE) == true
 
 /** Left-to-right in the bar = forward. */
 private fun androidx.compose.animation.AnimatedContentTransitionScope<NavBackStackEntry>.isForward(): Boolean =

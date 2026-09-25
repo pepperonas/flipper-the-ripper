@@ -46,7 +46,6 @@ import io.celox.flipperripper.data.engine.MOBILE_CHROME_UA
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InstagramLoginScreen(onDone: () -> Unit) {
-    var loading by remember { mutableStateOf(true) }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -67,53 +66,65 @@ fun InstagramLoginScreen(onDone: () -> Unit) {
             )
         },
     ) { padding ->
-        Box(Modifier.fillMaxSize().padding(padding)) {
-            AndroidView(
-                modifier = Modifier.fillMaxSize(),
-                factory = { context ->
-                    CookieManager.getInstance().setAcceptCookie(true)
-                    @SuppressLint("SetJavaScriptEnabled")
-                    WebView(context).apply {
-                        layoutParams =
-                            ViewGroup.LayoutParams(
-                                ViewGroup.LayoutParams.MATCH_PARENT,
-                                ViewGroup.LayoutParams.MATCH_PARENT,
-                            )
-                        // Unpainted WebView area is black by default; a light backdrop stops the
-                        // "black screen" look while Instagram's heavy login page hydrates.
-                        setBackgroundColor(Color.WHITE)
-                        settings.javaScriptEnabled = true
-                        settings.domStorageEnabled = true
-                        // Instagram blocks the default WebView UA; look like an ordinary mobile Chrome.
-                        settings.userAgentString = MOBILE_CHROME_UA
-                        CookieManager.getInstance().setAcceptThirdPartyCookies(this, true)
-                        webViewClient =
-                            object : WebViewClient() {
-                                override fun onPageFinished(view: WebView?, url: String?) {
-                                    loading = false
-                                    if (isSignedIn()) {
-                                        CookieManager.getInstance().flush()
-                                        onDone()
-                                    }
-                                }
+        InstagramLoginPage(onSignedIn = onDone, modifier = Modifier.fillMaxSize().padding(padding))
+    }
+}
 
-                                override fun onRenderProcessGone(
-                                    view: WebView?,
-                                    detail: RenderProcessGoneDetail?,
-                                ): Boolean {
-                                    // The renderer died (e.g. low memory). Reload rather than let the
-                                    // whole app be torn down (the default when we return false).
-                                    view?.reload()
-                                    return true
+/**
+ * Instagram's own login page in a WebView — shared by Settings and the sign-in wizard. [onSignedIn]
+ * fires once, as soon as Instagram's `sessionid` cookie exists.
+ */
+@Composable
+fun InstagramLoginPage(onSignedIn: () -> Unit, modifier: Modifier = Modifier) {
+    var loading by remember { mutableStateOf(true) }
+    var reported by remember { mutableStateOf(false) }
+    Box(modifier) {
+        AndroidView(
+            modifier = Modifier.fillMaxSize(),
+            factory = { context ->
+                CookieManager.getInstance().setAcceptCookie(true)
+                @SuppressLint("SetJavaScriptEnabled")
+                WebView(context).apply {
+                    layoutParams =
+                        ViewGroup.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                        )
+                    // Unpainted WebView area is black by default; a light backdrop stops the
+                    // "black screen" look while Instagram's heavy login page hydrates.
+                    setBackgroundColor(Color.WHITE)
+                    settings.javaScriptEnabled = true
+                    settings.domStorageEnabled = true
+                    // Instagram blocks the default WebView UA; look like an ordinary mobile Chrome.
+                    settings.userAgentString = MOBILE_CHROME_UA
+                    CookieManager.getInstance().setAcceptThirdPartyCookies(this, true)
+                    webViewClient =
+                        object : WebViewClient() {
+                            override fun onPageFinished(view: WebView?, url: String?) {
+                                loading = false
+                                if (!reported && isSignedIn()) {
+                                    reported = true
+                                    CookieManager.getInstance().flush()
+                                    onSignedIn()
                                 }
                             }
-                        loadUrl(LOGIN_URL)
-                    }
-                },
-            )
-            if (loading) {
-                CircularProgressIndicator(Modifier.align(Alignment.Center))
-            }
+
+                            override fun onRenderProcessGone(
+                                view: WebView?,
+                                detail: RenderProcessGoneDetail?,
+                            ): Boolean {
+                                // The renderer died (e.g. low memory). Reload rather than let the
+                                // whole app be torn down (the default when we return false).
+                                view?.reload()
+                                return true
+                            }
+                        }
+                    loadUrl(LOGIN_URL)
+                }
+            },
+        )
+        if (loading) {
+            CircularProgressIndicator(Modifier.align(Alignment.Center))
         }
     }
 }

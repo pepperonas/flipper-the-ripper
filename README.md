@@ -6,14 +6,14 @@
 
 **A modern, open-source Android app to download publicly accessible videos from YouTube, Instagram, TikTok, Facebook, X and Dailymotion.**
 
-[![version](https://img.shields.io/badge/version-1.11.0-7B4DFF?style=for-the-badge&logo=android&logoColor=white)](https://github.com/pepperonas/flipper-the-ripper/releases/latest)
-[![unit tests](https://img.shields.io/badge/unit%20tests-394-2E9E5B?style=for-the-badge&logo=junit5&logoColor=white)](app/src/test)
+[![version](https://img.shields.io/badge/version-1.12.0-7B4DFF?style=for-the-badge&logo=android&logoColor=white)](https://github.com/pepperonas/flipper-the-ripper/releases/latest)
+[![unit tests](https://img.shields.io/badge/unit%20tests-409-2E9E5B?style=for-the-badge&logo=junit5&logoColor=white)](app/src/test)
 [![lines of code](https://img.shields.io/badge/lines%20of%20code-8.5k-4B6BDF?style=for-the-badge&logo=kotlin&logoColor=white)](app/src/main/kotlin)
 [![test code](https://img.shields.io/badge/test%20code-6.3k-2E9E5B?style=for-the-badge&logo=kotlin&logoColor=white)](app/src/test)
 
 [![CI](https://img.shields.io/github/actions/workflow/status/pepperonas/flipper-the-ripper/ci.yml?branch=main&label=build&logo=github)](https://github.com/pepperonas/flipper-the-ripper/actions/workflows/ci.yml)
 [![Release workflow](https://img.shields.io/github/actions/workflow/status/pepperonas/flipper-the-ripper/release.yml?label=release&logo=githubactions)](https://github.com/pepperonas/flipper-the-ripper/actions/workflows/release.yml)
-[![instrumented](https://img.shields.io/badge/instrumented-21-2E9E5B?logo=android&logoColor=white)](app/src/androidTest)
+[![instrumented](https://img.shields.io/badge/instrumented-25-2E9E5B?logo=android&logoColor=white)](app/src/androidTest)
 [![Coverage](https://img.shields.io/badge/coverage-%E2%89%A580%25-brightgreen?logo=kotlin)](https://github.com/pepperonas/flipper-the-ripper/actions/workflows/ci.yml)
 [![APK size](https://img.shields.io/badge/APK-53.6%20MB-4B6BDF?logo=android&logoColor=white)](#-download)
 [![ABI](https://img.shields.io/badge/ABI-arm64--v8a%20only-4B6BDF?logo=arm&logoColor=white)](#-download)
@@ -62,7 +62,7 @@
 - **Share integration** — tap *Share* in YouTube / Instagram / TikTok / Facebook / X / Dailymotion and pick **Flipper the Ripper**; the link is imported automatically. With auto-download on (the default) the download starts at once and the app opens **History with the new download at the top of the list**, queued or running, progress wave and all — you always see that it is happening. With auto-download off the app opens Home with the link filled in and the details loading. The app registers as a *direct* share target, so Android can offer it in the suggested row at the top of the sheet rather than only in the app list. Apps that draw their own in-app share sheet (TikTok among them) show a fixed set of destinations plus a *More* entry — the Android sheet, and the app, are one tap behind that.
 - **Clipboard detection** — copied a link instead? On launch the app offers to download a supported URL found on the clipboard.
 - **One-tap flow** — analyse → detect platform → resolve metadata → download, with as few taps as possible (auto-download on share is configurable).
-- **Instagram sign-in (optional)** — some reels are only visible to a signed-in account. Sign in on **Instagram's own page** (*Settings → Instagram*) and the app can download the reels *your* account can see. The password is entered on Instagram, never touched by the app — only the resulting session cookie is kept, exactly as a browser does. Sign out anytime.
+- **Instagram sign-in, offered where it is needed** — some reels are only visible to a signed-in account. When one fails for that reason, the card (or the Home screen) says so in your language and offers **Sign in to Instagram**: a three-step wizard explains what signing in changes and what happens to the password, shows **Instagram's own login page**, and — once signed in — **restarts the failed download by itself** (from Home it loads the link again). The password is entered on Instagram, never touched by the app — only the resulting session cookie is kept, exactly as a browser does. Sign in or out any time under *Settings → Instagram*.
 - **Material 3 Expressive motion** — every screen transition is built from the theme's spring `MotionScheme` in one place (`ui/motion/ScreenTransitions.kt`): lateral fade-through with a directional slide between tabs, shared-axis rise for child screens; reduced motion collapses it to a cut.
 - **One drawn mark** — the app icon and every in-app sign share one shape: a soft Material *sunny* disc with a sharp download glyph punched through it, so the same path works coloured, outlined, tinted and as the Android themed icon.
 - **Compact bottom bar** — M3 Expressive `ShortNavigationBar` (64 dp instead of 80 dp), full-height items, filled icon on the active tab.
@@ -292,7 +292,7 @@ refused as a downgrade. Versioning follows [Semantic Versioning](https://semver.
 
 ## 🗺️ Roadmap
 
-- [x] Instagram sign-in for login-only reels (in-app WebView login → session reused by the extractor) — shipped in 1.2.11
+- [x] Instagram sign-in for login-only reels (in-app WebView login → session reused by the extractor) — shipped in 1.2.11; offered on the failed download as a wizard that restarts it — 1.12.0
 - [x] X and Dailymotion — shipped in 1.4.0
 - [x] Material 3 Expressive motion, one drawn mark, compact bottom bar — shipped in 1.5.0
 - [x] German translation, guarded against drift — shipped in 1.8.0
@@ -318,7 +318,7 @@ refused as a downgrade. Versioning follows [Semantic Versioning](https://semver.
 
 **A download fails with "rate-limited or out of date".** The extractor changed upstream. Open **Settings → Update yt-dlp** to fetch the latest engine, then retry.
 
-**An Instagram reel won't download / says it needs sign-in.** Some reels are only visible to a logged-in account. Go to **Settings → Instagram → Sign in to Instagram**, sign in on Instagram's own page, then retry. If your account can view the reel, the app can download it; a private account you don't follow stays inaccessible (that is Instagram's rule, not an app limit).
+**An Instagram reel won't download / says it needs sign-in.** Some reels are only visible to a logged-in account. Tap **Sign in to Instagram** on the failed card (or on Home) and follow the three steps; the download restarts by itself once you are signed in. The same sign-in lives under **Settings → Instagram**. If your account can view the reel, the app can download it; a private account you don't follow stays inaccessible (that is Instagram's rule, not an app limit).
 
 **YouTube says login/age-verification required.** That content is behind an auth/anti-bot wall that the app does not bypass; only content reachable without those walls is supported.
 
@@ -346,7 +346,7 @@ refused as a downgrade. Versioning follows [Semantic Versioning](https://semver.
 | Build fails on `kspDebugKotlin` | Ensure `ksp.useKSP2=false` (set in `gradle.properties`). |
 | A YouTube/TikTok download fails after the title/thumbnail loaded | The platform is gating the media fetch — see **How downloads are routed** below. Try **Settings → Update yt-dlp**, and switch download source: on-device uses your own IP, which YouTube blocks far less than a server's. |
 | "Your IP address is blocked" / "Sign in to confirm you're not a bot" | Platform-side IP reputation, not an app fault. Switch to **On device** (your own connection) or try a different network. |
-| An Instagram reel fails / `HTTP 403 from …cdninstagram.com` | The reel is login-only. **Settings → Instagram → Sign in to Instagram**, then retry. A 403 after signing in usually means your account can't view that reel (private account you don't follow). |
+| An Instagram reel fails / `HTTP 403 from …cdninstagram.com` | The reel is login-only. Tap **Sign in to Instagram** on the card; the wizard signs in and restarts the download. A 403 after signing in usually means your account can't view that reel (private account you don't follow). |
 
 ### How downloads are routed
 

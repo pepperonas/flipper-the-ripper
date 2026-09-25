@@ -19,8 +19,13 @@ import javax.inject.Singleton
  */
 @Singleton
 class InstagramSession
-@Inject
-constructor() {
+internal constructor(
+    /** Whether the cookie store holds a signed-in session. Swappable so tests need no Android. */
+    private val hasSessionCookie: () -> Boolean,
+) {
+    @Inject
+    constructor() : this(::cookieStoreHasSession)
+
     // Starts false and is filled in by refresh(); the cookie store is only touched when actually used,
     // which keeps construction free of Android dependencies.
     private val _loggedIn = MutableStateFlow(false)
@@ -48,13 +53,15 @@ constructor() {
         _loggedIn.value = false
     }
 
-    private fun readLoggedIn(): Boolean {
-        val cm = CookieManager.getInstance()
-        // `sessionid` is present only for an authenticated session.
-        return HOSTS.any { host -> cm.getCookie(host)?.contains("sessionid=") == true }
-    }
+    private fun readLoggedIn(): Boolean = hasSessionCookie()
 
-    private companion object {
+    internal companion object {
         val HOSTS = listOf("https://www.instagram.com", "https://instagram.com")
     }
+}
+
+/** `sessionid` is present only for an authenticated session. */
+private fun cookieStoreHasSession(): Boolean {
+    val cm = CookieManager.getInstance()
+    return InstagramSession.HOSTS.any { host -> cm.getCookie(host)?.contains("sessionid=") == true }
 }

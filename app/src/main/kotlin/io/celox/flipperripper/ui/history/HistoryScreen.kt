@@ -16,12 +16,14 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.Login
 import androidx.compose.material.icons.outlined.DeleteSweep
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.ContainedLoadingIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearWavyProgressIndicator
@@ -68,6 +70,7 @@ import io.celox.flipperripper.domain.model.isActive
 import io.celox.flipperripper.domain.model.isPausable
 import io.celox.flipperripper.domain.model.isPending
 import io.celox.flipperripper.domain.model.isReorderable
+import io.celox.flipperripper.domain.util.InstagramSignIn
 import io.celox.flipperripper.ui.components.DragHandleMark
 import io.celox.flipperripper.ui.components.EmptyDownloadsMark
 import io.celox.flipperripper.ui.components.ExpressiveLoadingIndicator
@@ -80,8 +83,9 @@ import sh.calvin.reorderable.rememberReorderableLazyListState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HistoryScreen(viewModel: HistoryViewModel = hiltViewModel()) {
+fun HistoryScreen(onSignInToInstagram: (String) -> Unit = {}, viewModel: HistoryViewModel = hiltViewModel()) {
     val records by viewModel.history.collectAsStateWithLifecycle()
+    val instagramSignedIn by viewModel.instagramSignedIn.collectAsStateWithLifecycle()
     val removed by viewModel.removed.collectAsStateWithLifecycle()
     val snackbarHost = remember { SnackbarHostState() }
     val removedMessage = removed?.let { stringResource(R.string.history_removed, it.record.title) }
@@ -158,7 +162,9 @@ fun HistoryScreen(viewModel: HistoryViewModel = hiltViewModel()) {
                         onPause = viewModel::pause,
                         onResume = viewModel::resume,
                         onReorder = viewModel::reorder,
+                        onSignInToInstagram = onSignInToInstagram,
                     ),
+                    instagramSignedIn = instagramSignedIn,
                 )
         }
     }
@@ -172,6 +178,8 @@ data class DownloadActions(
     val onPause: (String) -> Unit,
     val onResume: (String) -> Unit,
     val onReorder: (List<String>) -> Unit,
+    /** Opens the sign-in wizard for a download that failed because Instagram wanted an account. */
+    val onSignInToInstagram: (String) -> Unit = {},
 )
 
 /**
@@ -181,7 +189,12 @@ data class DownloadActions(
  * with the queue, because it is going to run.
  */
 @Composable
-fun DownloadQueueList(records: List<DownloadRecord>, modifier: Modifier, actions: DownloadActions) {
+fun DownloadQueueList(
+    records: List<DownloadRecord>,
+    modifier: Modifier,
+    actions: DownloadActions,
+    instagramSignedIn: Boolean = false,
+) {
     val queue = records.filter { it.status.isPending }.sortedWith(compareBy({ it.queueOrder }, { it.id }))
     val finished = records.filter { !it.status.isPending }
 
@@ -297,6 +310,10 @@ fun DownloadQueueList(records: List<DownloadRecord>, modifier: Modifier, actions
                         onPause = { actions.onPause(record.id) },
                         onResume = { actions.onResume(record.id) },
                         dragHandle = null,
+                        offerInstagramSignIn =
+                        record.status == DownloadStatus.FAILED &&
+                            InstagramSignIn.shouldOffer(record.platform, record.errorKind, instagramSignedIn),
+                        onSignInToInstagram = { actions.onSignInToInstagram(record.id) },
                     )
                 }
             }
@@ -399,6 +416,8 @@ private fun DownloadCard(
     onPause: () -> Unit,
     onResume: () -> Unit,
     dragHandle: (@Composable () -> Unit)?,
+    offerInstagramSignIn: Boolean = false,
+    onSignInToInstagram: () -> Unit = {},
 ) {
     val context = LocalContext.current
     Card(shape = MaterialTheme.shapes.extraLarge, modifier = Modifier.fillMaxWidth()) {
@@ -445,9 +464,26 @@ private fun DownloadCard(
                 }
             }
 
-            record.errorMessage?.takeIf { record.status == DownloadStatus.FAILED }?.let {
+            if (offerInstagramSignIn) {
+                // Not the engine's English sentence pointing at Settings: say it in the user's
+                // language and offer the sign-in right here — the wizard restarts this download.
                 Spacer(Modifier.height(Spacing.sm))
-                Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+                Text(
+                    stringResource(R.string.ig_signin_needed),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                )
+                Spacer(Modifier.height(Spacing.sm))
+                FilledTonalButton(onClick = onSignInToInstagram) {
+                    Icon(Icons.AutoMirrored.Outlined.Login, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(Spacing.sm))
+                    Text(stringResource(R.string.ig_signin_action))
+                }
+            } else {
+                record.errorMessage?.takeIf { record.status == DownloadStatus.FAILED }?.let {
+                    Spacer(Modifier.height(Spacing.sm))
+                    Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+                }
             }
 
             Spacer(Modifier.height(Spacing.sm))

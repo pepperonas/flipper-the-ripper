@@ -97,6 +97,23 @@
     <string name="settings_instagram_sign_in">Bei Instagram anmelden</string>
     <string name="settings_instagram_sign_out">Von Instagram abmelden</string>
     <string name="settings_instagram_signed_in">Angemeldet ✓</string>
+    <string name="ig_signin_needed">Dieses Reel ist nur für angemeldete Instagram-Konten sichtbar.</string>
+    <string name="ig_signin_action">Bei Instagram anmelden</string>
+    <string name="ig_wizard_title">Instagram-Anmeldung</string>
+    <string name="ig_wizard_close">Schließen</string>
+    <string name="ig_wizard_step">Schritt %1$d von %2$d</string>
+    <string name="ig_wizard_intro_title">Einmal anmelden, dann läuft es</string>
+    <string name="ig_wizard_intro_why">Manche Reels sind nur für angemeldete Konten sichtbar. Angemeldet kann Flipper the Ripper alles laden, was dein eigenes Konto sehen kann.</string>
+    <string name="ig_wizard_intro_password">Du meldest dich auf Instagrams eigener Seite an. Die App sieht dein Passwort nie — sie behält nur die Sitzung, wie ein Browser.</string>
+    <string name="ig_wizard_intro_signout">Abmelden kannst du dich jederzeit unter Einstellungen → Instagram.</string>
+    <string name="ig_wizard_continue">Weiter</string>
+    <string name="ig_wizard_not_now">Nicht jetzt</string>
+    <string name="ig_wizard_login_hint">Melde dich unten an. Sobald du drin bist, geht es von selbst weiter.</string>
+    <string name="ig_wizard_done_title">Du bist angemeldet</string>
+    <string name="ig_wizard_done_retry">Der Download startet neu.</string>
+    <string name="ig_wizard_done_home">Die Video-Infos werden neu geladen.</string>
+    <string name="ig_wizard_show_downloads">Downloads anzeigen</string>
+    <string name="ig_wizard_back">Zurück zum Link</string>
     <string name="login_title">Bei Instagram anmelden</string>
     <string name="login_back">Zurück</string>
 

@@ -12,6 +12,23 @@ section for the version in `app/build.gradle.kts` exists before anything is tagg
 
 ## [Unreleased]
 
+## [1.12.0] - 2026-09-26
+
+An Instagram reel that needs an account now offers the sign-in where it fails — and retries by itself.
+
+### Added
+- **Sign in to Instagram, right at the error.** A reel that is only visible to signed-in accounts used
+  to fail with an English sentence pointing at *Settings → Instagram*; the user had to find the
+  sign-in there, come back and press Retry. Now the failed card — and the Home screen after *Load
+  info* or *Download* — says what happened in the user's language and offers **Sign in to Instagram**.
+- **A three-step sign-in wizard:** ① what signing in changes and what happens to the password (it is
+  typed on Instagram's own page; the app keeps only the session, like a browser), ② Instagram's login
+  page, ③ confirmation. Once Instagram sets its session the wizard moves on by itself and **the failed
+  download starts again automatically**; from Home the link's info is loaded again. *Not now* leaves
+  everything as it was. Already signed in when it opens, it goes straight to the end.
+- The offer only appears when it can help: Instagram, a sign-in error, and no session yet. A signed-in
+  account that still cannot see a reel gets the plain error.
+
 ## [1.11.0] - 2026-09-25
 
 Five languages, an Undo for the swipe, and a home page that always has the newest APK.

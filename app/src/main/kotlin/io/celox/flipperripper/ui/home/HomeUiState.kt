@@ -7,6 +7,7 @@ import io.celox.flipperripper.domain.model.FormatSelection
 import io.celox.flipperripper.domain.model.Platform
 import io.celox.flipperripper.domain.model.QualityChoice
 import io.celox.flipperripper.domain.model.VideoInfo
+import io.celox.flipperripper.domain.util.InstagramSignIn
 import io.celox.flipperripper.domain.util.ParsedUrl
 
 /** State for the Home screen. */
@@ -16,6 +17,10 @@ data class HomeUiState(
     val isResolving: Boolean = false,
     val videoInfo: VideoInfo? = null,
     val errorMessage: String? = null,
+    /** [io.celox.flipperripper.domain.model.DownloadError.kind] of the error shown, for the sign-in offer. */
+    val errorKind: String? = null,
+    /** Whether an Instagram session exists (an Instagram login error then offers the sign-in wizard). */
+    val instagramSignedIn: Boolean = false,
     val engineReady: Boolean = false,
     /** The remembered default, and what a fresh screen starts on. */
     val defaultQuality: QualityChoice = QualityChoice.BEST,
@@ -28,6 +33,10 @@ data class HomeUiState(
     val updateNotice: AppUpdate? = null,
 ) {
     val canDownload: Boolean get() = detectedPlatform != null && urlInput.isNotBlank()
+
+    /** The error came from Instagram wanting an account, and there is none: offer the sign-in wizard. */
+    val offerInstagramSignIn: Boolean
+        get() = errorMessage != null && InstagramSignIn.shouldOffer(detectedPlatform, errorKind, instagramSignedIn)
 
     /**
      * The tiers worth offering.
