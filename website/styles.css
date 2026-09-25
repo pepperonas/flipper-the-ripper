@@ -104,8 +104,12 @@ code {
 .hero-bg, .hero-bg img {
   position: absolute; inset: 0; width: 100%; height: 100%; z-index: -2;
 }
+/* Desktop: the picture starts below the bar, so its corner lettering does not sit under the brand. */
+@media (min-width: 861px) {
+  .hero-bg, .hero-scrim { top: calc(env(safe-area-inset-top) + 64px); height: auto; bottom: 0; }
+}
 .hero-bg img {
-  object-fit: cover; object-position: 20% 50%;
+  object-fit: cover; object-position: 12% 50%;
   animation: hero-in 1.6s var(--ease-emph) both;
 }
 /* The banner carries its own wordmark on the right; the scrim sinks it into the page colour
@@ -113,8 +117,8 @@ code {
 .hero-scrim {
   position: absolute; inset: 0; z-index: -1;
   background:
-    linear-gradient(90deg, transparent 22%, color-mix(in srgb, var(--bg) 88%, transparent) 48%, var(--bg) 72%),
-    linear-gradient(180deg, color-mix(in srgb, var(--bg) 55%, transparent) 0, transparent 22%, transparent 70%, var(--bg) 100%);
+    linear-gradient(90deg, transparent 24%, color-mix(in srgb, var(--bg) 96%, transparent) 45%, var(--bg) 58%),
+    linear-gradient(180deg, color-mix(in srgb, var(--bg) 92%, transparent) 0, color-mix(in srgb, var(--bg) 40%, transparent) 12%, transparent 22%, transparent 72%, var(--bg) 100%);
 }
 .hero-content { width: min(100%, 520px); margin-right: max(0px, calc((100vw - var(--measure)) / 2 - var(--gutter))); }
 .kicker {
@@ -156,11 +160,11 @@ h1 {
   /* Narrow screens show the whole banner — cropping it cut its wordmark mid-word. */
   .hero {
     display: block; min-height: 0;
-    padding-top: calc(env(safe-area-inset-top) + 60px + 49.4vw + 8px);
+    padding-top: calc(env(safe-area-inset-top) + 60px + 56.3vw + 8px);
     padding-bottom: 56px;
   }
   .hero-bg, .hero-scrim {
-    top: calc(env(safe-area-inset-top) + 60px); height: 49.4vw; bottom: auto;
+    top: calc(env(safe-area-inset-top) + 60px); height: 56.3vw; bottom: auto;
   }
   .hero-bg img { object-fit: cover; object-position: 50% 50%; }
   .hero-scrim {
