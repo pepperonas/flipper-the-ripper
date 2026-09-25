@@ -31,6 +31,8 @@ server {
 
     root /var/www/flipper-the-ripper.celox.io;
     index index.html;
+    charset utf-8;
+    charset_types text/plain text/css application/javascript application/json text/xml;
 
     # Security headers are repeated in every location that sets its own add_header
     # (an add_header in a block drops everything inherited).

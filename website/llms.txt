@@ -1,0 +1,43 @@
+# Flipper the Ripper
+
+> Free, open-source (MIT) Android app that saves publicly accessible videos from YouTube, Instagram, TikTok, Facebook, X and Dailymotion to the phone's gallery. Share a link to the app and the download starts. No account, no ads, no tracking. Not on Google Play by design; distributed as a signed APK.
+
+## Get the app
+
+- Newest APK, always: https://flipper-the-ripper.celox.io/download (302 redirect to the current GitHub release asset)
+- Newest release as JSON: https://flipper-the-ripper.celox.io/latest.json — fields `version`, `name`, `url`, `size` (bytes), `sha256`, `published` (ISO 8601), `notes`
+- All releases and notes: https://github.com/pepperonas/flipper-the-ripper/releases
+- Requirements: Android 7.0 or later, 64-bit ARM (every phone sold since about 2016). One APK, nothing to choose.
+
+## Install
+
+1. Open https://flipper-the-ripper.celox.io/download on the phone.
+2. Open the downloaded file; allow the browser to install apps when Android asks (once).
+3. In any supported app tap Share and pick Flipper the Ripper. Updates install over the existing app; the app announces new releases itself.
+
+## Verify
+
+- APK checksum: `sha256` in https://flipper-the-ripper.celox.io/latest.json, also `SHA256SUMS.txt` in each release.
+- Signing certificate SHA-256 (identical for every release since 1.0.0): `1fc3904fd80eb8135b25ee15fe62ec3b74545eba360298c152f712646fd910cb` — check with `apksigner verify --print-certs`.
+
+## Features
+
+- Platforms: YouTube, Instagram, TikTok, Facebook, X, Dailymotion
+- Share-sheet integration and clipboard detection; one-tap download
+- Quality: Best, 1080p, 720p, 480p, audio only
+- Queue: one download at a time, pause/resume from the last byte, drag to reorder, swipe finished entries away with undo
+- Background downloads with one progress notification; files saved to Movies, named after the video title
+- Self-updating yt-dlp extractor
+- Languages: English, German, Spanish, Italian, French
+
+## Scope and limits
+
+- Only for publicly accessible content and personal, lawful use. Does not bypass DRM, paywalls or access restrictions.
+- No playlists, no subtitles.
+
+## Links
+
+- Source code: https://github.com/pepperonas/flipper-the-ripper
+- Changelog: https://github.com/pepperonas/flipper-the-ripper/blob/main/CHANGELOG.md
+- Licence: MIT — https://github.com/pepperonas/flipper-the-ripper/blob/main/LICENSE
+- Author: Martin Pfeffer, https://celox.io

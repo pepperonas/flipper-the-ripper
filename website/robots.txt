@@ -1,3 +1,6 @@
 User-agent: *
 Allow: /
+
+# Machine-readable summary for LLMs and agents: /llms.txt
+# Newest release as JSON: /latest.json
 Sitemap: https://flipper-the-ripper.celox.io/sitemap.xml
