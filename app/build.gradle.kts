@@ -164,6 +164,19 @@ android {
     }
 }
 
+// Every APK the build writes is named like the one the release publishes: flipper-the-ripper-v1.10.0.apk
+// (release) or flipper-the-ripper-v1.10.0-debug.apk — not the split's app-arm64-v8a-release.apk. The
+// release workflow picks the file up under the tag's name, so a tag that does not match versionName
+// fails the job on a missing file instead of publishing a mislabelled APK.
+android.applicationVariants.configureEach {
+    val name = versionName
+    val suffix = if (buildType.name == "release") "" else "-${buildType.name}"
+    outputs.configureEach {
+        (this as com.android.build.gradle.internal.api.BaseVariantOutputImpl).outputFileName =
+            "flipper-the-ripper-v$name$suffix.apk"
+    }
+}
+
 // The versionCode Android sees is `versionCode * 10 + 2`, and that scheme MUST stay even though only
 // one ABI is built now. It dates from the two-ABI era (armeabi +1, arm64 +2, so a newer build always
 // out-ranked an older one), and every installed copy carries a code from it — 1.8.3 is 282. Dropping

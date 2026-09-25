@@ -1,7 +1,6 @@
 package io.celox.flipperripper.release
 
 import com.google.common.truth.Truth.assertThat
-import com.google.common.truth.Truth.assertWithMessage
 import org.junit.Test
 import java.io.File
 
@@ -30,23 +29,29 @@ class ReleaseArtifactsTest {
         assertThat(builtAbis()).containsExactly("arm64-v8a")
     }
 
+    /** The name Gradle gives every APK (build.gradle.kts, `outputFileName`). */
+    private fun builtName(): String =
+        Regex("""outputFileName =\s*"([^"]+)"""").find(gradle)?.groupValues?.get(1)
+            ?: error("build.gradle.kts no longer sets outputFileName")
+
     @Test
-    fun `the workflow copies the APK the build produces`() {
-        // The split names its output app-<abi>-release.apk; the workflow must pick up that name.
-        builtAbis().forEach { abi ->
-            assertWithMessage("workflow references app-$abi-release.apk")
-                .that(workflow)
-                .contains("app-$abi-release.apk")
-        }
+    fun `the build names its APK like the published one`() {
+        // flipper-the-ripper-v1.10.0.apk straight out of Gradle, not app-arm64-v8a-release.apk.
+        assertThat(builtName()).isEqualTo("flipper-the-ripper-v\$name\$suffix.apk")
+        assertThat(gradle).contains("""if (buildType.name == "release") "" else "-${'$'}{buildType.name}"""")
     }
 
     @Test
-    fun `the workflow publishes no ABI it does not build`() {
-        // A leftover reference to a dropped ABI would fail the job on a missing file — or, worse,
-        // silently publish a stale artefact if one were lying around.
-        val referenced =
-            Regex("""app-([a-z0-9_-]+)-release\.apk""").findAll(workflow).map { it.groupValues[1] }.toSet()
-        assertThat(referenced).isEqualTo(builtAbis())
+    fun `the workflow copies the APK the build produces`() {
+        // The release build's file is flipper-the-ripper-v<versionName>.apk, and the tag is v<versionName>:
+        // the workflow must look for exactly the published name in the build output.
+        assertThat(workflow).contains("SRC=\"app/build/outputs/apk/release/\$APK\"")
+    }
+
+    @Test
+    fun `the workflow no longer looks for the split's default name`() {
+        // A leftover app-<abi>-release.apk would fail the job on a file the build no longer writes.
+        assertThat(Regex("""app-[a-z0-9_-]+-release\.apk""").containsMatchIn(workflow)).isFalse()
     }
 
     /** The line that names the published file — the one place the name is decided. */

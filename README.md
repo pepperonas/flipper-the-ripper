@@ -7,7 +7,7 @@
 **A modern, open-source Android app to download publicly accessible videos from YouTube, Instagram, TikTok, Facebook, X and Dailymotion.**
 
 [![version](https://img.shields.io/badge/version-1.10.0-7B4DFF?style=for-the-badge&logo=android&logoColor=white)](https://github.com/pepperonas/flipper-the-ripper/releases/latest)
-[![unit tests](https://img.shields.io/badge/unit%20tests-386-2E9E5B?style=for-the-badge&logo=junit5&logoColor=white)](app/src/test)
+[![unit tests](https://img.shields.io/badge/unit%20tests-387-2E9E5B?style=for-the-badge&logo=junit5&logoColor=white)](app/src/test)
 [![lines of code](https://img.shields.io/badge/lines%20of%20code-8.5k-4B6BDF?style=for-the-badge&logo=kotlin&logoColor=white)](app/src/main/kotlin)
 [![test code](https://img.shields.io/badge/test%20code-6.3k-2E9E5B?style=for-the-badge&logo=kotlin&logoColor=white)](app/src/test)
 
@@ -216,7 +216,7 @@ WorkManager · Kotlin Serialization · Coil · youtubedl-android · **no XML lay
 git clone https://github.com/pepperonas/flipper-the-ripper.git
 cd flipper-the-ripper
 
-./gradlew assembleDebug          # debug APK → app/build/outputs/apk/debug/
+./gradlew assembleDebug          # debug APK → app/build/outputs/apk/debug/flipper-the-ripper-vX.Y.Z-debug.apk
 ./gradlew testDebugUnitTest      # unit tests
 ./gradlew koverVerifyDebug       # coverage gate (≥ 80% line coverage)
 ./gradlew spotlessCheck detekt   # formatting + static analysis
@@ -232,7 +232,7 @@ Signing is wired via `keystore.properties` (local, git-ignored) with an environm
 fallback for CI. See [Signing](#-signing).
 
 ```bash
-./gradlew assembleRelease        # signed APK → app/build/outputs/apk/release/
+./gradlew assembleRelease        # signed APK → app/build/outputs/apk/release/flipper-the-ripper-vX.Y.Z.apk
 ```
 
 ## 🔏 Signing

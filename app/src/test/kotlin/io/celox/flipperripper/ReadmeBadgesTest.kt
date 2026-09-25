@@ -67,9 +67,12 @@ class ReadmeBadgesTest {
     fun `the APK-size badge is still roughly true`() {
         // Measured against the locally built release APK; where none has been built (CI, a fresh
         // clone) there is nothing honest to compare to, so the check is skipped rather than faked.
-        val apk = File("build/outputs/apk/release/app-arm64-v8a-release.apk")
-        org.junit.Assume.assumeTrue("needs a local release build", apk.exists())
-        val actualMb = apk.length() / 1024.0 / 1024.0
+        val apk =
+            File("build/outputs/apk/release")
+                .listFiles { f -> f.name.matches(Regex("""flipper-the-ripper-v[^-]+\.apk""")) }
+                ?.maxByOrNull { it.lastModified() }
+        org.junit.Assume.assumeTrue("needs a local release build", apk != null)
+        val actualMb = requireNotNull(apk).length() / 1024.0 / 1024.0
         val claimedMb = badgeValue("APK").removeSuffix("%20MB").toDouble()
         assertThat(actualMb).isWithin(claimedMb * 0.10).of(claimedMb)
     }

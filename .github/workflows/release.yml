@@ -97,9 +97,10 @@ jobs:
           TAG: ${{ steps.meta.outputs.tag }}
         run: |
           set -e
-          SRC=app/build/outputs/apk/release/app-arm64-v8a-release.apk
-          [ -f "$SRC" ] || { echo "Missing $SRC" >&2; exit 1; }
           APK="flipper-the-ripper-${TAG}.apk"
+          # Gradle names the file after versionName; a tag that does not match it fails here.
+          SRC="app/build/outputs/apk/release/$APK"
+          [ -f "$SRC" ] || { echo "Missing $SRC — does the tag match versionName?" >&2; ls app/build/outputs/apk/release >&2; exit 1; }
           cp "$SRC" "$APK"
           sha256sum "$APK" > SHA256SUMS.txt
           ls -lh "$APK"; cat SHA256SUMS.txt
