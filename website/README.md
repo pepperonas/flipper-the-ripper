@@ -4,7 +4,7 @@ Static page, no build step. `flippertheripper.celox.io` and `ftr.celox.io` answe
 
 | File | Purpose |
 |------|---------|
-| `index.html`, `styles.css`, `app.js` | The page. English in the markup, German swapped in by `app.js` for German browsers (toggle top right). Colours are the app's dark scheme from `ui/theme/Color.kt`. |
+| `index.html`, `styles.css`, `app.js`, `i18n.js` | The page. English in the markup; `i18n.js` carries German, Spanish, Italian and French, picked from the browser languages (selector top right, remembered per device). Colours are the app's dark scheme from `ui/theme/Color.kt`. |
 | `assets/` | Hero background (`docs/banner.png` as WebP/JPEG), screenshots, icon, OG image. |
 | `server/ftr-latest.py` + `.service`/`.timer` | Every 15 min on the VPS: asks GitHub for the latest release, writes `latest.json` next to the page and `/etc/nginx/ftr-download.conf` (`/download` → 302 to the newest APK). Visitors never call GitHub's API; a failed check keeps the last good state. |
 | `server/nginx/` | Vendored vhost (one Let's Encrypt certificate for all three names). |
