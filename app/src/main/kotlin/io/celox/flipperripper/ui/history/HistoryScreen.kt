@@ -27,6 +27,10 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
@@ -78,6 +82,26 @@ import sh.calvin.reorderable.rememberReorderableLazyListState
 @Composable
 fun HistoryScreen(viewModel: HistoryViewModel = hiltViewModel()) {
     val records by viewModel.history.collectAsStateWithLifecycle()
+    val removed by viewModel.removed.collectAsStateWithLifecycle()
+    val snackbarHost = remember { SnackbarHostState() }
+    val removedMessage = removed?.let { stringResource(R.string.history_removed, it.record.title) }
+    val undoLabel = stringResource(R.string.history_undo)
+    // One snackbar per delete. A second swipe restarts this effect, which cancels the first
+    // snackbar — only the newest removal can be undone, and the ViewModel agrees (token check).
+    LaunchedEffect(removed?.token) {
+        val current = removed ?: return@LaunchedEffect
+        val result =
+            snackbarHost.showSnackbar(
+                message = removedMessage.orEmpty(),
+                actionLabel = undoLabel,
+                duration = SnackbarDuration.Long,
+            )
+        if (result == SnackbarResult.ActionPerformed) {
+            viewModel.undoDelete(current.token)
+        } else {
+            viewModel.undoExpired(current.token)
+        }
+    }
     // Clearing the history cannot be undone, so the button only *asks*; nothing is removed until the
     // dialog is confirmed. Survives rotation, so a config change can never silently drop the question.
     var askClearAll by rememberSaveable { mutableStateOf(false) }
@@ -94,6 +118,7 @@ fun HistoryScreen(viewModel: HistoryViewModel = hiltViewModel()) {
     }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHost) },
         topBar = {
             TopAppBar(
                 title = {
@@ -245,9 +270,18 @@ fun DownloadQueueList(records: List<DownloadRecord>, modifier: Modifier, actions
                 // is deprecated, and it was the wrong shape anyway — the swipe is not a question to
                 // approve, the card simply leaves. It disappears from the list on its own once the
                 // row is gone, so there is no state to reset.
+                //
+                // The state is *saveable*, and the list keeps saved state per key. After Undo the
+                // entry comes back under the same key, and the list restored "swiped away" — the
+                // card deleted itself again the moment it reappeared (seen on a device). So a delete
+                // is only armed once this card has been seen at rest; a state that arrives already
+                // swiped is put back instead.
+                var armed by remember { mutableStateOf(dismissState.currentValue == SwipeToDismissBoxValue.Settled) }
                 LaunchedEffect(dismissState.currentValue) {
-                    if (dismissState.currentValue != SwipeToDismissBoxValue.Settled) {
-                        actions.onDelete(record.id)
+                    when {
+                        dismissState.currentValue == SwipeToDismissBoxValue.Settled -> armed = true
+                        armed -> actions.onDelete(record.id)
+                        else -> dismissState.snapTo(SwipeToDismissBoxValue.Settled)
                     }
                 }
                 SwipeToDismissBox(

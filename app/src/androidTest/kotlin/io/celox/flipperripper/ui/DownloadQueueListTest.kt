@@ -1,6 +1,7 @@
 package io.celox.flipperripper.ui
 
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
@@ -99,6 +100,48 @@ class DownloadQueueListTest {
         composeRule.onNodeWithText("done").performTouchInput { swipeLeft() }
         composeRule.waitForIdle()
         assertThat(deleted).containsExactly("done")
+    }
+
+    @Test
+    fun aCardBroughtBackByUndoDoesNotDeleteItselfAgain() {
+        // The swipe state is saveable and the list keeps saved state per key. After Undo the entry
+        // returns under the same key; the list restored "swiped away" and the card deleted itself a
+        // second time the moment it reappeared — found on a device, after the unit tests were green.
+        val done = record("done", DownloadStatus.COMPLETED, 1)
+        val shown = mutableStateOf(listOf(done))
+        composeRule.setContent {
+            FlipperTheme {
+                DownloadQueueList(
+                    records = shown.value,
+                    modifier = Modifier.fillMaxSize(),
+                    actions =
+                    DownloadActions(
+                        onCancel = {},
+                        onRetry = {},
+                        onDelete = {
+                            deleted += it
+                            shown.value = shown.value.filterNot { r -> r.id == it }
+                        },
+                        onPause = {},
+                        onResume = {},
+                        onReorder = {},
+                    ),
+                )
+            }
+        }
+        composeRule.onNodeWithText("done").performTouchInput { swipeLeft() }
+        composeRule.waitForIdle()
+        assertThat(deleted).containsExactly("done")
+
+        shown.value = listOf(done) // Undo
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("done").assertIsDisplayed()
+        assertThat(deleted).containsExactly("done")
+
+        // And it can still be swiped away again.
+        composeRule.onNodeWithText("done").performTouchInput { swipeLeft() }
+        composeRule.waitForIdle()
+        assertThat(deleted).containsExactly("done", "done")
     }
 
     @Test

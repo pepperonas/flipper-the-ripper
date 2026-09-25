@@ -15,6 +15,7 @@ import androidx.compose.material.icons.outlined.Code
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.material.icons.outlined.Language
+import androidx.compose.material.icons.outlined.Public
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
@@ -75,6 +76,7 @@ fun AboutSection(onOpenFailed: () -> Unit) {
 
     Spacer(Modifier.height(Spacing.md))
     FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.sm), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+        LinkChip(stringResource(R.string.about_website), Icons.Outlined.Public) { open(AboutLinks.PRODUCT_URL) }
         LinkChip(AboutLinks.WEBSITE_LABEL, Icons.Outlined.Language) { open(AboutLinks.WEBSITE_URL) }
         LinkChip(stringResource(R.string.about_source), Icons.Outlined.Code) { open(AboutLinks.REPO_URL) }
         LinkChip(stringResource(R.string.about_license, AboutLinks.LICENSE_NAME), Icons.Outlined.Description) {

@@ -9,6 +9,7 @@ class AboutLinksTest {
     fun `author, site and repository are the real ones`() {
         assertThat(AboutLinks.AUTHOR).isEqualTo("Martin Pfeffer")
         assertThat(AboutLinks.WEBSITE_URL).isEqualTo("https://celox.io")
+        assertThat(AboutLinks.PRODUCT_URL).isEqualTo("https://flipper-the-ripper.celox.io")
         assertThat(AboutLinks.REPO_URL).isEqualTo("https://github.com/pepperonas/flipper-the-ripper")
         assertThat(AboutLinks.LICENSE_URL).startsWith(AboutLinks.REPO_URL)
         assertThat(AboutLinks.LICENSE_URL).endsWith("/LICENSE")
@@ -28,7 +29,7 @@ class AboutLinksTest {
 
     @Test
     fun `every link is https`() {
-        listOf(AboutLinks.WEBSITE_URL, AboutLinks.REPO_URL, AboutLinks.LICENSE_URL, AboutLinks.donateUrl())
+        listOf(AboutLinks.WEBSITE_URL, AboutLinks.PRODUCT_URL, AboutLinks.REPO_URL, AboutLinks.LICENSE_URL, AboutLinks.donateUrl())
             .forEach { assertThat(it).startsWith("https://") }
     }
 }

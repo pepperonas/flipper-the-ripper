@@ -58,7 +58,14 @@ constructor(private val repository: DownloadRepository) {
 class DeleteRecordUseCase
 @Inject
 constructor(private val repository: DownloadRepository) {
-    suspend operator fun invoke(id: String) = repository.delete(id)
+    suspend operator fun invoke(id: String): DownloadRecord? = repository.delete(id)
+}
+
+/** Put a deleted history entry back (undo). */
+class RestoreRecordUseCase
+@Inject
+constructor(private val repository: DownloadRepository) {
+    suspend operator fun invoke(record: DownloadRecord) = repository.restore(record)
 }
 
 /** Clear the entire history. */

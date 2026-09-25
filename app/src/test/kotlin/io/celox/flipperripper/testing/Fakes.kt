@@ -117,8 +117,18 @@ class FakeDownloadRepository : DownloadRepository {
         retried += id
     }
 
-    override suspend fun delete(id: String) {
+    val restored = mutableListOf<DownloadRecord>()
+
+    override suspend fun delete(id: String): DownloadRecord? {
         deleted += id
+        val before = history.value.firstOrNull { it.id == id }
+        history.value = history.value.filterNot { it.id == id }
+        return before
+    }
+
+    override suspend fun restore(record: DownloadRecord) {
+        restored += record
+        history.value = history.value + record
     }
 
     override suspend fun clearHistory() {

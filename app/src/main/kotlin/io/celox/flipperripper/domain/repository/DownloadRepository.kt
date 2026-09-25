@@ -4,7 +4,13 @@ import io.celox.flipperripper.domain.model.DownloadRecord
 import io.celox.flipperripper.domain.model.DownloadRequest
 import kotlinx.coroutines.flow.Flow
 
-/** Schedules downloads and exposes their persisted history. */
+/**
+ * Schedules downloads and exposes their persisted history.
+ *
+ * One function per thing a user can do to a download; splitting the contract to satisfy a count
+ * would only scatter it across interfaces every caller then needs all of.
+ */
+@Suppress("TooManyFunctions")
 interface DownloadRepository {
     /** Enqueue a background download. Returns the record id that tracks it. */
     suspend fun enqueue(request: DownloadRequest): String
@@ -30,8 +36,17 @@ interface DownloadRepository {
     /** Retry a failed/cancelled record, reusing its request. */
     suspend fun retry(id: String)
 
-    /** Delete a single history entry (does not delete the saved media). */
-    suspend fun delete(id: String)
+    /**
+     * Delete a single history entry (does not delete the saved media). Returns the entry as it was,
+     * so it can be handed to [restore] — or null if there was none.
+     */
+    suspend fun delete(id: String): DownloadRecord?
+
+    /**
+     * Put a deleted history entry back exactly as it was — the other half of "undo" after a swipe.
+     * Only for finished entries: a download that was still pending was cancelled by [delete].
+     */
+    suspend fun restore(record: DownloadRecord)
 
     /** Clear the entire history (does not delete saved media). */
     suspend fun clearHistory()

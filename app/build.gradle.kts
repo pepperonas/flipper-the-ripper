@@ -90,6 +90,12 @@ android {
     // it fails as a downgrade ("App not installed"). One file removes the choice. 1.8.3 remains the
     // last release for 32-bit devices, and the in-app update notice stays quiet there (UpdatePolicy).
     // Still a split rather than a plain build so the native payload is the one architecture's only.
+    // Android 13+ offers a per-app language (Settings → Apps → Flipper the Ripper → Language). The
+    // list is generated from the values-xx folders, so a new translation appears there by itself.
+    androidResources {
+        generateLocaleConfig = true
+    }
+
     splits {
         abi {
             isEnable = true

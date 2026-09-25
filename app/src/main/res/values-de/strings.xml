@@ -54,6 +54,8 @@
     <string name="history_pause">Pausieren</string>
     <string name="history_resume">Fortsetzen</string>
     <string name="history_status_paused">Pausiert</string>
+    <string name="history_removed">„%1$s“ entfernt</string>
+    <string name="history_undo">Rückgängig</string>
     <string name="history_reorder">Umsortieren</string>
     <string name="history_swipe_delete_hint">Einen fertigen Download zum Entfernen zur Seite wischen.</string>
     <string name="history_status_queued">In Warteschlange</string>

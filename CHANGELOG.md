@@ -17,6 +17,13 @@ section for the version in `app/build.gradle.kts` exists before anything is tagg
   `flippertheripper.celox.io` and `ftr.celox.io`). It always offers the newest APK;
   `https://flipper-the-ripper.celox.io/download` is a stable direct link. Source in `website/`.
 
+- **Spanish, Italian and French.** The app now speaks five languages. On Android 13+ the language
+  can also be chosen for the app alone (*Settings → Apps → Flipper the Ripper → Language*).
+- **Undo after deleting.** Swiping a finished download away (or deleting it) shows a snackbar with
+  *Undo*, which puts the entry back exactly as it was. Downloads still in the queue offer no undo:
+  deleting them also cancels them.
+- Settings → About links to the product page.
+
 ### Changed
 - Gradle names its APKs like the published file: `flipper-the-ripper-v1.10.0.apk` and
   `flipper-the-ripper-v1.10.0-debug.apk` instead of `app-arm64-v8a-release.apk`. The release

@@ -10,6 +10,9 @@ object AboutLinks {
     const val AUTHOR = "Martin Pfeffer"
     const val WEBSITE_LABEL = "celox.io"
     const val WEBSITE_URL = "https://celox.io"
+
+    /** The app's own page — always offers the newest APK. */
+    const val PRODUCT_URL = "https://flipper-the-ripper.celox.io"
     const val REPO_URL = "https://github.com/pepperonas/flipper-the-ripper"
     const val LICENSE_NAME = "MIT License"
     const val LICENSE_URL = "$REPO_URL/blob/main/LICENSE"

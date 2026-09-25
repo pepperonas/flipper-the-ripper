@@ -7,20 +7,20 @@
 **A modern, open-source Android app to download publicly accessible videos from YouTube, Instagram, TikTok, Facebook, X and Dailymotion.**
 
 [![version](https://img.shields.io/badge/version-1.10.0-7B4DFF?style=for-the-badge&logo=android&logoColor=white)](https://github.com/pepperonas/flipper-the-ripper/releases/latest)
-[![unit tests](https://img.shields.io/badge/unit%20tests-387-2E9E5B?style=for-the-badge&logo=junit5&logoColor=white)](app/src/test)
+[![unit tests](https://img.shields.io/badge/unit%20tests-394-2E9E5B?style=for-the-badge&logo=junit5&logoColor=white)](app/src/test)
 [![lines of code](https://img.shields.io/badge/lines%20of%20code-8.5k-4B6BDF?style=for-the-badge&logo=kotlin&logoColor=white)](app/src/main/kotlin)
 [![test code](https://img.shields.io/badge/test%20code-6.3k-2E9E5B?style=for-the-badge&logo=kotlin&logoColor=white)](app/src/test)
 
 [![CI](https://img.shields.io/github/actions/workflow/status/pepperonas/flipper-the-ripper/ci.yml?branch=main&label=build&logo=github)](https://github.com/pepperonas/flipper-the-ripper/actions/workflows/ci.yml)
 [![Release workflow](https://img.shields.io/github/actions/workflow/status/pepperonas/flipper-the-ripper/release.yml?label=release&logo=githubactions)](https://github.com/pepperonas/flipper-the-ripper/actions/workflows/release.yml)
-[![instrumented](https://img.shields.io/badge/instrumented-20-2E9E5B?logo=android&logoColor=white)](app/src/androidTest)
+[![instrumented](https://img.shields.io/badge/instrumented-21-2E9E5B?logo=android&logoColor=white)](app/src/androidTest)
 [![Coverage](https://img.shields.io/badge/coverage-%E2%89%A580%25-brightgreen?logo=kotlin)](https://github.com/pepperonas/flipper-the-ripper/actions/workflows/ci.yml)
 [![APK size](https://img.shields.io/badge/APK-53.6%20MB-4B6BDF?logo=android&logoColor=white)](#-download)
 [![ABI](https://img.shields.io/badge/ABI-arm64--v8a%20only-4B6BDF?logo=arm&logoColor=white)](#-download)
 [![engine](https://img.shields.io/badge/engine-yt--dlp%20via%20youtubedl--android%200.18.1-C00?logo=youtube&logoColor=white)](#-the-download-engine--and-why)
 [![JDK](https://img.shields.io/badge/JDK-17-ED8B00?logo=openjdk&logoColor=white)](#%EF%B8%8F-build)
 [![platforms](https://img.shields.io/badge/platforms-6-8A63FF?logo=youtube&logoColor=white)](#-features)
-[![languages](https://img.shields.io/badge/languages-EN%20%2B%20DE-0E7C86?logo=googletranslate&logoColor=white)](app/src/main/res/values-de/strings.xml)
+[![languages](https://img.shields.io/badge/languages-EN%20%C2%B7%20DE%20%C2%B7%20ES%20%C2%B7%20IT%20%C2%B7%20FR-0E7C86?logo=googletranslate&logoColor=white)](app/src/main/res)
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.0-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org)
 [![Compose](https://img.shields.io/badge/Jetpack%20Compose-1.11-3DDC84?logo=android&logoColor=white)](https://developer.android.com/jetpack/compose)
 [![Material 3 Expressive](https://img.shields.io/badge/Material%203-Expressive-6C4BE0?logo=materialdesign&logoColor=white)](https://m3.material.io/blog/m3-expressive-motion-theming)
@@ -66,12 +66,12 @@
 - **Material 3 Expressive motion** — every screen transition is built from the theme's spring `MotionScheme` in one place (`ui/motion/ScreenTransitions.kt`): lateral fade-through with a directional slide between tabs, shared-axis rise for child screens; reduced motion collapses it to a cut.
 - **One drawn mark** — the app icon and every in-app sign share one shape: a soft Material *sunny* disc with a sharp download glyph punched through it, so the same path works coloured, outlined, tinted and as the Android themed icon.
 - **Compact bottom bar** — M3 Expressive `ShortNavigationBar` (64 dp instead of 80 dp), full-height items, filled icon on the active tab.
-- **English and German** — the whole interface is translated; a German phone gets German, everything else English. A test keeps the two files in step, including format placeholders.
+- **Five languages** — English, German, Spanish, Italian and French. The phone's language picks one, anything else gets English; on Android 13+ the app language can also be set on its own (*Settings → Apps → Flipper the Ripper → Language*). A test keeps every file in step with English, including format placeholders and plural forms.
 - **About & support** — Settings → About shows version/build, links to celox.io, the source and the MIT licence, and a PayPal button.
 - **Title-based filenames** — files are named after the video title (`Wie man Android Apps entwickelt.mp4`) with illegal characters sanitised.
 - **Shows up everywhere** — saved via **MediaStore** into the public *Movies* folder; instantly visible in Gallery, Google Photos and file managers.
 - **True background downloads** — keep going while the screen is locked, the app is minimised, or the device is rotated (WorkManager + foreground service).
-- **A download queue you can actually manage** — downloads run **one at a time, in the order shown**, not several at once as before. The running one can be **paused** (the partly fetched file is kept, and resuming continues from that byte rather than starting over) and the waiting ones **dragged** into a different order. Finished entries swipe away. One notification for the batch ("Downloading… · 2 of 5"), not one per download.
+- **A download queue you can actually manage** — downloads run **one at a time, in the order shown**, not several at once as before. The running one can be **paused** (the partly fetched file is kept, and resuming continues from that byte rather than starting over) and the waiting ones **dragged** into a different order. Finished entries swipe away — and an **Undo** in the snackbar brings a swiped entry back. One notification for the batch ("Downloading… · 2 of 5"), not one per download.
 - **Quality picker** — the Download button has a chevron that opens the options: **Best · 1080p · 720p · 480p · Audio only**, with a line under the button saying which one will happen. After *Load info* a tier the video does not reach is greyed out and the sheet says what the maximum is. A remembered default applies to shared links, so the one-tap path stays one tap.
 - **Robust error messages** — private video, login required, region blocked, rate-limited, network error, invalid link, cancelled.
 - **Material 3 Expressive** — spring-based motion physics (`MotionScheme.expressive()`), the expressive `LoadingIndicator`, emphasized typography, a spring-sliding segmented toggle, a split button with an options sheet, staggered list entrances, and expressive screen transitions. Dynamic color + light/dark, all guarded by `prefers-reduced-motion`.
@@ -419,7 +419,7 @@ is silent: nothing crashes, nothing logs, the wrong thing just ships.
 | Guard | Holds | Would have caught |
 |---|---|---|
 | `ReadmeBadgesTest` | the version, test-count and SDK badges against `build.gradle.kts` and the real test count | a stale badge (it has fired several times — that is its job) |
-| `TranslationTest` | every English string has a German one, placeholders match, no orphans, nothing merely copied | one English sentence on a German phone |
+| `TranslationTest` | every English string exists in DE/ES/IT/FR, placeholders and plural forms match, no orphans, nothing merely copied, no swallowed apostrophes | one English sentence on a translated phone |
 | `ShareTargetRegistrationTest` | manifest filter ↔ `shortcuts.xml` ↔ `SharedText` — what the sheet offers, the app accepts, the activity reads | the share filter widened on one side only (v1.8.2) |
 | `ReleaseArtifactsTest` | the ABI the build produces == the file the release workflow publishes == the file the README tells people to download | dropping or adding an ABI in one place |
 | `DownloadRunnerContractTest` | the runner never writes a whole row back, reports every phase, does not block the engine, and pauses *before* it stops the engine | a running download reset to QUEUED; a pause deleting the file it exists to keep (both shipped) |

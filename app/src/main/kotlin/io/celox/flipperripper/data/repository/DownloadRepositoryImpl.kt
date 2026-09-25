@@ -150,9 +150,15 @@ constructor(
         ensureQueueRunning()
     }
 
-    override suspend fun delete(id: String) {
+    override suspend fun delete(id: String): DownloadRecord? {
+        val before = dao.getById(id)?.toDomain()
         engine.cancel(id)
         dao.delete(id)
+        return before
+    }
+
+    override suspend fun restore(record: DownloadRecord) {
+        dao.upsert(DownloadEntity.fromDomain(record))
     }
 
     override suspend fun clearHistory() {

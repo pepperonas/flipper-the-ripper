@@ -103,6 +103,16 @@ class DownloadRepositoryImplTest {
         }
 
     @Test
+    fun `restore brings a deleted record back unchanged`() =
+        runTest {
+            val id = repository.enqueue(DownloadRequest("https://youtu.be/x", Platform.YOUTUBE))
+            val before = repository.observeRecord(id).first()!!
+            repository.delete(id)
+            repository.restore(before)
+            assertThat(repository.observeRecord(id).first()).isEqualTo(before)
+        }
+
+    @Test
     fun `clearHistory empties the table`() =
         runTest {
             repository.enqueue(DownloadRequest("https://youtu.be/x", Platform.YOUTUBE))
