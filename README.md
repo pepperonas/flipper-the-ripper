@@ -83,7 +83,7 @@
 
 ## 📥 Download
 
-**Website:** [flipper-the-ripper.celox.io](https://flipper-the-ripper.celox.io) — always offers the newest APK; <https://flipper-the-ripper.celox.io/download> is a stable direct link to it.
+**Website:** [flipper-the-ripper.celox.io](https://flipper-the-ripper.celox.io) — always offers the newest APK; <https://flipper-the-ripper.celox.io/download> is a stable direct link to it. The site lives in [`website/`](website/) (how it stays current, the agent interface — `llms.txt`, Markdown via `Accept: text/markdown`, `latest.json` — and how to deploy: [website/README.md](website/README.md)).
 
 Grab **`flipper-the-ripper-<version>.apk`** from the [**Releases**](https://github.com/pepperonas/flipper-the-ripper/releases/latest) page and sideload it. There is one file per release — 64-bit ARM, which is every Android phone sold since about 2016 — so there is nothing to pick. Install it over the existing app to update; every release since 1.0.0 is signed with the same key, and the Home screen tells you when a newer release exists.
 

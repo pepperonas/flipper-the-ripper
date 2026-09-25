@@ -272,6 +272,26 @@ h1 {
 }
 .note { margin: 20px 4px 0; color: var(--on-variant); font-size: 15px; }
 
+/* ---------- faq ---------- */
+.faq { display: grid; gap: 10px; }
+.faq-item {
+  background: var(--surface-low); border: 1px solid color-mix(in srgb, var(--outline-variant) 70%, transparent);
+  border-radius: 20px; padding: 0 20px;
+}
+.faq-item[open] { background: var(--surface); }
+.faq-item summary {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 56px;
+  cursor: pointer; list-style: none; font-weight: 600; color: var(--on-bg);
+}
+.faq-item summary::-webkit-details-marker { display: none; }
+.faq-item summary::after {
+  content: ""; flex: none; width: 10px; height: 10px; margin-right: 4px;
+  border-right: 2px solid var(--on-variant); border-bottom: 2px solid var(--on-variant);
+  transform: rotate(45deg) translateY(-3px); transition: transform .3s var(--ease-spring);
+}
+.faq-item[open] summary::after { transform: rotate(225deg) translate(-2px, -1px); }
+.faq-item p { margin: 0 0 18px; color: var(--on-variant); max-width: 75ch; }
+
 /* ---------- support ---------- */
 .support {
   position: relative; overflow: hidden; isolation: isolate;

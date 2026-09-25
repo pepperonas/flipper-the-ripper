@@ -1,6 +1,10 @@
 <!doctype html>
 <html lang="en">
 <head>
+  <!-- nginx SSI: fallbacks for the release facts pulled in below (must precede their first use). -->
+  <!--# block name="none" --><!--# endblock -->
+  <!--# block name="dash" -->—<!--# endblock -->
+  <!--# block name="meta_fallback" -->Newest release · Android 7.0+ · 64-bit ARM · free, MIT licence<!--# endblock -->
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Flipper the Ripper — Free Android Video Downloader</title>
@@ -13,11 +17,13 @@
   <meta name="color-scheme" content="dark">
   <meta name="format-detection" content="telephone=no">
   <link rel="canonical" href="https://flipper-the-ripper.celox.io/">
-  <link rel="icon" href="assets/mark.svg?v=13" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=13">
-  <link rel="preload" as="image" type="image/webp" imagesrcset="assets/hero-1400.webp?v=13 1400w, assets/hero-2400.webp?v=13 2400w" imagesizes="100vw">
+  <link rel="icon" href="assets/mark.svg?v=14" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=14">
+  <link rel="preload" as="image" type="image/webp" imagesrcset="assets/hero-1400.webp?v=14 1400w, assets/hero-2400.webp?v=14 2400w" imagesizes="100vw">
   <!-- For agents and tools: machine-readable facts about the app and its newest release. -->
   <link rel="alternate" type="text/markdown" href="/llms.txt" title="Flipper the Ripper for LLMs and agents">
+  <link rel="alternate" type="text/markdown" href="/index.md" title="This page as Markdown">
+  <link rel="alternate" type="text/markdown" href="/changelog.md" title="Changelog (Markdown)">
   <link rel="alternate" type="application/json" href="/latest.json" title="Newest release (version, APK URL, size, SHA-256)">
 
   <meta property="og:type" content="website">
@@ -30,8 +36,8 @@
   <meta property="og:locale:alternate" content="es_ES">
   <meta property="og:locale:alternate" content="it_IT">
   <meta property="og:locale:alternate" content="fr_FR">
-  <meta property="og:image" content="https://flipper-the-ripper.celox.io/assets/og.jpg?v=13">
-  <meta property="og:image:secure_url" content="https://flipper-the-ripper.celox.io/assets/og.jpg?v=13">
+  <meta property="og:image" content="https://flipper-the-ripper.celox.io/assets/og.jpg?v=14">
+  <meta property="og:image:secure_url" content="https://flipper-the-ripper.celox.io/assets/og.jpg?v=14">
   <meta property="og:image:type" content="image/jpeg">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
@@ -39,7 +45,7 @@
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Flipper the Ripper — Rip it. Keep it.">
   <meta name="twitter:description" content="Free, open-source Android video downloader for YouTube, Instagram, TikTok, Facebook, X and Dailymotion. No account, no ads, no tracking.">
-  <meta name="twitter:image" content="https://flipper-the-ripper.celox.io/assets/og.jpg?v=13">
+  <meta name="twitter:image" content="https://flipper-the-ripper.celox.io/assets/og.jpg?v=14">
   <meta name="twitter:image:alt" content="Flipper the Ripper — a cartoon dolphin leaping out of a phone, videos flying into a download arrow.">
 
   <script type="application/ld+json">
@@ -55,8 +61,8 @@
   ],
   "description": "Free, open-source Android app that saves publicly accessible videos from YouTube, Instagram, TikTok, Facebook, X and Dailymotion to the phone's gallery. Share a link to the app and the download starts. No account, no ads, no tracking.",
   "url": "https://flipper-the-ripper.celox.io/",
-  "image": "https://flipper-the-ripper.celox.io/assets/og.jpg?v=13",
-  "screenshot": "https://flipper-the-ripper.celox.io/assets/screens.jpg?v=13",
+  "image": "https://flipper-the-ripper.celox.io/assets/og.jpg?v=14",
+  "screenshot": "https://flipper-the-ripper.celox.io/assets/screens.jpg?v=14",
   "operatingSystem": "Android 7.0 or later (64-bit ARM)",
   "applicationCategory": "MultimediaApplication",
   "applicationSubCategory": "Video downloader",
@@ -106,7 +112,10 @@
    "@type": "Organization",
    "name": "celox.io",
    "url": "https://celox.io"
-  }
+  },
+  "softwareVersion": "<!--# include virtual='/ssi/version.txt' stub='none' -->",
+  "fileSize": "<!--# include virtual='/ssi/size.txt' stub='none' -->",
+  "dateModified": "<!--# include virtual='/ssi/date.txt' stub='none' -->"
  },
  {
   "@context": "https://schema.org",
@@ -134,26 +143,81 @@
     "text": "In YouTube, Instagram, TikTok, Facebook, X or Dailymotion tap Share and pick Flipper the Ripper. Updates install over the existing app."
    }
   ]
+ },
+ {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+   {
+    "@type": "Question",
+    "name": "Is Flipper the Ripper free?",
+    "acceptedAnswer": {
+     "@type": "Answer",
+     "text": "Yes. It is free and open source under the MIT licence, with no ads, no account and no tracking."
+    }
+   },
+   {
+    "@type": "Question",
+    "name": "Why is it not on Google Play?",
+    "acceptedAnswer": {
+     "@type": "Answer",
+     "text": "The Play Store does not allow video downloaders or apps that update their own download engine. The app is distributed as a signed APK through GitHub Releases, like NewPipe and Seal."
+    }
+   },
+   {
+    "@type": "Question",
+    "name": "Which phones does it run on?",
+    "acceptedAnswer": {
+     "@type": "Answer",
+     "text": "Android 7.0 or later on 64-bit ARM, which is every Android phone sold since about 2016. Version 1.8.3 is the last release for 32-bit devices."
+    }
+   },
+   {
+    "@type": "Question",
+    "name": "How do I update?",
+    "acceptedAnswer": {
+     "@type": "Answer",
+     "text": "Install the newer APK over the existing app; your downloads and settings stay. The app shows a notice on its Home screen when a new release is out, and every release is signed with the same key."
+    }
+   },
+   {
+    "@type": "Question",
+    "name": "Which sites can it download from?",
+    "acceptedAnswer": {
+     "@type": "Answer",
+     "text": "YouTube, Instagram, TikTok, Facebook, X and Dailymotion — publicly accessible videos only. It does not bypass DRM, paywalls or logins you do not have."
+    }
+   },
+   {
+    "@type": "Question",
+    "name": "How do I know the APK is genuine?",
+    "acceptedAnswer": {
+     "@type": "Answer",
+     "text": "Compare its SHA-256 with the value above and check the signing certificate with apksigner verify --print-certs; the certificate is the same for every release since 1.0.0."
+    }
+   }
+  ]
  }
 ]
   </script>
 
-  <link rel="stylesheet" href="styles.css?v=13">
-  <script src="i18n.js?v=13" defer></script>
-  <script src="app.js?v=13" defer></script>
-  <script src="changelog.js?v=13" defer></script>
+  <link rel="stylesheet" href="styles.css?v=14">
+  <script src="i18n.js?v=14" defer></script>
+  <script src="app.js?v=14" defer></script>
+  <script src="changelog.js?v=14" defer></script>
 </head>
 <body>
   <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
 
   <header class="bar">
     <a class="brand" href="#top" aria-label="Flipper the Ripper">
-      <img src="assets/mark.svg?v=13" alt="" width="28" height="28">
+      <img src="assets/mark.svg?v=14" alt="" width="28" height="28">
       <span>Flipper the Ripper</span>
     </a>
     <nav class="bar-links" aria-label="Main">
       <a href="#features" data-i18n="nav.features">Features</a>
       <a href="#install" data-i18n="nav.install">Install</a>
+      <a href="#faq" data-i18n="nav.faq">FAQ</a>
       <a href="#support" data-i18n="nav.support">Support</a>
       <a class="gh" href="https://github.com/pepperonas/flipper-the-ripper" target="_blank" rel="noopener noreferrer">
         <svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
@@ -180,8 +244,8 @@
     <section class="hero" id="top">
       <picture class="hero-bg" aria-hidden="true">
         <source type="image/webp" sizes="100vw"
-                srcset="assets/hero-1400.webp?v=13 1400w, assets/hero-2400.webp?v=13 2400w">
-        <img src="assets/hero.jpg?v=13" alt="" width="2912" height="1440" fetchpriority="high">
+                srcset="assets/hero-1400.webp?v=14 1400w, assets/hero-2400.webp?v=14 2400w">
+        <img src="assets/hero.jpg?v=14" alt="" width="2912" height="1440" fetchpriority="high">
       </picture>
       <div class="hero-scrim" aria-hidden="true"></div>
 
@@ -197,7 +261,7 @@
           </a>
           <a class="btn tonal" href="https://github.com/pepperonas/flipper-the-ripper" data-i18n="hero.source" target="_blank" rel="noopener noreferrer">Source code</a>
         </div>
-        <p class="meta" id="dl-meta"><span data-i18n="hero.meta">Newest release · Android 7.0+ · 64-bit ARM · free, MIT licence</span></p>
+        <p class="meta" id="dl-meta"><span data-i18n="hero.meta"><!--# include virtual="/ssi/meta.html" stub="meta_fallback" --></span></p>
       </div>
     </section>
 
@@ -246,8 +310,8 @@
     <section class="section shots" aria-labelledby="s-h">
       <h2 id="s-h" data-i18n="s.h">Material 3 Expressive, dark and light</h2>
       <picture>
-        <source srcset="assets/screens.webp?v=13" type="image/webp">
-        <img src="assets/screens.jpg?v=13" width="1600" height="894" loading="lazy" decoding="async"
+        <source srcset="assets/screens.webp?v=14" type="image/webp">
+        <img src="assets/screens.jpg?v=14" width="1600" height="894" loading="lazy" decoding="async"
              data-i18n-alt="s.alt" alt="Four screens: the quality sheet on Home, the download queue, the progress notification and the German settings">
       </picture>
     </section>
@@ -272,11 +336,11 @@
         </li>
       </ol>
 
-      <div class="card verify">
+      <div class="card verify" id="verify">
         <h3 data-i18n="v.h">Check what you downloaded</h3>
         <dl>
           <dt data-i18n="v.apk">APK SHA-256</dt>
-          <dd><code id="sha">—</code></dd>
+          <dd><code id="sha"><!--# include virtual="/ssi/sha.txt" stub="dash" --></code></dd>
           <dt data-i18n="v.cert">Signing certificate SHA-256</dt>
           <dd><code>1fc3904fd80eb8135b25ee15fe62ec3b74545eba360298c152f712646fd910cb</code></dd>
         </dl>
@@ -284,6 +348,36 @@
       </div>
 
       <p class="note" data-i18n="i.play">Not on Google Play by design: the Play Store does not allow video downloaders or self-updating engines. Distribution runs through GitHub Releases, like NewPipe and Seal.</p>
+    </section>
+
+    <section class="section" id="faq" aria-labelledby="faq-h">
+      <h2 id="faq-h" data-i18n="faq.h">Questions</h2>
+      <div class="faq">
+        <details class="faq-item">
+          <summary data-i18n="faq.q1">Is Flipper the Ripper free?</summary>
+          <p data-i18n="faq.q1a">Yes. It is free and open source under the MIT licence, with no ads, no account and no tracking.</p>
+        </details>
+        <details class="faq-item">
+          <summary data-i18n="faq.q2">Why is it not on Google Play?</summary>
+          <p data-i18n="faq.q2a">The Play Store does not allow video downloaders or apps that update their own download engine. The app is distributed as a signed APK through GitHub Releases, like NewPipe and Seal.</p>
+        </details>
+        <details class="faq-item">
+          <summary data-i18n="faq.q3">Which phones does it run on?</summary>
+          <p data-i18n="faq.q3a">Android 7.0 or later on 64-bit ARM, which is every Android phone sold since about 2016. Version 1.8.3 is the last release for 32-bit devices.</p>
+        </details>
+        <details class="faq-item">
+          <summary data-i18n="faq.q4">How do I update?</summary>
+          <p data-i18n="faq.q4a">Install the newer APK over the existing app; your downloads and settings stay. The app shows a notice on its Home screen when a new release is out, and every release is signed with the same key.</p>
+        </details>
+        <details class="faq-item">
+          <summary data-i18n="faq.q5">Which sites can it download from?</summary>
+          <p data-i18n="faq.q5a">YouTube, Instagram, TikTok, Facebook, X and Dailymotion — publicly accessible videos only. It does not bypass DRM, paywalls or logins you do not have.</p>
+        </details>
+        <details class="faq-item">
+          <summary data-i18n="faq.q6">How do I know the APK is genuine?</summary>
+          <p data-i18n="faq.q6a">Compare its SHA-256 with the value above and check the signing certificate with apksigner verify --print-certs; the certificate is the same for every release since 1.0.0.</p>
+        </details>
+      </div>
     </section>
 
     <section class="section" id="support" aria-labelledby="sp-h">

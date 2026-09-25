@@ -5,6 +5,7 @@
 ## Get the app
 
 - Newest APK, always: https://flipper-the-ripper.celox.io/download (302 redirect to the current GitHub release asset)
+- This page as Markdown (with the current version and SHA-256): https://flipper-the-ripper.celox.io/index.md — also served at / for `Accept: text/markdown`
 - Newest release as JSON: https://flipper-the-ripper.celox.io/latest.json — fields `version`, `name`, `url`, `size` (bytes), `sha256`, `published` (ISO 8601), `notes`
 - All releases and notes: https://github.com/pepperonas/flipper-the-ripper/releases
 - Requirements: Android 7.0 or later, 64-bit ARM (every phone sold since about 2016). One APK, nothing to choose.

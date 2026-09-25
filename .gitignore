@@ -40,3 +40,5 @@ backend.properties
 .playwright-mcp/
 website/latest.json
 website/changelog.md
+website/ssi/
+__pycache__/

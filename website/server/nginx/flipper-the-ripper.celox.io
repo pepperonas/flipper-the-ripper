@@ -1,6 +1,12 @@
 # Flipper the Ripper — product page. Vendored copy of /etc/nginx/sites-available/flipper-the-ripper.celox.io
 # One certificate covers all three names; the two short names answer with a 301.
 
+# Agents that ask for Markdown get the Markdown version of the page at /.
+map $http_accept $ftr_wants_markdown {
+    default 0;
+    "~*text/markdown" 1;
+}
+
 server {
     listen 80;
     listen [::]:80;
@@ -32,7 +38,7 @@ server {
     root /var/www/flipper-the-ripper.celox.io;
     index index.html;
     charset utf-8;
-    charset_types text/plain text/css application/javascript application/json text/xml;
+    charset_types text/plain text/css application/javascript application/json text/xml text/markdown;
 
     # Security headers are repeated in every location that sets its own add_header
     # (an add_header in a block drops everything inherited).
@@ -45,10 +51,41 @@ server {
     # /download -> 302 to the newest APK; written by ftr-latest.py (glob: absent file is fine).
     include /etc/nginx/ftr-download*.conf;
 
+    # index.html and index.md pull the release facts from /ssi/ (written by ftr-latest.py) at serve
+    # time, so version, size, date and SHA-256 are in the document itself — no JavaScript needed.
+    ssi on;
+    ssi_last_modified off;
+    location ^~ /ssi/ {
+        internal;
+        default_type text/plain;
+    }
+
+    # Content negotiation: `Accept: text/markdown` on / returns the Markdown version of the page.
+    location = / {
+        if ($ftr_wants_markdown) { rewrite ^ /index.md last; }
+        try_files /index.html =404;
+        add_header Vary "Accept" always;
+        add_header Link '</llms.txt>; rel="alternate"; type="text/markdown", </index.md>; rel="alternate"; type="text/markdown", </latest.json>; rel="alternate"; type="application/json"' always;
+        add_header Cache-Control "no-cache" always;
+        add_header Strict-Transport-Security "max-age=31536000" always;
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+        add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;
+        add_header Content-Security-Policy "default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'none'" always;
+    }
+    location = /index.md {
+        types { }
+        default_type text/markdown;  # charset comes from charset_types; with it here ssi_types would not match
+        ssi_types text/markdown;
+        add_header Vary "Accept" always;
+        add_header Cache-Control "no-cache" always;
+        add_header X-Content-Type-Options "nosniff" always;
+    }
+
     # Copied from GitHub by ftr-latest.py; read by the changelog dialog and by agents.
     location = /changelog.md {
         types { }
-        default_type "text/markdown; charset=utf-8";
+        default_type text/markdown;  # charset comes from charset_types; with it here ssi_types would not match
         add_header Cache-Control "no-cache" always;
         add_header X-Content-Type-Options "nosniff" always;
     }

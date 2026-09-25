@@ -5,12 +5,15 @@ Runs on the VPS from ftr-latest.timer. Writes two files, both only when somethin
 
   <webroot>/latest.json      read by the page (same origin: visitors never call GitHub's API)
   <webroot>/changelog.md     CHANGELOG.md from main, shown in the page's changelog dialog
+  <webroot>/ssi/*            version, size, date, SHA-256 and the meta line, pulled into index.html and
+                             index.md by nginx SSI — so the facts are in the HTML itself, for agents and
+                             for anyone without JavaScript
   /etc/nginx/ftr-download.conf  `location = /download` -> 302 to the newest APK, so
                                https://flipper-the-ripper.celox.io/download is a stable link
 
 A failed GitHub call changes nothing: the last good state stays in place.
 """
-import json, os, re, subprocess, sys, tempfile, urllib.request
+import datetime, html, json, os, re, subprocess, sys, tempfile, urllib.request
 
 REPO = "pepperonas/flipper-the-ripper"
 WEBROOT = os.environ.get("FTR_WEBROOT", "/var/www/flipper-the-ripper.celox.io")
@@ -60,6 +63,24 @@ def fetch_changelog():
     return text
 
 
+def ssi_fragments(d):
+    """The release facts as tiny text files for nginx SSI (English; the page's JavaScript localises)."""
+    size = f"{d['size'] / 1048576:.1f} MB"
+    day = d["published"][:10]
+    try:
+        pretty = datetime.date.fromisoformat(day).strftime("%-d %b %Y")
+    except ValueError:
+        pretty = day
+    meta = " · ".join(filter(None, [d["version"], size, pretty, "Android 7.0+", "64-bit ARM"]))
+    return {
+        "version.txt": d["version"].lstrip("v"),
+        "size.txt": size,
+        "date.txt": day,
+        "sha.txt": d["sha256"],
+        "meta.html": html.escape(meta),
+    }
+
+
 def same(path, text):
     try:
         with open(path) as f:
@@ -90,6 +111,11 @@ def main():
         print(f"ftr-latest: keeping previous state ({e})", file=sys.stderr)
         return 1
     changed_json = write_if_changed(os.path.join(WEBROOT, "latest.json"), json.dumps(d, indent=2) + "\n")
+    ssi_dir = os.path.join(WEBROOT, "ssi")
+    os.makedirs(ssi_dir, exist_ok=True)
+    changed_ssi = False
+    for name, text in ssi_fragments(d).items():
+        changed_ssi |= write_if_changed(os.path.join(ssi_dir, name), text)
     try:
         changed_log = write_if_changed(os.path.join(WEBROOT, "changelog.md"), fetch_changelog())
     except Exception as e:  # the dialog keeps showing the last good copy
@@ -120,7 +146,8 @@ def main():
         changed_conf = True
     print(
         f"ftr-latest: {d['version']} json={'new' if changed_json else 'same'} "
-        f"changelog={'new' if changed_log else 'same'} nginx={'reloaded' if changed_conf else 'same'}"
+        f"ssi={'new' if changed_ssi else 'same'} changelog={'new' if changed_log else 'same'} "
+        f"nginx={'reloaded' if changed_conf else 'same'}"
     )
     return 0
 
