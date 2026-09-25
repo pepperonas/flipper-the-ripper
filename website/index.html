@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Flipper the Ripper — Android video downloader</title>
+  <meta name="description" content="Open-source Android app to save public videos from YouTube, Instagram, TikTok, Facebook, X and Dailymotion. Share a link, get the file. Free, no account, no tracking.">
+  <meta name="theme-color" content="#141218">
+  <meta name="color-scheme" content="dark">
+  <link rel="canonical" href="https://flipper-the-ripper.celox.io/">
+  <link rel="icon" href="assets/mark.svg?v=1" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=1">
+  <link rel="preload" as="image" href="assets/hero.webp?v=1" type="image/webp">
+
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://flipper-the-ripper.celox.io/">
+  <meta property="og:title" content="Flipper the Ripper — Rip it. Keep it.">
+  <meta property="og:description" content="Open-source Android app to save public videos from YouTube, Instagram, TikTok, Facebook, X and Dailymotion.">
+  <meta property="og:image" content="https://flipper-the-ripper.celox.io/assets/og.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"SoftwareApplication","name":"Flipper the Ripper",
+   "operatingSystem":"Android 7.0+","applicationCategory":"MultimediaApplication",
+   "offers":{"@type":"Offer","price":"0","priceCurrency":"EUR"},
+   "license":"https://opensource.org/licenses/MIT",
+   "downloadUrl":"https://flipper-the-ripper.celox.io/download",
+   "codeRepository":"https://github.com/pepperonas/flipper-the-ripper",
+   "author":{"@type":"Person","name":"Martin Pfeffer","url":"https://celox.io"}}
+  </script>
+
+  <link rel="stylesheet" href="styles.css?v=1">
+  <script src="app.js?v=1" defer></script>
+</head>
+<body>
+  <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
+
+  <header class="bar">
+    <a class="brand" href="#top" aria-label="Flipper the Ripper">
+      <img src="assets/mark.svg?v=1" alt="" width="28" height="28">
+      <span>Flipper the Ripper</span>
+    </a>
+    <nav class="bar-links" aria-label="Main">
+      <a href="#features" data-i18n="nav.features">Features</a>
+      <a href="#install" data-i18n="nav.install">Install</a>
+      <a class="gh" href="https://github.com/pepperonas/flipper-the-ripper" rel="noopener">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+        <span>GitHub</span>
+      </a>
+      <button class="lang" type="button" id="lang" aria-label="Deutsch">DE</button>
+    </nav>
+  </header>
+
+  <main id="main">
+    <section class="hero" id="top">
+      <picture class="hero-bg" aria-hidden="true">
+        <source srcset="assets/hero.webp?v=1" type="image/webp">
+        <img src="assets/hero.jpg?v=1" alt="" width="1024" height="506" fetchpriority="high">
+      </picture>
+      <div class="hero-scrim" aria-hidden="true"></div>
+
+      <div class="hero-content">
+        <p class="kicker" data-i18n="hero.kicker">Android · Open source · Free</p>
+        <h1 data-i18n="hero.title">Share a link.<br>Keep the video.</h1>
+        <p class="lead" data-i18n="hero.lead">Save public videos from six platforms straight into your gallery — tap <em>Share</em>, pick Flipper the Ripper, done. No account, no ads, no tracking.</p>
+
+        <div class="cta">
+          <a class="btn primary" id="dl" href="https://github.com/pepperonas/flipper-the-ripper/releases/latest">
+            <svg viewBox="18 18 72 72" aria-hidden="true"><use href="#glyph-dl"/></svg>
+            <span data-i18n="hero.download">Download APK</span>
+          </a>
+          <a class="btn tonal" href="https://github.com/pepperonas/flipper-the-ripper" rel="noopener" data-i18n="hero.source">Source code</a>
+        </div>
+        <p class="meta" id="dl-meta"><span data-i18n="hero.meta">Latest release · Android 7.0+ · 64-bit ARM</span></p>
+      </div>
+    </section>
+
+    <section class="platforms" aria-labelledby="pl-h">
+      <h2 id="pl-h" class="sr" data-i18n="pl.h">Supported platforms</h2>
+      <ul>
+        <li class="p-yt">YouTube</li>
+        <li class="p-ig">Instagram</li>
+        <li class="p-tt">TikTok</li>
+        <li class="p-fb">Facebook</li>
+        <li class="p-x">X</li>
+        <li class="p-dm">Dailymotion</li>
+      </ul>
+    </section>
+
+    <section class="section" id="features" aria-labelledby="f-h">
+      <h2 id="f-h" data-i18n="f.h">Built to take as few taps as possible</h2>
+      <div class="grid">
+        <article class="card">
+          <h3 data-i18n="f1.t">Share, and it starts</h3>
+          <p data-i18n="f1.p">Pick the app in any share sheet. The download begins at once and you see it at the top of the list — or copy a link and the app offers it on launch.</p>
+        </article>
+        <article class="card">
+          <h3 data-i18n="f2.t">A queue you can manage</h3>
+          <p data-i18n="f2.p">One download at a time, in the order shown. Pause and resume from the byte it stopped at, drag waiting ones into a new order, swipe finished ones away.</p>
+        </article>
+        <article class="card">
+          <h3 data-i18n="f3.t">Choose the quality</h3>
+          <p data-i18n="f3.p">Best, 1080p, 720p, 480p or audio only. Tiers a video doesn't reach are greyed out, and a remembered default keeps shared links one tap.</p>
+        </article>
+        <article class="card">
+          <h3 data-i18n="f4.t">Keeps going in the background</h3>
+          <p data-i18n="f4.p">Locked screen, minimised app, rotated phone — downloads continue, with one notification for the whole batch.</p>
+        </article>
+        <article class="card">
+          <h3 data-i18n="f5.t">Straight into your gallery</h3>
+          <p data-i18n="f5.p">Files land in <em>Movies</em>, named after the video title, and show up in Google Photos and every file manager right away.</p>
+        </article>
+        <article class="card">
+          <h3 data-i18n="f6.t">Stays working</h3>
+          <p data-i18n="f6.p">The bundled yt-dlp updates itself, because platforms break old extractors within months. The app tells you when a new release is out.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section shots" aria-labelledby="s-h">
+      <h2 id="s-h" data-i18n="s.h">Material 3 Expressive, dark and light</h2>
+      <picture>
+        <source srcset="assets/screens.webp?v=1" type="image/webp">
+        <img src="assets/screens.jpg?v=1" width="1600" height="894" loading="lazy" decoding="async"
+             data-i18n-alt="s.alt" alt="Four screens: the quality sheet on Home, the download queue, the progress notification and the German settings">
+      </picture>
+    </section>
+
+    <section class="section" id="install" aria-labelledby="i-h">
+      <h2 id="i-h" data-i18n="i.h">Install in three steps</h2>
+      <ol class="steps">
+        <li class="card">
+          <span class="num">1</span>
+          <h3 data-i18n="i1.t">Download the APK</h3>
+          <p data-i18n="i1.p">One file for every phone sold since about 2016 — there is nothing to pick.</p>
+        </li>
+        <li class="card">
+          <span class="num">2</span>
+          <h3 data-i18n="i2.t">Allow the install</h3>
+          <p data-i18n="i2.p">Open the file. Android asks once whether your browser may install apps — allow it.</p>
+        </li>
+        <li class="card">
+          <span class="num">3</span>
+          <h3 data-i18n="i3.t">Share a link</h3>
+          <p data-i18n="i3.p">Updates install over the existing app; the Home screen tells you when one is available.</p>
+        </li>
+      </ol>
+
+      <div class="card verify">
+        <h3 data-i18n="v.h">Check what you downloaded</h3>
+        <dl>
+          <dt data-i18n="v.apk">APK SHA-256</dt>
+          <dd><code id="sha">—</code></dd>
+          <dt data-i18n="v.cert">Signing certificate SHA-256</dt>
+          <dd><code>1fc3904fd80eb8135b25ee15fe62ec3b74545eba360298c152f712646fd910cb</code></dd>
+        </dl>
+        <p class="small" data-i18n="v.p">Every release since 1.0.0 is signed with the same key. Compare with <code>apksigner verify --print-certs</code>.</p>
+      </div>
+
+      <p class="note" data-i18n="i.play">Not on Google Play by design: the Play Store does not allow video downloaders or self-updating engines. Distribution runs through GitHub Releases, like NewPipe and Seal.</p>
+    </section>
+
+    <section class="section legal" aria-labelledby="l-h">
+      <h2 id="l-h" data-i18n="l.h">Only save what you may keep</h2>
+      <p data-i18n="l.p">Flipper the Ripper is for publicly accessible content and personal, lawful use. It does not bypass DRM, paywalls or access restrictions. Respect each platform's terms and copyright law.</p>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <p>© <span id="year">2026</span> Martin Pfeffer · <a href="https://celox.io">celox.io</a></p>
+    <p class="foot-links">
+      <a href="https://github.com/pepperonas/flipper-the-ripper/blob/main/LICENSE" data-i18n="ft.license">MIT licence</a>
+      <a href="https://github.com/pepperonas/flipper-the-ripper/blob/main/CHANGELOG.md" data-i18n="ft.changelog">Changelog</a>
+      <a href="https://www.paypal.com/donate/?business=martin.pfeffer@celox.io&amp;currency_code=EUR&amp;item_name=Flipper%20the%20Ripper" data-i18n="ft.donate">Support the project</a>
+      <a href="https://celox.io/impressum/" data-i18n="ft.imprint">Imprint</a>
+      <a href="https://celox.io/datenschutz/" data-i18n="ft.privacy">Privacy</a>
+    </p>
+  </footer>
+
+  <svg class="defs" width="0" height="0" aria-hidden="true">
+    <defs>
+      <path id="glyph-dl" fill="currentColor" d="M49,33h10v17.5h8l-13,12.5-13-12.5h8Z M41.5,68.5h25a3,3 0 0 1 0,6h-25a3,3 0 0 1 0-6Z"/>
+    </defs>
+  </svg>
+</body>
+</html>

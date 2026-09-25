@@ -1,0 +1,8 @@
+[Unit]
+Description=Publish the newest Flipper the Ripper APK on flipper-the-ripper.celox.io
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /usr/local/sbin/ftr-latest.py
