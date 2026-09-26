@@ -26,7 +26,7 @@ This is the Markdown version of https://flipper-the-ripper.celox.io/ for agents 
 
 ## Install
 
-1. Open https://flipper-the-ripper.celox.io/download on the phone.
+1. Open https://flipper-the-ripper.celox.io/download on the phone. Chrome asks whether to keep an APK — tap **Download anyway**. If the download stops at 100 %, that question is hidden (typical inside another app's browser, e.g. the GitHub app): open the link in Chrome itself (⋮ → **Open in Chrome**) and download again.
 2. Open the downloaded file. Android asks once whether the browser may install apps — allow it.
 3. In YouTube, Instagram, TikTok, Facebook, X or Dailymotion tap **Share** and pick **Flipper the Ripper**. Updates install over the existing app.
 
@@ -43,7 +43,7 @@ This is the Markdown version of https://flipper-the-ripper.celox.io/ for agents 
 
 **Which phones does it run on?** Android 7.0 or later on 64-bit ARM, which is every Android phone sold since about 2016. Version 1.8.3 is the last release for 32-bit devices.
 
-**How do I update?** Install the newer APK over the existing app; your downloads and settings stay. The app shows a notice on its Home screen when a new release is out, and every release is signed with the same key.
+**How do I update?** Install the newer APK over the existing app; your downloads and settings stay. The app sends a notification when a new release is out, and every release is signed with the same key.
 
 **Which sites can it download from?** YouTube, Instagram, TikTok, Facebook, X and Dailymotion — publicly accessible videos only. It does not bypass DRM, paywalls or logins you do not have.
 

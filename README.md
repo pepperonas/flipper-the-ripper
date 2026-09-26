@@ -96,7 +96,12 @@
 
 **Website:** [flipper-the-ripper.celox.io](https://flipper-the-ripper.celox.io) — always offers the newest APK; <https://flipper-the-ripper.celox.io/download> is a stable direct link to it. The site lives in [`website/`](website/) (how it stays current, the agent interface — `llms.txt`, Markdown via `Accept: text/markdown`, `latest.json` — and how to deploy: [website/README.md](website/README.md)).
 
-Grab **`flipper-the-ripper-<version>.apk`** from the [**Releases**](https://github.com/pepperonas/flipper-the-ripper/releases/latest) page and sideload it. There is one file per release — 64-bit ARM, which is every Android phone sold since about 2016 — so there is nothing to pick. Install it over the existing app to update; every release since 1.0.0 is signed with the same key, and the Home screen tells you when a newer release exists.
+Grab **`flipper-the-ripper-<version>.apk`** from the [**Releases**](https://github.com/pepperonas/flipper-the-ripper/releases/latest) page and sideload it. There is one file per release — 64-bit ARM, which is every Android phone sold since about 2016 — so there is nothing to pick. Install it over the existing app to update; every release since 1.0.0 is signed with the same key, and the app notifies you when a newer release exists.
+
+> **Download stuck at 100 %?** Chrome holds every APK back until you confirm *Download anyway* — the
+> file is complete, but stays a hidden `.pending-…` file until then. Inside another app's browser (the
+> GitHub app, Gmail, messengers open links in a Chrome Custom Tab) that question can be hidden, and the
+> download hangs at 100 %. Open the link in Chrome itself (⋮ → *Open in Chrome*) and download again.
 
 Want to check what you downloaded? See [Releases & verification](#-releases--verification).
 
@@ -351,6 +356,7 @@ refused as a downgrade. Versioning follows [Semantic Versioning](https://semver.
 |---------|-----|
 | **"App not installed"** when sideloading | Three causes, in order of likelihood. **(1)** The file is an older release, or a 32-bit build from before 1.9.0, and the installed app has a higher version code — Android refuses downgrades; install the latest release from the Releases page. **(2)** A 32-bit-only phone: releases since 1.9.0 are 64-bit only, stay on 1.8.3. **(3)** The APK was signed with a different key than the installed copy — it did not come from this project's release workflow; verify it (see [Releases & verification](#-releases--verification)) and uninstall the foreign copy first if you trust the new one. |
 | "The download engine is still initialising" | First launch unpacks the native payload; wait a few seconds and retry. |
+| APK download stuck at 100 % | Chrome is waiting for *Download anyway*, and the question is hidden — usually because the link was opened inside another app (GitHub app, Gmail, a messenger). Open it in Chrome itself (⋮ → *Open in Chrome*) and download again. |
 | Downloads don't start in the background | Allow notifications and disable battery optimisation for the app. |
 | Repeated failures on one platform | **Settings → Update yt-dlp**. |
 | Nothing saved to the gallery | Check storage; on Android 7–9 grant the storage permission when prompted. |

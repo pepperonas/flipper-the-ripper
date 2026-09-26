@@ -19,7 +19,7 @@ Everything below is also available without JavaScript: the page's HTML carries t
 
 ## Install
 
-1. Open [the download link](https://flipper-the-ripper.celox.io/download) on the phone.
+1. Open [the download link](https://flipper-the-ripper.celox.io/download) on the phone. Chrome asks whether to keep an APK — tap "Download anyway". If it stops at 100 %, that question is hidden (typical inside another app's browser, e.g. the GitHub app): open the link in Chrome itself and download again.
 2. Open the downloaded file; allow the browser to install apps when Android asks (once).
 3. In any supported app tap Share and pick Flipper the Ripper. Updates install over the existing app; the app announces new releases itself.
 
