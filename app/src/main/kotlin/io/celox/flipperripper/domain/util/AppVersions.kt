@@ -33,6 +33,14 @@ object AppVersions {
                 (dismissed == null || isNewer(dismissed, update.version))
         }
 
+    /**
+     * Whether a release notification should be posted for [known]: notifications are on, it is newer
+     * than the installed build, and newer than the last release a notification was posted for — one
+     * notification per release, never the same one twice.
+     */
+    fun shouldNotify(installed: String, known: AppUpdate?, notified: String?, enabled: Boolean): Boolean =
+        enabled && visibleUpdate(installed, known, notified) != null
+
     private fun parts(version: String): List<Int> =
         version
             .trim()

@@ -17,6 +17,8 @@ data class UserPreferences(
     val defaultQuality: QualityChoice = QualityChoice.BEST,
     /** Offer to download a URL detected on the clipboard at app start. */
     val clipboardDetection: Boolean = true,
+    /** Post a notification when a newer app release is published (checked in the background). */
+    val updateNotifications: Boolean = true,
 )
 
 enum class ThemeMode { SYSTEM, LIGHT, DARK }

@@ -6,7 +6,13 @@ import io.celox.flipperripper.domain.model.ThemeMode
 import io.celox.flipperripper.domain.model.UserPreferences
 import kotlinx.coroutines.flow.Flow
 
-/** Persists and observes user preferences. */
+/**
+ * Persists and observes user preferences.
+ *
+ * One setter per preference by design — bundling them to satisfy a function count would only make
+ * every caller pass values it does not change.
+ */
+@Suppress("TooManyFunctions")
 interface SettingsRepository {
     val preferences: Flow<UserPreferences>
 
@@ -19,6 +25,8 @@ interface SettingsRepository {
     suspend fun setDefaultQuality(quality: QualityChoice)
 
     suspend fun setClipboardDetection(enabled: Boolean)
+
+    suspend fun setUpdateNotifications(enabled: Boolean)
 
     /** Epoch millis of the last successful yt-dlp engine update (0 if never). */
     val lastEngineUpdateMs: Flow<Long>
@@ -39,4 +47,9 @@ interface SettingsRepository {
     val dismissedUpdateVersion: Flow<String?>
 
     suspend fun setDismissedUpdateVersion(version: String)
+
+    /** Version tag a release notification was already posted for — one notification per release. */
+    val notifiedUpdateVersion: Flow<String?>
+
+    suspend fun setNotifiedUpdateVersion(version: String)
 }

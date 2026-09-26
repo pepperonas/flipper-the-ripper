@@ -160,6 +160,17 @@ class FakeSettingsRepository(initial: UserPreferences = UserPreferences()) : Set
         state.value = state.value.copy(clipboardDetection = enabled)
     }
 
+    override suspend fun setUpdateNotifications(enabled: Boolean) {
+        state.value = state.value.copy(updateNotifications = enabled)
+    }
+
+    val notifiedVersion = MutableStateFlow<String?>(null)
+    override val notifiedUpdateVersion: Flow<String?> = notifiedVersion
+
+    override suspend fun setNotifiedUpdateVersion(version: String) {
+        notifiedVersion.value = version
+    }
+
     val lastUpdate = MutableStateFlow(0L)
     override val lastEngineUpdateMs: Flow<Long> = lastUpdate
 

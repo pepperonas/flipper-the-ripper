@@ -66,4 +66,15 @@ class AppVersionsTest {
         val newer = AppUpdate("v1.5.0", "https://example.com")
         assertThat(AppVersions.visibleUpdate("1.3.1", newer, dismissed = "v1.4.0")).isEqualTo(newer)
     }
+
+    @Test
+    fun `a newer release is notified once, and only while notifications are on`() {
+        val v = io.celox.flipperripper.domain.model.AppUpdate("v1.13.0", "https://x")
+        assertThat(AppVersions.shouldNotify("1.12.0", v, notified = null, enabled = true)).isTrue()
+        assertThat(AppVersions.shouldNotify("1.12.0", v, notified = "v1.13.0", enabled = true)).isFalse()
+        assertThat(AppVersions.shouldNotify("1.12.0", v, notified = "v1.12.1", enabled = true)).isTrue()
+        assertThat(AppVersions.shouldNotify("1.12.0", v, notified = null, enabled = false)).isFalse()
+        assertThat(AppVersions.shouldNotify("1.13.0", v, notified = null, enabled = true)).isFalse()
+        assertThat(AppVersions.shouldNotify("1.12.0", null, notified = null, enabled = true)).isFalse()
+    }
 }

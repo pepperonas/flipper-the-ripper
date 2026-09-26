@@ -158,6 +158,12 @@
     <string name="notif_queue_position">%1$s · %2$d von %3$d</string>
     <string name="notif_completed">Download abgeschlossen</string>
     <string name="notif_failed">Download fehlgeschlagen</string>
+    <string name="channel_app_updates">App-Updates</string>
+    <string name="notif_update_title">Flipper the Ripper %1$s ist verfügbar</string>
+    <string name="notif_update_text">Tippen, um das Update zu laden. Es wird über die bestehende App installiert; Downloads und Einstellungen bleiben erhalten.</string>
+    <string name="notif_update_whats_new">Neuerungen</string>
+    <string name="settings_update_notifications">Über neue Versionen benachrichtigen</string>
+    <string name="settings_update_notifications_desc">Prüft zweimal täglich im Hintergrund und meldet sich einmal pro Version</string>
 
     <!-- Generic -->
     <!-- Teilen-Dialog -->

@@ -33,6 +33,8 @@ constructor(@ApplicationContext private val context: Context) : SettingsReposito
         val DEFAULT_MODE = stringPreferencesKey("default_mode")
         val DEFAULT_QUALITY = stringPreferencesKey("default_quality")
         val CLIPBOARD = booleanPreferencesKey("clipboard_detection")
+        val UPDATE_NOTIFICATIONS = booleanPreferencesKey("update_notifications")
+        val NOTIFIED_UPDATE_VERSION = stringPreferencesKey("notified_update_version")
         val LAST_ENGINE_UPDATE = longPreferencesKey("last_engine_update_ms")
         val LAST_APP_UPDATE_CHECK = longPreferencesKey("last_app_update_check_ms")
         val KNOWN_UPDATE_VERSION = stringPreferencesKey("known_update_version")
@@ -49,6 +51,7 @@ constructor(@ApplicationContext private val context: Context) : SettingsReposito
                 autoDownloadOnShare = prefs[Keys.AUTO_DOWNLOAD] ?: true,
                 defaultQuality = QualityPreference.read(prefs[Keys.DEFAULT_QUALITY], prefs[Keys.DEFAULT_MODE]),
                 clipboardDetection = prefs[Keys.CLIPBOARD] ?: true,
+                updateNotifications = prefs[Keys.UPDATE_NOTIFICATIONS] ?: true,
             )
         }
 
@@ -70,6 +73,10 @@ constructor(@ApplicationContext private val context: Context) : SettingsReposito
 
     override suspend fun setClipboardDetection(enabled: Boolean) {
         context.dataStore.edit { it[Keys.CLIPBOARD] = enabled }
+    }
+
+    override suspend fun setUpdateNotifications(enabled: Boolean) {
+        context.dataStore.edit { it[Keys.UPDATE_NOTIFICATIONS] = enabled }
     }
 
     override val lastEngineUpdateMs: Flow<Long> =
@@ -105,5 +112,12 @@ constructor(@ApplicationContext private val context: Context) : SettingsReposito
 
     override suspend fun setDismissedUpdateVersion(version: String) {
         context.dataStore.edit { it[Keys.DISMISSED_UPDATE_VERSION] = version }
+    }
+
+    override val notifiedUpdateVersion: Flow<String?> =
+        context.dataStore.data.map { it[Keys.NOTIFIED_UPDATE_VERSION] }
+
+    override suspend fun setNotifiedUpdateVersion(version: String) {
+        context.dataStore.edit { it[Keys.NOTIFIED_UPDATE_VERSION] = version }
     }
 }

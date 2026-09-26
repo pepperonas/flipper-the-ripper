@@ -1,6 +1,7 @@
 package io.celox.flipperripper.data.update
 
 import android.os.Build
+import io.celox.flipperripper.BuildConfig
 import io.celox.flipperripper.data.engine.YtDlpEngine
 import io.celox.flipperripper.di.ApplicationScope
 import io.celox.flipperripper.domain.model.EngineResult
@@ -21,8 +22,9 @@ import javax.inject.Singleton
  *     YouTube in particular breaks old extractors within months (the shipped 2024-09 yt-dlp ended
  *     every YouTube download in "Sign in to confirm you're not a bot"). The runtime update pulls
  *     the current yt-dlp release so extraction keeps working between app releases.
- *  2. **the app itself** — the newest GitHub release is fetched and remembered; the Home screen
- *     shows an update notice when it is newer than the installed build.
+ *  2. **the app itself** — the newest release is fetched and remembered; the Home screen shows an
+ *     update notice and a notification is posted when it is newer than the installed build. The
+ *     same check also runs twice a day in the background ([AppUpdateCheckWorker]).
  *
  * Called from app start AND from every shared-in link ([io.celox.flipperripper.ui.MainActivity]) —
  * a warm process never re-runs `Application.onCreate`, so start-only checks went stale exactly for
@@ -35,7 +37,7 @@ class UpdateCoordinator
 @Inject
 constructor(
     private val engine: YtDlpEngine,
-    private val appUpdateChecker: AppUpdateChecker,
+    private val releaseWatcher: AppReleaseWatcher,
     private val settingsRepository: SettingsRepository,
     @ApplicationScope private val appScope: CoroutineScope,
 ) {
@@ -73,8 +75,8 @@ constructor(
         val last = settingsRepository.lastAppUpdateCheckMs.first()
         val now = System.currentTimeMillis()
         if (now - last < APP_CHECK_INTERVAL_MS) return
-        val release = appUpdateChecker.fetchLatestRelease() ?: return
-        settingsRepository.setKnownAppUpdate(release)
+        // Also posts the release notification, once per release (see AppReleaseWatcher).
+        releaseWatcher.check(BuildConfig.VERSION_NAME) ?: return
         settingsRepository.setLastAppUpdateCheckMs(now)
     }
 

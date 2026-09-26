@@ -1,6 +1,7 @@
 package io.celox.flipperripper.data.update
 
 import com.google.common.truth.Truth.assertThat
+import io.celox.flipperripper.domain.model.AppUpdate
 import org.junit.Test
 
 class AppReleaseParserTest {
@@ -38,5 +39,22 @@ class AppReleaseParserTest {
         assertThat(AppReleaseParser.parse("""{"tag_name":"","html_url":""}""")).isNull()
         assertThat(AppReleaseParser.parse("not json at all")).isNull()
         assertThat(AppReleaseParser.parse("""{"message":"Not Found"}""")).isNull()
+    }
+
+    @Test
+    fun `the product page's latest json gives version and release notes`() {
+        val body = """{ "version": "v1.12.0", "published": "2026-09-26T00:00:00Z",
+            "notes": "https://github.com/pepperonas/flipper-the-ripper/releases/tag/v1.12.0",
+            "assets": [] }"""
+        assertThat(AppReleaseParser.parseSite(body))
+            .isEqualTo(AppUpdate("v1.12.0", "https://github.com/pepperonas/flipper-the-ripper/releases/tag/v1.12.0"))
+    }
+
+    @Test
+    fun `a latest json without an https notes link is not trusted`() {
+        assertThat(AppReleaseParser.parseSite("""{ "version": "v1.12.0", "notes": "http://evil.example" }""")).isNull()
+        assertThat(AppReleaseParser.parseSite("""{ "version": "v1.12.0" }""")).isNull()
+        assertThat(AppReleaseParser.parseSite("""{ "notes": "https://github.com/x" }""")).isNull()
+        assertThat(AppReleaseParser.parseSite("<html>502 Bad Gateway</html>")).isNull()
     }
 }

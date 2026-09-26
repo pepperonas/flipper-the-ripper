@@ -163,6 +163,12 @@ fun SettingsScreen(
                     checked = prefs.clipboardDetection,
                     onCheckedChange = viewModel::setClipboardDetection,
                 )
+                SwitchRow(
+                    title = stringResource(R.string.settings_update_notifications),
+                    subtitle = stringResource(R.string.settings_update_notifications_desc),
+                    checked = prefs.updateNotifications,
+                    onCheckedChange = viewModel::setUpdateNotifications,
+                )
             }
 
             SettingsSection(stringResource(R.string.settings_source_title)) {

@@ -161,6 +161,12 @@
     <string name="notif_queue_position">%1$s · %2$d of %3$d</string>
     <string name="notif_completed">Download complete</string>
     <string name="notif_failed">Download failed</string>
+    <string name="channel_app_updates">App updates</string>
+    <string name="notif_update_title">Flipper the Ripper %1$s is available</string>
+    <string name="notif_update_text">Tap to download the update. It installs over the current app; your downloads and settings stay.</string>
+    <string name="notif_update_whats_new">What\'s new</string>
+    <string name="settings_update_notifications">Notify about new versions</string>
+    <string name="settings_update_notifications_desc">Checks twice a day in the background and notifies once per release</string>
 
     <!-- Generic -->
     <!-- Share sheet: how the app names itself as a direct share target. -->

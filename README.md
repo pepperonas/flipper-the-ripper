@@ -15,7 +15,7 @@
 <h3>👉 <a href="https://flipper-the-ripper.celox.io">flipper-the-ripper.celox.io</a> — features, install guide, FAQ and always the newest APK</h3>
 
 [![version](https://img.shields.io/badge/version-1.12.0-7B4DFF?style=for-the-badge&logo=android&logoColor=white)](https://github.com/pepperonas/flipper-the-ripper/releases/latest)
-[![unit tests](https://img.shields.io/badge/unit%20tests-409-2E9E5B?style=for-the-badge&logo=junit5&logoColor=white)](app/src/test)
+[![unit tests](https://img.shields.io/badge/unit%20tests-419-2E9E5B?style=for-the-badge&logo=junit5&logoColor=white)](app/src/test)
 [![lines of code](https://img.shields.io/badge/lines%20of%20code-8.5k-4B6BDF?style=for-the-badge&logo=kotlin&logoColor=white)](app/src/main/kotlin)
 [![test code](https://img.shields.io/badge/test%20code-6.3k-2E9E5B?style=for-the-badge&logo=kotlin&logoColor=white)](app/src/test)
 
@@ -86,8 +86,11 @@
 - **Self-updating extractor** — yt-dlp is refreshed automatically (throttled, on app start *and*
   whenever a link is shared in), because platforms like YouTube break old extractors within months.
   A manual **Update yt-dlp** button remains in Settings.
-- **Update notices** — when a newer release is published on GitHub, the Home screen shows a
-  dismissible card linking straight to it.
+- **Update notifications** — a background check (twice a day, only with a network, also when the app
+  is closed) looks for a new release — first on [the website](https://flipper-the-ripper.celox.io/latest.json),
+  then on GitHub — and posts **one notification per release** on its own *App updates* channel. Tapping
+  it downloads the newest APK; *What's new* opens the release notes. The Home screen additionally shows
+  a dismissible card. Switch the notifications off under *Settings → Behavior*.
 
 ## 📥 Download
 

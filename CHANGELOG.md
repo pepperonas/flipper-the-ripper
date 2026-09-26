@@ -12,6 +12,16 @@ section for the version in `app/build.gradle.kts` exists before anything is tagg
 
 ## [Unreleased]
 
+### Added
+- **A notification when a new version is out.** Until now a new release showed up only as a card on
+  the Home screen — so only for people who opened the app. A background check now runs twice a day
+  (only with a network, also while the app is closed), asks the website's `latest.json` first and
+  GitHub as a fallback (no 60-requests-per-hour limit to run into), and posts one notification per
+  release on its own *App updates* channel. Tapping it downloads the newest APK; *What's new* opens
+  the release notes. A notification that could not be shown (permission not granted yet) is tried
+  again on a later check. It can be switched off in *Settings → Behavior*. Devices that cannot install
+  the releases (32-bit only) are never checked.
+
 ## [1.12.0] - 2026-09-26
 
 An Instagram reel that needs an account now offers the sign-in where it fails — and retries by itself.

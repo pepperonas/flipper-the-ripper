@@ -76,6 +76,9 @@ constructor(
     fun setClipboardDetection(enabled: Boolean) =
         viewModelScope.launch { settingsRepository.setClipboardDetection(enabled) }
 
+    fun setUpdateNotifications(enabled: Boolean) =
+        viewModelScope.launch { settingsRepository.setUpdateNotifications(enabled) }
+
     fun setDefaultQuality(quality: QualityChoice) =
         viewModelScope.launch { settingsRepository.setDefaultQuality(quality) }
 

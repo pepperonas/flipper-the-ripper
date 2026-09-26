@@ -23,4 +23,17 @@ object AppReleaseParser {
             val url = obj["html_url"]?.jsonPrimitive?.content?.takeIf { it.isNotBlank() }
             if (tag == null || url == null) null else AppUpdate(tag, url)
         }.getOrNull()
+
+    /**
+     * Parses the product page's `latest.json` (written from GitHub Releases by the site's timer):
+     * `{ "version": "v1.12.0", "notes": "https://github.com/…/releases/tag/v1.12.0", … }`. Only
+     * published releases ever reach that file, so there are no draft/prerelease flags to check.
+     */
+    fun parseSite(body: String): AppUpdate? =
+        runCatching {
+            val obj = json.parseToJsonElement(body).jsonObject
+            val version = obj["version"]?.jsonPrimitive?.content?.takeIf { it.isNotBlank() }
+            val notes = obj["notes"]?.jsonPrimitive?.content?.takeIf { it.startsWith("https://") }
+            if (version == null || notes == null) null else AppUpdate(version, notes)
+        }.getOrNull()
 }

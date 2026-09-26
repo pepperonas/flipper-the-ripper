@@ -54,6 +54,14 @@ abstract class RepositoryModule {
     abstract fun bindMediaStoreWriter(impl: MediaStoreWriterImpl): MediaStoreWriter
 
     @Binds
+    abstract fun bindAppReleaseSource(impl: io.celox.flipperripper.data.update.AppUpdateChecker):
+        io.celox.flipperripper.domain.repository.AppReleaseSource
+
+    @Binds
+    abstract fun bindUpdateNotifications(impl: io.celox.flipperripper.data.update.UpdateNotifier):
+        io.celox.flipperripper.domain.repository.UpdateNotifications
+
+    @Binds
     abstract fun bindIdGenerator(impl: UuidGenerator): IdGenerator
 
     @Binds

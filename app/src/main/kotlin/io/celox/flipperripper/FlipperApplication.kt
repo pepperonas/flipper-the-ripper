@@ -8,7 +8,9 @@ import coil.ImageLoaderFactory
 import coil.decode.VideoFrameDecoder
 import dagger.hilt.android.HiltAndroidApp
 import io.celox.flipperripper.data.share.ShareTargets
+import io.celox.flipperripper.data.update.AppUpdateCheckWorker
 import io.celox.flipperripper.data.update.UpdateCoordinator
+import io.celox.flipperripper.data.update.UpdateNotifier
 import io.celox.flipperripper.data.work.DownloadNotifier
 import io.celox.flipperripper.data.work.DownloadQueueBootstrap
 import io.celox.flipperripper.ui.ShareLinkHandler
@@ -35,6 +37,8 @@ class FlipperApplication :
 
     @Inject lateinit var updateCoordinator: UpdateCoordinator
 
+    @Inject lateinit var updateNotifier: UpdateNotifier
+
     /**
      * Injected purely so it exists: it is the only consumer of the shared-link bus, and a link that
      * arrives before anything touches it would sit in the channel unread.
@@ -52,6 +56,9 @@ class FlipperApplication :
     override fun onCreate() {
         super.onCreate()
         runCatching { notifier.ensureChannels() }
+        runCatching { updateNotifier.ensureChannel() }
+        // A release notification must also reach people who never open the app (see the worker).
+        runCatching { AppUpdateCheckWorker.schedule(this) }
         // Touch it so Hilt builds it now rather than on first use — see the field's comment.
         shareLinkHandler.hashCode()
         // Retires the pre-1.10 per-download workers and resumes anything a killed process left
