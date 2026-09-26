@@ -1,10 +1,18 @@
 <div align="center">
 
-<img src="docs/banner.png" alt="Flipper the Ripper — Rip it. Keep it." width="100%">
+<a href="https://flipper-the-ripper.celox.io"><img src="docs/banner.png" alt="Flipper the Ripper — Rip it. Keep it. Open the website." width="100%"></a>
 
 # 🎬 Flipper the Ripper
 
 **A modern, open-source Android app to download publicly accessible videos from YouTube, Instagram, TikTok, Facebook, X and Dailymotion.**
+
+<p>
+  <a href="https://flipper-the-ripper.celox.io"><img alt="Website: flipper-the-ripper.celox.io" height="56" src="https://img.shields.io/badge/%F0%9F%8C%90_Website-flipper--the--ripper.celox.io-7B4DFF?style=for-the-badge"></a>
+  &nbsp;
+  <a href="https://flipper-the-ripper.celox.io/download"><img alt="Download the newest APK" height="56" src="https://img.shields.io/badge/%E2%AC%87%EF%B8%8F_Download-newest_APK-2E9E5B?style=for-the-badge&logo=android&logoColor=white"></a>
+</p>
+
+<h3>👉 <a href="https://flipper-the-ripper.celox.io">flipper-the-ripper.celox.io</a> — features, install guide, FAQ and always the newest APK</h3>
 
 [![version](https://img.shields.io/badge/version-1.12.0-7B4DFF?style=for-the-badge&logo=android&logoColor=white)](https://github.com/pepperonas/flipper-the-ripper/releases/latest)
 [![unit tests](https://img.shields.io/badge/unit%20tests-409-2E9E5B?style=for-the-badge&logo=junit5&logoColor=white)](app/src/test)
