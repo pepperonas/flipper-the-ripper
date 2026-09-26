@@ -12,6 +12,10 @@ section for the version in `app/build.gradle.kts` exists before anything is tagg
 
 ## [Unreleased]
 
+## [1.13.0] - 2026-09-26
+
+The app now tells you when a new version is out — also while it is closed.
+
 ### Added
 - **A notification when a new version is out.** Until now a new release showed up only as a card on
   the Home screen — so only for people who opened the app. A background check now runs twice a day

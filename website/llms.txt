@@ -37,6 +37,7 @@ Everything below is also available without JavaScript: the page's HTML carries t
 - Background downloads with one progress notification; files saved to Movies, named after the video title
 - Instagram reels that need an account: the failed download offers a sign-in wizard (on Instagram's own page) and restarts itself once signed in
 - Self-updating yt-dlp extractor
+- Notification when a new version is released (checked twice a day, can be switched off)
 - Languages: English, German, Spanish, Italian, French
 
 ## Scope and limits
