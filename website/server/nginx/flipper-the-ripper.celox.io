@@ -110,6 +110,16 @@ server {
         add_header Cache-Control "no-cache" always;
         add_header X-Content-Type-Options "nosniff" always;
     }
+    # Verified copies of the release APK (ftr-latest.py). Versioned names, so they never change: cache
+    # for good. nginx answers byte ranges with an ETag, so an interrupted phone download resumes.
+    location ^~ /apk/ {
+        location ~ \.sha256$ { default_type text/plain; add_header X-Content-Type-Options "nosniff" always; }
+        types { }
+        default_type application/vnd.android.package-archive;
+        add_header Content-Disposition "attachment" always;
+        add_header Cache-Control "public, max-age=31536000, immutable" always;
+        add_header X-Content-Type-Options "nosniff" always;
+    }
     location = /latest.json {
         add_header Cache-Control "no-cache" always;
         add_header X-Content-Type-Options "nosniff" always;

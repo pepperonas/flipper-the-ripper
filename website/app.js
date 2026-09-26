@@ -132,7 +132,7 @@
   fetch('latest.json', { cache: 'no-cache' })
     .then(function (r) { return r.ok ? r.json() : null; })
     .then(function (d) {
-      if (!d || !/^https:\/\/github\.com\/pepperonas\/flipper-the-ripper\/releases\/download\//.test(d.url || '')) return;
+      if (!d || !/^https:\/\/(flipper-the-ripper\.celox\.io\/apk\/|github\.com\/pepperonas\/flipper-the-ripper\/releases\/download\/)/.test(d.url || '')) return;
       release = d;
       document.getElementById('dl').href = d.url;
       if (d.sha256) document.getElementById('sha').textContent = d.sha256;

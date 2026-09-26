@@ -8,7 +8,7 @@ HOST=root@69.62.121.168
 ROOT=/var/www/flipper-the-ripper.celox.io
 
 # latest.json, changelog.md and ssi/ are written on the server by ftr-latest.py — never delete them from here.
-rsync -avz --delete --exclude latest.json --exclude changelog.md --exclude ssi/ --exclude server/ --exclude deploy.sh --exclude README.md \
+rsync -avz --delete --exclude latest.json --exclude changelog.md --exclude ssi/ --exclude apk/ --exclude server/ --exclude deploy.sh --exclude README.md \
   --exclude .DS_Store ./ "$HOST:$ROOT/"
 ssh "$HOST" "chown -R root:root $ROOT && chmod -R u=rwX,go=rX $ROOT"
 

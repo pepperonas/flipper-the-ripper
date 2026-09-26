@@ -16,7 +16,8 @@ Store does not allow video downloaders); it is distributed as one signed APK per
 ```json
 { "version": "v1.11.0", "published": "2026-09-25T…Z", "notes": "https://github.com/…/releases/tag/v1.11.0",
   "assets": [ { "target": "android", "name": "flipper-the-ripper-v1.11.0.apk",
-                "url": "https://github.com/…", "size": 56270809, "sha256": "…" } ] }
+                "url": "https://flipper-the-ripper.celox.io/apk/flipper-the-ripper-v1.11.0.apk",
+                "github_url": "https://github.com/…", "size": 56270809, "sha256": "…" } ] }
 ```
 
 The file is refreshed from GitHub Releases every 15 minutes. On the page itself, browsers that support
@@ -24,7 +25,7 @@ WebMCP expose the same data as the tools `get_latest_release`, `get_download_url
 
 ## 2. Download
 
-- Stable link, always the newest APK: <https://flipper-the-ripper.celox.io/download> (302 to the release asset).
+- Stable link, always the newest APK: <https://flipper-the-ripper.celox.io/download> (302 to a verified copy of the release APK on this site; interrupted downloads resume).
 - Requirements: Android 7.0 or later, 64-bit ARM (every Android phone since about 2016). One file, no choice.
 
 ## 3. Verify

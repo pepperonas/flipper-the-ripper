@@ -51,22 +51,30 @@ when its content changed:
 
 | Output | Used by |
 |--------|---------|
-| `latest.json` — `version`, `name`, `url`, `size` (bytes), `sha256` (from the API's `digest`), `published`, `notes` | The page's JavaScript (button link, localised meta line, SHA-256 in *Verify*) and agents |
+| `apk/<name>.apk` (+ `.sha256`) — a copy of the release APK, published only after size and SHA-256 match the release | `/download` and the download button; the current and the previous copy are kept, older ones deleted |
+| `latest.json` — `version`, `name`, `url` (the copy on this site), `github_url`, `size` (bytes), `sha256` (from the API's `digest`), `published`, `notes`, and the same as `assets[]` | The page's JavaScript (button link, localised meta line, SHA-256 in *Verify*) and agents |
 | `ssi/version.txt`, `size.txt`, `date.txt`, `sha.txt`, `meta.html` | nginx SSI in `index.html` (meta line, SHA-256, JSON-LD `softwareVersion`/`fileSize`/`dateModified`) and `index.md` |
 | `changelog.md` — `CHANGELOG.md` from `main` via `raw.githubusercontent.com` | The changelog dialog and agents |
-| `/etc/nginx/ftr-download.conf` — `location = /download { return 302 <asset URL>; }` | The download button in the HTML and every link that should survive releases |
+| `/etc/nginx/ftr-download.conf` — `location = /download { return 302 /apk/<name>.apk; }` (the GitHub asset URL while no verified copy exists) | The download button in the HTML and every link that should survive releases |
 
 A failed GitHub call, a release without exactly one APK or a changelog that does not start with
 `# Changelog` changes **nothing** — the last good state stays online. nginx is reloaded only when the
 redirect changed, only after `nginx -t` passed (a failing test restores the previous include), and
 **never while certbot is running**.
 
+**Why the APK is served from here and not from GitHub** (since 2026-09-26): GitHub delivers release
+assets through signed CDN URLs that expire after about an hour. A phone download that is interrupted —
+screen off, Wi-Fi to mobile data, a slow line — resumes with that same URL, fails once it has expired,
+and the file stays incomplete. The copy here has a stable URL, byte ranges and an ETag (nginx), so a
+resume always works. If the copy cannot be made or does not verify, `/download` keeps pointing at
+GitHub, and the log line says `apk=github`.
+
 So after a release nothing needs doing here. To make the site show it at once instead of within
 15 minutes:
 
 ```bash
 ssh root@69.62.121.168 'systemctl start ftr-latest.service; journalctl -u ftr-latest -n 3 -o cat'
-# ftr-latest: v1.11.0 json=new ssi=new changelog=new nginx=reloaded
+# ftr-latest: v1.13.0 json=new apk=local ssi=new changelog=new nginx=reloaded
 ```
 
 Give nginx a few seconds after the reload before checking `/download` — right after it, one request
@@ -78,7 +86,7 @@ Everything a person sees is available without running JavaScript:
 
 | What | Where | Notes |
 |------|-------|-------|
-| Newest APK | `https://flipper-the-ripper.celox.io/download` | 302 to the current GitHub release asset. The download button's `href` in the HTML is this URL; JavaScript only swaps in the direct asset URL. |
+| Newest APK | `https://flipper-the-ripper.celox.io/download` | 302 to `/apk/<name>.apk`, a verified copy served from this site (resumable). The download button's `href` in the HTML is this URL; JavaScript only swaps in the direct file URL. |
 | Release facts | HTML (meta line, *Verify*), JSON-LD, `index.md` | Filled in by SSI at serve time — version, size, date, SHA-256. |
 | Release as JSON | `/latest.json` | Fields as above. `Cache-Control: no-cache`. |
 | Page as Markdown | `/index.md`, or `/` with `Accept: text/markdown` | Content negotiation; responses carry `Vary: Accept`. |

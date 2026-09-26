@@ -8,17 +8,28 @@ Runs on the VPS from ftr-latest.timer. Writes two files, both only when somethin
   <webroot>/ssi/*            version, size, date, SHA-256 and the meta line, pulled into index.html and
                              index.md by nginx SSI — so the facts are in the HTML itself, for agents and
                              for anyone without JavaScript
+  <webroot>/apk/<name>.apk   a verified copy of the release APK, served by nginx from this origin
   /etc/nginx/ftr-download.conf  `location = /download` -> 302 to the newest APK, so
                                https://flipper-the-ripper.celox.io/download is a stable link
 
+Why a copy instead of a redirect to GitHub: GitHub hands out release assets through signed CDN URLs
+that expire (about an hour). A phone download that gets interrupted - screen off, Wi-Fi to mobile data,
+a slow line - resumes with the same URL, and once it has expired the resume fails and the file stays
+incomplete. Our copy has a stable URL, byte ranges and an ETag, so a resume always works. The copy is
+only published after its size and SHA-256 match what GitHub reports; if that fails, /download keeps
+pointing at GitHub.
+
 A failed GitHub call changes nothing: the last good state stays in place.
 """
-import datetime, html, json, os, re, subprocess, sys, tempfile, urllib.request
+import datetime, glob, hashlib, html, json, os, re, subprocess, sys, tempfile, urllib.request
 
 REPO = "pepperonas/flipper-the-ripper"
 WEBROOT = os.environ.get("FTR_WEBROOT", "/var/www/flipper-the-ripper.celox.io")
 NGINX_INC = os.environ.get("FTR_NGINX_INC", "/etc/nginx/ftr-download.conf")
 ASSET = re.compile(r"^flipper-the-ripper-v[0-9][0-9A-Za-z.\-]*\.apk$")
+SITE = "https://flipper-the-ripper.celox.io"
+APK_DIR = os.path.join(WEBROOT, "apk")
+KEEP_APKS = 2  # the current one and the one before, so a download running across a release finishes
 URL = re.compile(r"^https://github\.com/pepperonas/flipper-the-ripper/releases/download/[^\s;\"'{}]+\.apk$")
 
 
@@ -61,6 +72,51 @@ def fetch_changelog():
     if len(body) > CHANGELOG_MAX or not text.startswith("# Changelog") or "\n## [" not in text:
         raise ValueError("unexpected CHANGELOG.md content")
     return text
+
+
+def sha256_of(path):
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def mirror(d):
+    """Keep a verified copy of the release APK in APK_DIR. Returns the served path or None."""
+    if not re.fullmatch(r"[0-9a-f]{64}", d["sha256"]):
+        raise ValueError("release has no SHA-256 digest, cannot verify a copy")
+    os.makedirs(APK_DIR, exist_ok=True)
+    target = os.path.join(APK_DIR, d["name"])
+    side = target + ".sha256"
+    # Cheap check on every run; the full hash only when the file is new or its sidecar disagrees.
+    if os.path.exists(target) and os.path.getsize(target) == d["size"] and same(side, d["sha256"] + "\n"):
+        return target
+    fd, tmp = tempfile.mkstemp(dir=APK_DIR, prefix=".ftr-")
+    try:
+        h = hashlib.sha256()
+        n = 0
+        req = urllib.request.Request(d["github_url"], headers={"User-Agent": "ftr-latest"})
+        with os.fdopen(fd, "wb") as out, urllib.request.urlopen(req, timeout=60) as r:
+            for chunk in iter(lambda: r.read(1 << 20), b""):
+                out.write(chunk)
+                h.update(chunk)
+                n += len(chunk)
+        if n != d["size"] or h.hexdigest() != d["sha256"]:
+            raise ValueError(f"copy does not match the release (size {n}, sha256 {h.hexdigest()})")
+        os.chmod(tmp, 0o644)
+        os.replace(tmp, target)
+    finally:
+        if os.path.exists(tmp):
+            os.remove(tmp)
+    write_if_changed(side, d["sha256"] + "\n")
+    # Drop old copies, newest first by modification time.
+    apks = sorted(glob.glob(os.path.join(APK_DIR, "*.apk")), key=os.path.getmtime, reverse=True)
+    for old in [a for a in apks if a != target][KEEP_APKS - 1:]:
+        os.remove(old)
+        if os.path.exists(old + ".sha256"):
+            os.remove(old + ".sha256")
+    return target
 
 
 def ssi_fragments(d):
@@ -110,6 +166,16 @@ def main():
     except Exception as e:  # network, rate limit, malformed release: keep the last good state
         print(f"ftr-latest: keeping previous state ({e})", file=sys.stderr)
         return 1
+    d["github_url"] = d["url"]
+    try:
+        mirrored = mirror(d) is not None
+    except Exception as e:  # GitHub stays the download source until a verified copy exists
+        print(f"ftr-latest: no local copy, /download points at GitHub ({e})", file=sys.stderr)
+        mirrored = False
+    if mirrored:
+        d["url"] = f"{SITE}/apk/{d['name']}"
+    d["assets"] = [{"target": "android", "name": d["name"], "url": d["url"], "size": d["size"],
+                    "sha256": d["sha256"], "github_url": d["github_url"]}]
     changed_json = write_if_changed(os.path.join(WEBROOT, "latest.json"), json.dumps(d, indent=2) + "\n")
     ssi_dir = os.path.join(WEBROOT, "ssi")
     os.makedirs(ssi_dir, exist_ok=True)
@@ -123,7 +189,7 @@ def main():
         changed_log = False
     conf = (
         "# Written by ftr-latest.py - do not edit.\n"
-        f"location = /download {{\n    add_header Cache-Control \"no-store\" always;\n    return 302 {d['url']};\n}}\n"
+        f"location = /download {{\n    add_header Cache-Control \"no-store\" always;\n    return 302 {('/apk/' + d['name']) if mirrored else d['url']};\n}}\n"
     )
     changed_conf = False
     if not same(NGINX_INC, conf):
@@ -146,7 +212,7 @@ def main():
         changed_conf = True
     print(
         f"ftr-latest: {d['version']} json={'new' if changed_json else 'same'} "
-        f"ssi={'new' if changed_ssi else 'same'} changelog={'new' if changed_log else 'same'} "
+        f"apk={'local' if mirrored else 'github'} ssi={'new' if changed_ssi else 'same'} changelog={'new' if changed_log else 'same'} "
         f"nginx={'reloaded' if changed_conf else 'same'}"
     )
     return 0
