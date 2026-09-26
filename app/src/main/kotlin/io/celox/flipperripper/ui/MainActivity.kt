@@ -14,8 +14,11 @@ import androidx.compose.runtime.getValue
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dagger.hilt.android.AndroidEntryPoint
+import io.celox.flipperripper.BuildConfig
 import io.celox.flipperripper.data.share.SharedText
+import io.celox.flipperripper.data.update.AppUpdateInstaller
 import io.celox.flipperripper.data.update.UpdateCoordinator
+import io.celox.flipperripper.data.update.UpdateNotifier
 import io.celox.flipperripper.domain.model.UserPreferences
 import io.celox.flipperripper.domain.repository.SettingsRepository
 import io.celox.flipperripper.ui.theme.FlipperTheme
@@ -31,6 +34,8 @@ class MainActivity : ComponentActivity() {
     @Inject lateinit var settingsRepository: SettingsRepository
 
     @Inject lateinit var updateCoordinator: UpdateCoordinator
+
+    @Inject lateinit var updateInstaller: AppUpdateInstaller
 
     private val notificationPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { /* best-effort */ }
@@ -66,8 +71,13 @@ class MainActivity : ComponentActivity() {
         handleIntent(intent)
     }
 
-    /** Forward a shared text link to the Home ViewModel via the bus. */
+    /** Forward a shared text link to the Home ViewModel via the bus; start an update from its notification. */
     private fun handleIntent(intent: Intent?) {
+        if (intent?.action == UpdateNotifier.ACTION_INSTALL_UPDATE) {
+            // The Home screen is the start destination; its update card shows the progress.
+            updateInstaller.start(BuildConfig.VERSION_NAME)
+            return
+        }
         if (intent == null || !SharedText.isShare(intent.action, intent.type)) return
         intent.getStringExtra(Intent.EXTRA_TEXT)?.let { incomingLinkBus.post(it) }
         // A link is about to hit the extractor — the freshest moment to make sure yt-dlp and the app

@@ -29,8 +29,20 @@
     <string name="home_dismiss">Schließen</string>
     <string name="home_engine_initializing">Download-Engine wird vorbereitet…</string>
     <string name="home_update_available">Update %1$s ist verfügbar</string>
-    <string name="home_update_body">Auf GitHub liegt eine neuere Version — mit den aktuellsten Anpassungen an die Plattformen.</string>
-    <string name="home_update_get">Update holen</string>
+    <string name="home_update_body">Eine neuere Version von Flipper the Ripper ist da, mit den aktuellsten Anpassungen an die Plattformen. Sie wird über diese App installiert; Downloads und Einstellungen bleiben erhalten.</string>
+    <string name="home_update_browser">Im Browser laden</string>
+    <string name="home_update_retry">Nochmal versuchen</string>
+    <string name="home_update_failed_no_release">Gerade ist kein installierbares Release zu finden.</string>
+    <string name="home_update_failed_install">Android hat das Update nicht installiert.</string>
+    <string name="home_update_failed_checksum">Die geladene Datei passte nicht zum Release und wurde gelöscht. Nochmal versuchen.</string>
+    <string name="home_update_failed_network">Der Download ist abgebrochen. Nochmal versuchen; er setzt dort fort, wo er aufgehört hat.</string>
+    <string name="home_update_allow">Erlauben</string>
+    <string name="home_update_permission">Android fragt einmal: Flipper the Ripper erlauben, Apps zu installieren. Einschalten, zurückkommen, und das Update läuft weiter.</string>
+    <string name="home_update_installing">Wird installiert — bitte im Android-Fenster bestätigen.</string>
+    <string name="home_update_verifying">Datei wird geprüft…</string>
+    <string name="home_update_downloading_percent">Update wird geladen… %1$d %%</string>
+    <string name="home_update_downloading">Update wird geladen…</string>
+    <string name="home_update_install">Update installieren</string>
     <string name="home_unsupported">Dieser Link gehört zu keiner unterstützten Plattform.</string>
 
     <!-- History -->
@@ -160,8 +172,10 @@
     <string name="notif_failed">Download fehlgeschlagen</string>
     <string name="channel_app_updates">App-Updates</string>
     <string name="notif_update_title">Flipper the Ripper %1$s ist verfügbar</string>
-    <string name="notif_update_text">Tippen, um das Update zu laden. Es wird über die bestehende App installiert; Downloads und Einstellungen bleiben erhalten.</string>
+    <string name="notif_update_text">Tippen, um das Update zu installieren. Downloads und Einstellungen bleiben erhalten.</string>
     <string name="notif_update_whats_new">Neuerungen</string>
+    <string name="notif_updated_title">Auf %1$s aktualisiert</string>
+    <string name="notif_updated_text">Tippen, um Flipper the Ripper zu öffnen.</string>
     <string name="settings_update_notifications">Über neue Versionen benachrichtigen</string>
     <string name="settings_update_notifications_desc">Prüft zweimal täglich im Hintergrund und meldet sich einmal pro Version</string>
 

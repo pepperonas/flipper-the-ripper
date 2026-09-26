@@ -83,6 +83,26 @@ class HomeViewModelTest {
             shareLinkHandler = shareHandler(),
             appNavigator = navigator,
             instagramSession = instagramSession,
+            updateInstaller =
+            io.celox.flipperripper.data.update.AppUpdateInstaller(
+                source = object : io.celox.flipperripper.domain.repository.InstallableApkSource {
+                    override suspend fun latest() = null
+
+                    override suspend fun download(
+                        apk: io.celox.flipperripper.domain.model.InstallableApk,
+                        target: java.io.File,
+                        onProgress: (Long, Long) -> Unit,
+                    ) = Unit
+                },
+                gateway = object : io.celox.flipperripper.domain.repository.PackageInstallGateway {
+                    override fun canInstallPackages() = true
+
+                    override fun install(apk: java.io.File) = Unit
+                },
+                dir = java.io.File(System.getProperty("java.io.tmpdir"), "flipper-update-test"),
+                scope = CoroutineScope(StandardTestDispatcher(testScheduler)).also { handlerScopes += it },
+                ioDispatcher = StandardTestDispatcher(testScheduler),
+            ),
         )
 
     @Test

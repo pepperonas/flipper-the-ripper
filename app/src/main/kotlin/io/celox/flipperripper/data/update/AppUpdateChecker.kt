@@ -48,7 +48,7 @@ constructor(@IoDispatcher private val ioDispatcher: CoroutineDispatcher) : AppRe
         const val RELEASES_LATEST_URL =
             "https://api.github.com/repos/pepperonas/flipper-the-ripper/releases/latest"
 
-        /** Always the newest APK (302 to the current release asset) — what a notification tap opens. */
+        /** Always the newest APK — the browser fallback when the in-app update fails. */
         const val DOWNLOAD_URL = "https://flipper-the-ripper.celox.io/download"
     }
 }

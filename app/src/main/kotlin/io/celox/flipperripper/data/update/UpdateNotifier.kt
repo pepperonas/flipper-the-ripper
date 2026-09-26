@@ -16,13 +16,14 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import io.celox.flipperripper.R
 import io.celox.flipperripper.domain.model.AppUpdate
 import io.celox.flipperripper.domain.repository.UpdateNotifications
+import io.celox.flipperripper.ui.MainActivity
 import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
  * "Flipper the Ripper 1.13.0 is available" — on its own channel, so a user can silence release news
- * without losing download notifications. Tapping it opens the stable download link, which always
- * serves the newest APK; *What's new* opens the release notes.
+ * without losing download notifications. Tapping it opens the app and starts the in-app update
+ * ([AppUpdateInstaller] — no browser involved); *What's new* opens the release notes.
  */
 @Singleton
 class UpdateNotifier
@@ -54,13 +55,23 @@ constructor(@ApplicationContext private val context: Context) : UpdateNotificati
                 .setContentTitle(context.getString(R.string.notif_update_title, version))
                 .setContentText(context.getString(R.string.notif_update_text))
                 .setStyle(NotificationCompat.BigTextStyle().bigText(context.getString(R.string.notif_update_text)))
-                .setContentIntent(viewIntent(AppUpdateChecker.DOWNLOAD_URL, REQUEST_DOWNLOAD))
+                .setContentIntent(installIntent())
                 .addAction(0, context.getString(R.string.notif_update_whats_new), viewIntent(update.url, REQUEST_NOTES))
                 .setAutoCancel(true)
                 .setCategory(NotificationCompat.CATEGORY_RECOMMENDATION)
                 .build()
         return runCatching { manager.notify(NOTIFICATION_ID, notification) }.isSuccess
     }
+
+    private fun installIntent(): PendingIntent =
+        PendingIntent.getActivity(
+            context,
+            REQUEST_INSTALL,
+            Intent(context, MainActivity::class.java)
+                .setAction(ACTION_INSTALL_UPDATE)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP),
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+        )
 
     private fun viewIntent(url: String, requestCode: Int): PendingIntent =
         PendingIntent.getActivity(
@@ -72,8 +83,11 @@ constructor(@ApplicationContext private val context: Context) : UpdateNotificati
 
     companion object {
         const val CHANNEL_ID = "app_updates"
-        private const val NOTIFICATION_ID = 42_001
-        private const val REQUEST_DOWNLOAD = 1
+
+        /** Shared with [PackageReplacedReceiver]: "updated" replaces "available". */
+        const val NOTIFICATION_ID = 42_001
+        const val ACTION_INSTALL_UPDATE = "io.celox.flipperripper.action.INSTALL_UPDATE"
+        private const val REQUEST_INSTALL = 1
         private const val REQUEST_NOTES = 2
     }
 }

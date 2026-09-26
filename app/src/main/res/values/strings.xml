@@ -23,8 +23,20 @@
     <string name="home_dismiss">Dismiss</string>
     <string name="home_engine_initializing">Preparing the download engine…</string>
     <string name="home_update_available">Update %1$s is available</string>
-    <string name="home_update_body">A newer version of Flipper the Ripper is on GitHub — with the latest platform fixes.</string>
-    <string name="home_update_get">Get update</string>
+    <string name="home_update_body">A newer version of Flipper the Ripper is out, with the latest platform fixes. It installs over this app; your downloads and settings stay.</string>
+    <string name="home_update_browser">Download in browser</string>
+    <string name="home_update_retry">Try again</string>
+    <string name="home_update_failed_no_release">No installable release found right now.</string>
+    <string name="home_update_failed_install">Android did not install the update.</string>
+    <string name="home_update_failed_checksum">The downloaded file did not match the release and was deleted. Try again.</string>
+    <string name="home_update_failed_network">The download broke off. Try again; it continues where it stopped.</string>
+    <string name="home_update_allow">Allow</string>
+    <string name="home_update_permission">Android asks once: allow Flipper the Ripper to install apps. Switch it on, come back, and the update continues.</string>
+    <string name="home_update_installing">Installing — confirm on the Android screen.</string>
+    <string name="home_update_verifying">Checking the file…</string>
+    <string name="home_update_downloading_percent">Downloading the update… %1$d %%</string>
+    <string name="home_update_downloading">Downloading the update…</string>
+    <string name="home_update_install">Install update</string>
     <string name="home_unsupported">This link is not from a supported platform.</string>
 
     <!-- History -->
@@ -163,8 +175,10 @@
     <string name="notif_failed">Download failed</string>
     <string name="channel_app_updates">App updates</string>
     <string name="notif_update_title">Flipper the Ripper %1$s is available</string>
-    <string name="notif_update_text">Tap to download the update. It installs over the current app; your downloads and settings stay.</string>
+    <string name="notif_update_text">Tap to install the update. Your downloads and settings stay.</string>
     <string name="notif_update_whats_new">What\'s new</string>
+    <string name="notif_updated_title">Updated to %1$s</string>
+    <string name="notif_updated_text">Tap to open Flipper the Ripper.</string>
     <string name="settings_update_notifications">Notify about new versions</string>
     <string name="settings_update_notifications_desc">Checks twice a day in the background and notifies once per release</string>
 

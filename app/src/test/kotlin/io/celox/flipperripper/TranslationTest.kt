@@ -142,6 +142,15 @@ class TranslationTest {
         }
     }
 
+    @Test
+    fun `no string carries a regex back-reference left over from a bulk edit`() {
+        // A bulk replacement once wrote a literal "\1" into the French update notification instead of
+        // the semicolon it was meant to keep (shipped in 1.13.0). Nothing else would have noticed.
+        (listOf("en" to base) + locales.map { it to translation(it) }).forEach { (locale, xml) ->
+            assertWithMessage(locale).that(Regex("""\\[0-9]""").find(xml)?.value).isNull()
+        }
+    }
+
     private companion object {
         /** Up to this length, an identical string is a shared word rather than a missed translation. */
         const val SHARED_TOKEN_MAX = 12

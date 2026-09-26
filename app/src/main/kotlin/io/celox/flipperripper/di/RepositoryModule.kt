@@ -54,6 +54,14 @@ abstract class RepositoryModule {
     abstract fun bindMediaStoreWriter(impl: MediaStoreWriterImpl): MediaStoreWriter
 
     @Binds
+    abstract fun bindInstallableApkSource(impl: io.celox.flipperripper.data.update.ApkReleaseSource):
+        io.celox.flipperripper.domain.repository.InstallableApkSource
+
+    @Binds
+    abstract fun bindPackageInstallGateway(impl: io.celox.flipperripper.data.update.AndroidPackageInstallGateway):
+        io.celox.flipperripper.domain.repository.PackageInstallGateway
+
+    @Binds
     abstract fun bindAppReleaseSource(impl: io.celox.flipperripper.data.update.AppUpdateChecker):
         io.celox.flipperripper.domain.repository.AppReleaseSource
 

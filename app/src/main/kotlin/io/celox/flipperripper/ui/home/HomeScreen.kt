@@ -34,6 +34,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -42,6 +43,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SplitButtonDefaults
 import androidx.compose.material3.SplitButtonLayout
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -61,9 +63,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.core.content.getSystemService
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import io.celox.flipperripper.R
+import io.celox.flipperripper.data.update.AppUpdateChecker
+import io.celox.flipperripper.domain.model.UpdateFailure
+import io.celox.flipperripper.domain.model.UpdateInstallState
 import io.celox.flipperripper.ui.components.AppMark
 import io.celox.flipperripper.ui.components.ExpressiveLoadingIndicator
 import io.celox.flipperripper.ui.components.PlatformBadge
@@ -79,6 +85,11 @@ import io.celox.flipperripper.ui.util.ObserveAsEvents
 fun HomeScreen(onSignInToInstagram: () -> Unit = {}, viewModel: HomeViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    // Back from Android's "Install unknown apps" screen: the in-app update continues by itself.
+    LifecycleResumeEffect(Unit) {
+        viewModel.onUpdatePermissionMaybeGranted()
+        onPauseOrDispose { }
+    }
     val snackbarHostState = remember { SnackbarHostState() }
     var showOptions by rememberSaveable { mutableStateOf(false) }
 
@@ -135,13 +146,27 @@ fun HomeScreen(onSignInToInstagram: () -> Unit = {}, viewModel: HomeViewModel = 
                 state.updateNotice?.let { update ->
                     Column {
                         UpdateNoticeCard(
-                            version = update.version,
-                            onGet = {
+                            version = update.version.removePrefix("v"),
+                            install = state.updateInstall,
+                            onInstall = { viewModel.installUpdate() },
+                            onAllow = {
+                                // Android 8+: the per-app "Install unknown apps" switch, opened on this app.
+                                runCatching {
+                                    context.startActivity(
+                                        android.content.Intent(
+                                            android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                                            android.net.Uri.parse("package:${context.packageName}"),
+                                        ),
+                                    )
+                                }
+                            },
+                            onBrowser = {
+                                viewModel.dismissUpdateFailure()
                                 runCatching {
                                     context.startActivity(
                                         android.content.Intent(
                                             android.content.Intent.ACTION_VIEW,
-                                            android.net.Uri.parse(update.url),
+                                            android.net.Uri.parse(AppUpdateChecker.DOWNLOAD_URL),
                                         ),
                                     )
                                 }
@@ -367,8 +392,16 @@ private fun EngineBanner() {
 }
 
 @Composable
-private fun UpdateNoticeCard(version: String, onGet: () -> Unit, onDismiss: () -> Unit) {
-    val getInteraction = remember { MutableInteractionSource() }
+private fun UpdateNoticeCard(
+    version: String,
+    install: UpdateInstallState,
+    onInstall: () -> Unit,
+    onAllow: () -> Unit,
+    onBrowser: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val primaryInteraction = remember { MutableInteractionSource() }
+    val onColor = MaterialTheme.colorScheme.onPrimaryContainer
     Card(
         shape = MaterialTheme.shapes.extraLarge,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
@@ -378,23 +411,63 @@ private fun UpdateNoticeCard(version: String, onGet: () -> Unit, onDismiss: () -
             Text(
                 stringResource(R.string.home_update_available, version),
                 style = MaterialTheme.typography.titleMediumEmphasized,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                color = onColor,
             )
             Spacer(Modifier.height(Spacing.xs))
-            Text(
-                stringResource(R.string.home_update_body),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
-            )
-            Spacer(Modifier.height(Spacing.md))
-            Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-                Button(
-                    onClick = onGet,
-                    interactionSource = getInteraction,
-                    modifier = Modifier.springPressed(getInteraction),
-                ) { Text(stringResource(R.string.home_update_get)) }
-                androidx.compose.material3.TextButton(onClick = onDismiss) {
-                    Text(stringResource(R.string.home_dismiss))
+            val body =
+                when (install) {
+                    UpdateInstallState.Idle -> stringResource(R.string.home_update_body)
+                    is UpdateInstallState.Downloading ->
+                        install.fraction?.let { stringResource(R.string.home_update_downloading_percent, (it * 100).toInt()) }
+                            ?: stringResource(R.string.home_update_downloading)
+                    UpdateInstallState.Verifying -> stringResource(R.string.home_update_verifying)
+                    UpdateInstallState.NeedsPermission -> stringResource(R.string.home_update_permission)
+                    UpdateInstallState.Installing -> stringResource(R.string.home_update_installing)
+                    is UpdateInstallState.Failed ->
+                        stringResource(
+                            when (install.reason) {
+                                UpdateFailure.NETWORK -> R.string.home_update_failed_network
+                                UpdateFailure.CHECKSUM -> R.string.home_update_failed_checksum
+                                UpdateFailure.INSTALL -> R.string.home_update_failed_install
+                                UpdateFailure.NO_RELEASE -> R.string.home_update_failed_no_release
+                            },
+                        )
+                }
+            Text(body, style = MaterialTheme.typography.bodySmall, color = onColor)
+            when (install) {
+                is UpdateInstallState.Downloading -> {
+                    Spacer(Modifier.height(Spacing.md))
+                    val fraction = install.fraction
+                    if (fraction != null) {
+                        LinearWavyProgressIndicator(progress = { fraction.coerceIn(0f, 1f) }, modifier = Modifier.fillMaxWidth())
+                    } else {
+                        LinearWavyProgressIndicator(modifier = Modifier.fillMaxWidth())
+                    }
+                }
+                UpdateInstallState.Verifying, UpdateInstallState.Installing -> {
+                    Spacer(Modifier.height(Spacing.md))
+                    LinearWavyProgressIndicator(modifier = Modifier.fillMaxWidth())
+                }
+                else -> {
+                    Spacer(Modifier.height(Spacing.md))
+                    Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+                        val (label, action) =
+                            when (install) {
+                                UpdateInstallState.NeedsPermission -> R.string.home_update_allow to onAllow
+                                is UpdateInstallState.Failed -> R.string.home_update_retry to onInstall
+                                else -> R.string.home_update_install to onInstall
+                            }
+                        Button(
+                            onClick = action,
+                            interactionSource = primaryInteraction,
+                            modifier = Modifier.springPressed(primaryInteraction),
+                        ) { Text(stringResource(label)) }
+                        if (install is UpdateInstallState.Failed) {
+                            TextButton(onClick = onBrowser) { Text(stringResource(R.string.home_update_browser)) }
+                        } else {
+                            TextButton(onClick = onDismiss) { Text(stringResource(R.string.home_dismiss)) }
+                        }
+                    }
                 }
             }
         }

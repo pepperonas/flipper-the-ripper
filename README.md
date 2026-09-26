@@ -15,9 +15,9 @@
 <h3>👉 <a href="https://flipper-the-ripper.celox.io">flipper-the-ripper.celox.io</a> — features, install guide, FAQ and always the newest APK</h3>
 
 [![version](https://img.shields.io/badge/version-1.13.0-7B4DFF?style=for-the-badge&logo=android&logoColor=white)](https://github.com/pepperonas/flipper-the-ripper/releases/latest)
-[![unit tests](https://img.shields.io/badge/unit%20tests-419-2E9E5B?style=for-the-badge&logo=junit5&logoColor=white)](app/src/test)
-[![lines of code](https://img.shields.io/badge/lines%20of%20code-8.5k-4B6BDF?style=for-the-badge&logo=kotlin&logoColor=white)](app/src/main/kotlin)
-[![test code](https://img.shields.io/badge/test%20code-6.3k-2E9E5B?style=for-the-badge&logo=kotlin&logoColor=white)](app/src/test)
+[![unit tests](https://img.shields.io/badge/unit%20tests-442-2E9E5B?style=for-the-badge&logo=junit5&logoColor=white)](app/src/test)
+[![lines of code](https://img.shields.io/badge/lines%20of%20code-9.9k-4B6BDF?style=for-the-badge&logo=kotlin&logoColor=white)](app/src/main/kotlin)
+[![test code](https://img.shields.io/badge/test%20code-7.3k-2E9E5B?style=for-the-badge&logo=kotlin&logoColor=white)](app/src/test)
 
 [![CI](https://img.shields.io/github/actions/workflow/status/pepperonas/flipper-the-ripper/ci.yml?branch=main&label=build&logo=github)](https://github.com/pepperonas/flipper-the-ripper/actions/workflows/ci.yml)
 [![Release workflow](https://img.shields.io/github/actions/workflow/status/pepperonas/flipper-the-ripper/release.yml?label=release&logo=githubactions)](https://github.com/pepperonas/flipper-the-ripper/actions/workflows/release.yml)
@@ -88,15 +88,22 @@
   A manual **Update yt-dlp** button remains in Settings.
 - **Update notifications** — a background check (twice a day, only with a network, also when the app
   is closed) looks for a new release — first on [the website](https://flipper-the-ripper.celox.io/latest.json),
-  then on GitHub — and posts **one notification per release** on its own *App updates* channel. Tapping
-  it downloads the newest APK; *What's new* opens the release notes. The Home screen additionally shows
-  a dismissible card. Switch the notifications off under *Settings → Behavior*.
+  then on GitHub — and posts **one notification per release** on its own *App updates* channel; *What's
+  new* opens the release notes. The Home screen additionally shows a card. Switch the notifications off
+  under *Settings → Behavior*.
+- **Updates install from inside the app** — tapping the notification or *Install update* on the card
+  downloads the newest APK in the app (resumable), checks it against the published SHA-256 and hands it
+  to Android's installer; no browser involved. Android asks once to allow *Install unknown apps* for
+  Flipper the Ripper and shows its own confirmation. Afterwards a notification offers to reopen the
+  app (Android ends it while replacing it). If anything fails, the card offers the download in the
+  browser instead. Only the product page's own copy and this repository's Releases are accepted, and
+  Android refuses any APK not signed with the same key.
 
 ## 📥 Download
 
 **Website:** [flipper-the-ripper.celox.io](https://flipper-the-ripper.celox.io) — always offers the newest APK; <https://flipper-the-ripper.celox.io/download> is a stable direct link to it. The site lives in [`website/`](website/) (how it stays current, the agent interface — `llms.txt`, Markdown via `Accept: text/markdown`, `latest.json` — and how to deploy: [website/README.md](website/README.md)).
 
-Grab **`flipper-the-ripper-<version>.apk`** from the [**Releases**](https://github.com/pepperonas/flipper-the-ripper/releases/latest) page and sideload it. There is one file per release — 64-bit ARM, which is every Android phone sold since about 2016 — so there is nothing to pick. Install it over the existing app to update; every release since 1.0.0 is signed with the same key, and the app notifies you when a newer release exists.
+Grab **`flipper-the-ripper-<version>.apk`** from the [**Releases**](https://github.com/pepperonas/flipper-the-ripper/releases/latest) page and sideload it. There is one file per release — 64-bit ARM, which is every Android phone sold since about 2016 — so there is nothing to pick. Install it over the existing app to update; every release since 1.0.0 is signed with the same key, and the app notifies you when a newer release exists — and installs it itself (since 1.14.0), so only the very first install goes through the browser.
 
 > **Download stuck at 100 %?** Chrome holds every APK back until you confirm *Download anyway* — the
 > file is complete, but stays a hidden `.pending-…` file until then. Inside another app's browser (the

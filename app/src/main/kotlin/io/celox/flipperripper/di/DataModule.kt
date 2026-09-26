@@ -36,4 +36,11 @@ object DataModule {
     fun provideWorkManager(
         @ApplicationContext context: Context,
     ): WorkManager = WorkManager.getInstance(context)
+
+    /** Where the in-app update keeps the downloaded APK (cache: Android may clear it, nothing is lost). */
+    @Provides
+    @javax.inject.Named(io.celox.flipperripper.data.update.AppUpdateInstaller.UPDATE_DIR)
+    fun provideUpdateDir(
+        @ApplicationContext context: Context,
+    ): java.io.File = java.io.File(context.cacheDir, "app-update")
 }

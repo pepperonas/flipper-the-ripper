@@ -12,6 +12,21 @@ section for the version in `app/build.gradle.kts` exists before anything is tagg
 
 ## [Unreleased]
 
+### Added
+- **Updates install from inside the app.** *Install update* on the Home card, or a tap on the update
+  notification, downloads the newest APK in the app — from the product page's own copy, GitHub as the
+  fallback — resumes an interrupted download from the last byte, checks the file against the published
+  SHA-256 (a mismatch is deleted, never installed) and hands it to Android's package installer. Android
+  asks once to allow *Install unknown apps* for the app; the update continues by itself when you come
+  back. Browsers held the APK back behind a "file might be harmful" question that could stay hidden in
+  a browser opened from another app, so the download hung at 100 % (seen on a Galaxy S24). If the
+  in-app update fails, the card offers the browser download instead. After the update a notification
+  offers to reopen the app, because Android ends it while replacing it. New permission:
+  `REQUEST_INSTALL_PACKAGES` (see SECURITY.md).
+
+### Fixed
+- The French update notification showed a stray `\1` instead of its semicolon (since 1.13.0).
+
 ## [1.13.0] - 2026-09-26
 
 The app now tells you when a new version is out — also while it is closed.

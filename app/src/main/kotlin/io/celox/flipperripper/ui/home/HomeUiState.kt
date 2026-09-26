@@ -6,6 +6,7 @@ import io.celox.flipperripper.domain.model.AppUpdate
 import io.celox.flipperripper.domain.model.FormatSelection
 import io.celox.flipperripper.domain.model.Platform
 import io.celox.flipperripper.domain.model.QualityChoice
+import io.celox.flipperripper.domain.model.UpdateInstallState
 import io.celox.flipperripper.domain.model.VideoInfo
 import io.celox.flipperripper.domain.util.InstagramSignIn
 import io.celox.flipperripper.domain.util.ParsedUrl
@@ -31,6 +32,8 @@ data class HomeUiState(
     val clipboardSuggestion: ParsedUrl? = null,
     /** A newer app release on GitHub, surfaced as a dismissible notice. */
     val updateNotice: AppUpdate? = null,
+    /** The in-app update, once started (download, verify, install). */
+    val updateInstall: UpdateInstallState = UpdateInstallState.Idle,
 ) {
     val canDownload: Boolean get() = detectedPlatform != null && urlInput.isNotBlank()
 

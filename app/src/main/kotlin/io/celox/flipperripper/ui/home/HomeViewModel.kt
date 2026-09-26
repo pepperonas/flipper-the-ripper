@@ -5,10 +5,12 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.celox.flipperripper.BuildConfig
 import io.celox.flipperripper.data.engine.InstagramSession
+import io.celox.flipperripper.data.update.AppUpdateInstaller
 import io.celox.flipperripper.domain.model.DownloadRequest
 import io.celox.flipperripper.domain.model.EngineResult
 import io.celox.flipperripper.domain.model.FormatSelection
 import io.celox.flipperripper.domain.model.QualityChoice
+import io.celox.flipperripper.domain.model.UpdateInstallState
 import io.celox.flipperripper.domain.repository.SettingsRepository
 import io.celox.flipperripper.domain.usecase.ObserveEngineReadyUseCase
 import io.celox.flipperripper.domain.usecase.PeekClipboardUrlUseCase
@@ -43,6 +45,7 @@ constructor(
     private val shareLinkHandler: ShareLinkHandler,
     private val appNavigator: AppNavigator,
     private val instagramSession: InstagramSession,
+    private val updateInstaller: AppUpdateInstaller,
 ) : ViewModel() {
     private val _state = MutableStateFlow(HomeUiState())
     val state = _state.asStateFlow()
@@ -94,11 +97,28 @@ constructor(
             combine(
                 settingsRepository.knownAppUpdate,
                 settingsRepository.dismissedUpdateVersion,
-            ) { known, dismissed ->
-                AppVersions.visibleUpdate(BuildConfig.VERSION_NAME, known, dismissed)
-            }.collect { notice -> _state.update { it.copy(updateNotice = notice) } }
+                updateInstaller.state,
+            ) { known, dismissed, install ->
+                // A running install (e.g. started from the notification) shows even if the card was
+                // dismissed earlier — otherwise its progress and questions would be invisible.
+                val notice =
+                    if (install is UpdateInstallState.Idle) {
+                        AppVersions.visibleUpdate(BuildConfig.VERSION_NAME, known, dismissed)
+                    } else {
+                        AppVersions.visibleUpdate(BuildConfig.VERSION_NAME, known, null)
+                    }
+                notice to install
+            }.collect { (notice, install) -> _state.update { it.copy(updateNotice = notice, updateInstall = install) } }
         }
     }
+
+    /** Downloads, verifies and installs the newest release inside the app. */
+    fun installUpdate() = updateInstaller.start(BuildConfig.VERSION_NAME)
+
+    /** Back from Android's "Install unknown apps" screen: continue if it was switched on. */
+    fun onUpdatePermissionMaybeGranted() = updateInstaller.onPermissionMaybeGranted()
+
+    fun dismissUpdateFailure() = updateInstaller.dismissFailure()
 
     fun dismissUpdateNotice() {
         val version = _state.value.updateNotice?.version ?: return

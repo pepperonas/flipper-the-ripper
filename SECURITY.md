@@ -67,8 +67,10 @@ Flipper the Ripper is designed with a conservative, privacy-respecting posture:
   - `ACCESS_NETWORK_STATE` — to know whether a connection exists before starting a download.
   - `POST_NOTIFICATIONS` — to show download progress and completion (runtime-requested on Android 13+).
   - `FOREGROUND_SERVICE` + `FOREGROUND_SERVICE_DATA_SYNC` — to keep downloads running while the app is in the background.
+  - `REQUEST_INSTALL_PACKAGES` — for the in-app update: the app installs a newer release of itself. Android asks the user once ("Install unknown apps") and shows its own confirmation before installing.
   - Legacy `WRITE_EXTERNAL_STORAGE` — declared with `android:maxSdkVersion="28"` only, for Android 7–9; modern Android versions use scoped storage through MediaStore.
 - **Bundled yt-dlp engine.** The app ships a bundled yt-dlp engine (via youtubedl-android). It is **updated at runtime** (throttled, at app start and when a link is shared in) to pick up upstream fixes, including security-relevant ones, without a full app update; a manual update button remains in Settings.
+- **In-app updates, verified before install.** The app fetches an update only from its product page (`https://flipper-the-ripper.celox.io/apk/…`) or from this repository's GitHub Releases, checks the file against the published SHA-256 (a mismatch is deleted, never installed), and hands it to Android's package installer — which additionally refuses any APK not signed with the same key as the installed app.
 - **Hidden WebView, fenced in.** The extractor WebView loads exactly one page and refuses any navigation that is not `http(s)` — a platform's deep link into its native app (`snssdk1340://…`, `intent://…`) is never followed, so the extractor cannot be used to launch other apps on the user's behalf.
 
 ## Out of Scope

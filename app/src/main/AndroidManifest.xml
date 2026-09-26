@@ -13,6 +13,9 @@
     <!-- Notifications (runtime-requested on API 33+). -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <!-- In-app update: the app installs a newer release of itself (Android asks the user once). -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+
     <!-- Legacy public-storage write for API 24–28; scoped storage needs no permission on 29+. -->
     <uses-permission
         android:name="android.permission.WRITE_EXTERNAL_STORAGE"
@@ -56,6 +59,20 @@
                 android:name="android.app.shortcuts"
                 android:resource="@xml/shortcuts" />
         </activity>
+
+        <!-- Android's package installer reports the in-app update's outcome here. -->
+        <receiver
+            android:name=".data.update.InstallResultReceiver"
+            android:exported="false" />
+
+        <!-- Runs in the new version after an in-app update and offers to reopen the app. -->
+        <receiver
+            android:name=".data.update.PackageReplacedReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
 
         <!-- Declare the data-sync foreground service type for WorkManager's foreground service. -->
         <service
