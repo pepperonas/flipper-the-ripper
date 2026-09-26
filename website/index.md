@@ -21,7 +21,7 @@ This is the Markdown version of https://flipper-the-ripper.celox.io/ for agents 
 - **Keeps going in the background** — locked screen, minimised app, rotated phone; one notification for the whole batch.
 - **Straight into your gallery** — files land in Movies, named after the video title, visible in Google Photos and every file manager.
 - **Instagram sign-in where it is needed** — a reel only visible to signed-in accounts offers *Sign in to Instagram* on the failed card; a three-step wizard signs in on Instagram's own page and restarts the download by itself.
-- **Stays working** — the bundled yt-dlp updates itself; the app sends a notification when a new release is out (checked twice a day, can be switched off).
+- **Stays working** — the bundled yt-dlp updates itself; the app installs new releases itself — notification, download, SHA-256 check, Android's installer (from 1.14.0).
 - **Five languages** — English, German, Spanish, Italian, French.
 
 ## Install
@@ -43,7 +43,7 @@ This is the Markdown version of https://flipper-the-ripper.celox.io/ for agents 
 
 **Which phones does it run on?** Android 7.0 or later on 64-bit ARM, which is every Android phone sold since about 2016. Version 1.8.3 is the last release for 32-bit devices.
 
-**How do I update?** Install the newer APK over the existing app; your downloads and settings stay. The app sends a notification when a new release is out, and every release is signed with the same key.
+**How do I update?** From 1.14.0 the app installs updates itself: it sends a notification when a new release is out, downloads the APK, checks its SHA-256 and hands it to Android; your downloads and settings stay. Older versions update by installing the newer APK over the existing app. Every release is signed with the same key.
 
 **Which sites can it download from?** YouTube, Instagram, TikTok, Facebook, X and Dailymotion — publicly accessible videos only. It does not bypass DRM, paywalls or logins you do not have.
 

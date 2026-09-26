@@ -45,7 +45,7 @@
             'Saves to Movies, named after the video title',
             'Instagram reels that need an account: a sign-in wizard on the failed download, which then restarts',
             'Self-updating yt-dlp extractor',
-            'Notification when a new version is released (checked twice a day, can be switched off)',
+            'Installs updates itself (from 1.14.0): notification, download, SHA-256 check, Android installer',
             'English, German, Spanish, Italian, French'],
           limits: ['Publicly accessible content and lawful personal use only; no DRM/paywall/login bypass',
             'No playlists, no subtitles'],

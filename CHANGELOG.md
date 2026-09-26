@@ -12,6 +12,10 @@ section for the version in `app/build.gradle.kts` exists before anything is tagg
 
 ## [Unreleased]
 
+## [1.14.0] - 2026-09-26
+
+Updates install from inside the app — no browser, no download that hangs at 100 %.
+
 ### Added
 - **Updates install from inside the app.** *Install update* on the Home card, or a tap on the update
   notification, downloads the newest APK in the app — from the product page's own copy, GitHub as the
